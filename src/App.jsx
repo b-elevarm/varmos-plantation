@@ -4191,6 +4191,9 @@ function ccBuildQueue({alerts,wos,counts,decisions}){
   sev:r.status==="Kritis"?3:2,badge:r.status,cat:"Air / Embung",
   issue:r.name+(r.status==="Bocor"?" bocor — perlu perbaikan":" level "+r.level+"% (kritis)"),
   area:"Blok "+r.id[1],pic:FS_BY_BLOCK["GH-B0"+r.id[1]]||"Estate Manager",due:"—",act:["Manajemen Air","water",{}]}));
+ INIT_INV.filter(i=>invStatus(i)==="Kritis").forEach(i=>items.push({
+  sev:2,badge:"Stok kritis",cat:"Material",issue:i.name+" — stok bebas "+fmtN(Math.max(0,i.onHand-i.reserved))+" "+i.unit+" di bawah minimum",
+  area:"Gudang",pic:"Warehouse Officer",due:"—",act:["Inventori","inventory",{}]}));
  PUMPS.filter(pp=>pp.status==="Gangguan").forEach(pp=>items.push({
   sev:2,badge:"Gangguan",cat:"Alat",issue:"Pompa "+pp.id+" ("+pp.zone+") gangguan",area:pp.zone,pic:"Teknisi Irigasi",due:"—",act:["Manajemen Air","water",{}]}));
  (decisions||[]).filter(d=>d.status!=="Selesai"&&d.due&&d.due<=WX_ADD_DAYS(TODAY,3)).forEach(d=>items.push({
@@ -4245,7 +4248,16 @@ function CommandCenterPage(){
  const embOps=RESERVOIRS.filter(r=>r.level!=null);
  const embAvg=embOps.length?Math.round(embOps.reduce((a,r)=>a+r.level,0)/embOps.length):null;
  const pumpsDown=PUMPS.filter(pp=>pp.status==="Gangguan").length;
- const resReady=Math.max(0,Math.round(100*128/142)-pumpsDown*5-RESERVOIRS.filter(r=>r.status==="Bocor"||r.status==="Kritis").length*5);
+ /* Tersambung ke data modul: Tenaga Kerja (HOK), Inventori (stok), Keuangan (BUDGET_TREND) */
+ /* HOK: pakai hari kerja terakhir pada data kehadiran (LB_TODAY bisa jatuh di hari libur) */
+ const lbLastWd=LB_ATT_DAYS.length?LB_ATT_DAYS[LB_ATT_DAYS.length-1]:LB_TODAY;
+ const hokToday=Math.round(lbAttStat(lbAttOn(lbLastWd)).hok);
+ const laborActive=lbAgg(LB_WORKERS).active.length;
+ const matKritis=INIT_INV.filter(i=>invStatus(i)==="Kritis").length;
+ const budPlan=BUDGET_TREND.reduce((a,m)=>a+(m.anggaran||0),0);
+ const budAct=BUDGET_TREND.reduce((a,m)=>a+(m.aktual||0),0);
+ const budPct=budPlan?Math.round(1000*budAct/budPlan)/10:null;
+ const resReady=Math.max(0,Math.round(100*hokToday/Math.max(1,laborActive))-pumpsDown*5-matKritis*6-RESERVOIRS.filter(r=>r.status==="Bocor"||r.status==="Kritis").length*5);
  const finFull=["Direksi","Finance","Estate Manager","Super Admin"].includes(role);
  const finHighlight=role==="Mitra Lahan"; /* keputusan produk: Mitra hanya highlight, tanpa detail/drill */
  const canDecide=["Direksi","Estate Manager","Super Admin"].includes(role);
@@ -4294,15 +4306,15 @@ function CommandCenterPage(){
      <ResponsiveContainer width="100%" height={190}><AreaChart data={DAILY_PROGRESS}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="d" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Area type="monotone" dataKey="v" name="WO selesai" stroke="#2563EB" fill="#2563EB" fillOpacity={0.25}/></AreaChart></ResponsiveContainer>
     </Card>
     {finFull&&<Card title="Anggaran vs aktual (Rp juta)">
-     <ResponsiveContainer width="100%" height={190}><BarChart data={BUDGET_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="plan" name="Anggaran" fill="#93C5FD"/><Bar dataKey="actual" name="Aktual" fill="#2563EB"/></BarChart></ResponsiveContainer>
+     <ResponsiveContainer width="100%" height={190}><BarChart data={BUDGET_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="anggaran" name="Anggaran" fill="#93C5FD"/><Bar dataKey="aktual" name="Aktual" fill="#2563EB"/></BarChart></ResponsiveContainer>
     </Card>}
    </div>
   </CcSection>);
  const secSnap=(
   <CcSection key="snap" title="Execution Snapshot" icon={ClipboardList} defaultCollapsed={cfg.collapsed.includes("snap")}
    action={<button onClick={()=>nav("workorders")} className="text-xs font-semibold text-green-700 hover:underline">Semua WO →</button>}>
-   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-center">
-    {[["WO hari ini",todayWos.length,null],["Verifikasi",counts.verif,null],["HOK","~128/142","demo"],["Level embung",embAvg!=null?embAvg+"%":"—","rata-rata beroperasi"],["Alat gangguan",pumpsDown,null]].map(([l,v,note],i)=>(
+   <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-3 text-center">
+    {[["WO hari ini",todayWos.length,null],["Verifikasi",counts.verif,null],["HOK",fmtN(hokToday)+"/"+fmtN(laborActive),"hari kerja terakhir"],["Stok kritis",matKritis,"Inventori"],["Level embung",embAvg!=null?embAvg+"%":"—","rata-rata beroperasi"],["Alat gangguan",pumpsDown,null]].map(([l,v,note],i)=>(
      <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-2">
       <div className="text-base font-bold text-gray-900">{v}</div>
       <div className="text-[10px] text-gray-500 leading-tight">{l}{note?" · "+note:""}</div>
@@ -4348,7 +4360,7 @@ function CommandCenterPage(){
        <div>• Citra sensing: 20 Jul 2026 · satelit + sensor</div>
        <div>• Work order & alert: live (sesi)</div>
        <div>• Embung & pompa: data lapangan Jul 2026</div>
-       <div>• Tenaga kerja, material, anggaran: <b>~ demo</b> (belum tersambung)</div>
+       <div>• Tenaga kerja, material, anggaran: tersambung ke modul (data demo modul)</div>
        <div className="pt-1 border-t border-gray-100">Konflik antar-sumber dikelola di <button className="text-green-700 font-medium hover:underline" onClick={()=>nav("dq-issues")}>Data Issues</button>.</div>
       </div>}
      </div>
@@ -4359,9 +4371,9 @@ function CommandCenterPage(){
     <Kpi label="Estate Health Score" value={estate.score!=null?estate.score+"/100":"—"} sub={fmtN(estate.n)+" pohon · sensus + sensing"} icon={Sprout} tone={estate.score>=80?"green":estate.score>=60?"amber":"red"} onClick={()=>nav("map")}/>
     <Kpi label="Critical Exceptions" value={critN} sub={critN>0?"butuh tindakan segera":"tidak ada item kritis"} icon={AlertTriangle} tone={critN>=4?"red":critN>0?"amber":"green"}/>
     <Kpi label="WO Tepat Waktu" value={onTime+"%"} sub={fmtN(counts.wo)+" aktif · "+fmtN(counts.overdue)+" terlambat"} icon={ClipboardList} tone={onTime>=90?"green":onTime>=75?"amber":"red"} onClick={()=>nav("workorders")}/>
-    <Kpi label="Resource Readiness" value={"~"+resReady+"%"} sub={"HOK·material·alat·air (sebagian demo)"} icon={Gauge} tone={resReady>=90?"green":resReady>=70?"amber":"red"}/>
-    {finFull&&<Kpi label="Budget Variance" value="~92,5%" sub="Rp 1,72 M / 1,86 M (demo)" icon={Wallet} tone="green" onClick={()=>nav("budget")}/>}
-    {finHighlight&&<Kpi label="Realisasi Anggaran" value="~92,5%" icon={Wallet} tone="green"/>}
+    <Kpi label="Resource Readiness" value={resReady+"%"} sub={"HOK "+fmtN(hokToday)+"/"+fmtN(laborActive)+" · "+matKritis+" stok kritis · "+pumpsDown+" alat"} icon={Gauge} tone={resReady>=90?"green":resReady>=70?"amber":"red"}/>
+    {finFull&&<Kpi label="Budget Variance" value={budPct!=null?String(budPct).replace(".",",")+"%":"—"} sub={fmtRpC(budAct*1e6)+" / "+fmtRpC(budPlan*1e6)+" (YTD)"} icon={Wallet} tone={budPct==null?"gray":budPct<=105?"green":"amber"} onClick={()=>nav("budget")}/>}
+    {finHighlight&&<Kpi label="Realisasi Anggaran" value={budPct!=null?String(budPct).replace(".",",")+"%":"—"} icon={Wallet} tone="green"/>}
    </div>
    {cfg.order.filter(k=>!cfg.hidden.includes(k)).map(k=>SECTIONS[k])}
    {drawerBlock&&<BlockDrawer blockId={drawerBlock} onClose={()=>setDrawerBlock(null)}/>}
@@ -5686,7 +5698,7 @@ function PlantingPage(){
     <Kpi label="Target populasi" value={fmtN(target)} icon={Trees} tone="blue"/>
     <Kpi label="Tertanam hidup" value={fmtN(activeTrees)} icon={Sprout} tone="green" sub={fmtPct((activeTrees/target*100).toFixed(1))+" dari target"}/>
     <Kpi label="Survival rate" value={fmtPct(survival)} icon={Activity} tone={survival>=90?"green":"amber"} sub="aktif / total sensus"/>
-    <Kpi label="Sulam terealisasi" value={fmtN(0)} icon={RefreshCw} tone="purple" sub="belum ada program"/>
+    <Kpi label="Sulam terealisasi (YTD)" value={fmtN(hsRegistry().by.replanted)} icon={RefreshCw} tone="purple" sub={hsRegistry().by.replanted>0?"tercatat di sensus/registri":"belum ada realisasi — basis Sensus Des 2025"}/>
     <Kpi label="Kebutuhan sulam" value={fmtN(need)} icon={AlertTriangle} tone="red" sub={"prioritas "+priBlocks}/>
    </div>
    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
