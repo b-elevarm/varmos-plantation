@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# keep the spec document local-only
+VarmOS Plantation Implementation Specification.pdf

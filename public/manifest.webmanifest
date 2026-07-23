@@ -1,0 +1,9 @@
+{
+  "name": "VarmOS Plantation",
+  "short_name": "VarmOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#166534",
+  "orientation": "any"
+}
