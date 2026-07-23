@@ -6959,7 +6959,7 @@ const INIT_USER_LOG=[];
 const USTAT_STYLE={"Aktif":"bg-green-100 text-green-800","Menunggu Undangan":"bg-amber-100 text-amber-800","Nonaktif":"bg-gray-200 text-gray-600"};
 const UStat=({v})=><span className={"inline-flex px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap "+(USTAT_STYLE[v]||"bg-gray-100 text-gray-600")}>{v}</span>;
 const uInitials=(n)=>n.replace(/[^A-Za-z ]/g,"").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
-const NAV_FLAT=NAV.flatMap(it=>it.children?it.children.map(c=>({page:c.page,label:c.label})):[{page:it.page,label:it.label}]);
+const NAV_FLAT=NAV.filter(it=>!it.section).flatMap(it=>it.children?it.children.map(c=>({page:c.page,label:c.label})):[{page:it.page,label:it.label}]);
 const roleAccess=(r)=>NAV_FLAT.filter(p=>!(ROLES[r]?.hide||[]).includes(p.page));
 
 function UserInviteModal({open,onClose}){
