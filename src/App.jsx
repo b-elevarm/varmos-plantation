@@ -539,10 +539,18 @@ const SOIL_TESTS=[
  {block:"GH-B04",date:"2026-06-15",pH:5.3,corg:"1,7%",n:"Rendah",p:"Rendah",k:"Sedang",rec:"Perbaiki air dahulu, lalu NPK + dolomit"},
 ];
 
+/* 9 embung sesuai titik KML lapangan (data/gunung-hejo-titik-embung.kml).
+   Kapasitas & level masih data demo; status: <40 Kritis · 40–64 Waspada · ≥65 Normal. */
 const RESERVOIRS=[
- {id:"E-01",name:"Embung Utama E-01",cap:12000,level:34,status:"Kritis"},
- {id:"E-02",name:"Embung E-02",cap:5000,level:58,status:"Waspada"},
- {id:"E-03",name:"Embung E-03",cap:3500,level:72,status:"Normal"},
+ {id:"B1A",name:"Embung B1A",cap:4000,level:32,status:"Kritis"},
+ {id:"B1B",name:"Embung B1B",cap:2500,level:41,status:"Waspada"},
+ {id:"B1C",name:"Embung B1C",cap:2000,level:55,status:"Waspada"},
+ {id:"B2A",name:"Embung B2A",cap:3000,level:62,status:"Waspada"},
+ {id:"B2B",name:"Embung B2B",cap:2000,level:58,status:"Waspada"},
+ {id:"B3A",name:"Embung B3A",cap:2500,level:68,status:"Normal"},
+ {id:"B3B",name:"Embung B3B",cap:1800,level:74,status:"Normal"},
+ {id:"B4A",name:"Embung B4A",cap:2200,level:71,status:"Normal"},
+ {id:"B4B",name:"Embung B4B",cap:1500,level:66,status:"Normal"},
 ];
 const PUMPS=[
  {id:"P-01",zone:"Jalur A",status:"Aktif",flow:"18 m³/jam",hours:1240},
@@ -551,10 +559,10 @@ const PUMPS=[
  {id:"P-04",zone:"Cadangan",status:"Standby",flow:"22 m³/jam",hours:420},
 ];
 const IRRIGATION_SCHEDULE=[
- {slot:"05.00–08.00",zone:"Blok 4 (prioritas)",source:"E-01 + P-04",vol:"180 m³"},
- {slot:"08.00–11.00",zone:"Blok 1",source:"E-01",vol:"160 m³"},
- {slot:"13.00–16.00",zone:"Blok 2",source:"E-02",vol:"120 m³"},
- {slot:"16.00–18.00",zone:"Pembibitan Blok 4",source:"E-03",vol:"40 m³"},
+ {slot:"05.00–08.00",zone:"Blok 4 (prioritas)",source:"B4A + P-04",vol:"180 m³"},
+ {slot:"08.00–11.00",zone:"Blok 1",source:"B1A + B1B",vol:"160 m³"},
+ {slot:"13.00–16.00",zone:"Blok 2",source:"B2A",vol:"120 m³"},
+ {slot:"16.00–18.00",zone:"Pembibitan Blok 4",source:"B4B",vol:"40 m³"},
 ];
 /* ============================================================
    KLIMATOLOGI & KEPUTUSAN AGRONOMI — lapisan data
@@ -5377,8 +5385,8 @@ function WaterPage(){
   <div>
    <PageHeader title="Manajemen Air" subtitle="Embung, jaringan irigasi, dan status kelembapan tanah — musim kemarau."/>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-    <Kpi label="Level rata-rata embung" value="55%" icon={Droplets} tone="amber" trend={-8}/>
-    <Kpi label="Embung status kritis" value="1" icon={AlertTriangle} tone="red" sub="E-01 (34%)" onClick={()=>nav("alerts",{focus:"AL-001"})}/>
+    <Kpi label="Level rata-rata embung" value={Math.round(RESERVOIRS.reduce((a,r)=>a+r.level,0)/RESERVOIRS.length)+"%"} icon={Droplets} tone="amber" trend={-8}/>
+    <Kpi label="Embung status kritis" value={String(RESERVOIRS.filter(r=>r.status==="Kritis").length)} icon={AlertTriangle} tone="red" sub={RESERVOIRS.filter(r=>r.status==="Kritis").map(r=>r.id+" ("+r.level+"%)").join(" • ")||"—"} onClick={()=>nav("alerts",{focus:"AL-001"})}/>
     <Kpi label="Blok kelembapan rendah" value="3" icon={MapPin} tone="red" sub="Blok 4 • Blok 1 • Blok 2"/>
     <Kpi label="Pompa gangguan" value="1" icon={Gauge} tone="amber" sub="P-03 (jalur C)"/>
    </div>
