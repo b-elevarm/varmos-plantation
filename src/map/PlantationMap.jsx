@@ -34,6 +34,7 @@ const EMPTY_FC = { type: "FeatureCollection", features: [] };
 const PlantationMap = forwardRef(function PlantationMap(
   { height, basemap = "satelit", offlineImage = null, areas, context = null, trees = null,
     labels = [], showLabels = true, selectedId = null, fitKey = "", focusTarget = null,
+    points = [], showPoints = true, roads = null, showRoads = true,
     onAreaClick, onTreeClick },
   ref
 ) {
@@ -41,6 +42,7 @@ const PlantationMap = forwardRef(function PlantationMap(
   const mapRef = useRef(null);
   const [ready, setReady] = useState(false);
   const markersRef = useRef([]);
+  const infraRef = useRef([]);
   const popupRef = useRef(null);
   const cbRef = useRef({});
   cbRef.current = { onAreaClick, onTreeClick };
@@ -95,6 +97,13 @@ const PlantationMap = forwardRef(function PlantationMap(
       map.addLayer({ id: "areas-selected", type: "line", source: "areas",
         filter: ["==", ["get", "id"], "__none__"],
         paint: { "line-color": "#7C3AED", "line-width": 3 } });
+      map.addSource("roads", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({ id: "roads-casing", type: "line", source: "roads",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#FFFFFF", "line-width": 4, "line-opacity": 0.55 } });
+      map.addLayer({ id: "roads-line", type: "line", source: "roads",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#D97706", "line-width": 1.8, "line-dasharray": [2.2, 1.4] } });
       map.addLayer({ id: "trees-pts", type: "circle", source: "trees",
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 1.2, 17, 3.4, 20, 7],
@@ -135,7 +144,7 @@ const PlantationMap = forwardRef(function PlantationMap(
 
       setReady(true);
     });
-    return () => { markersRef.current.forEach((m) => m.remove()); map.remove(); mapRef.current = null; };
+    return () => { markersRef.current.forEach((m) => m.remove()); infraRef.current.forEach((m) => m.remove()); map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -143,6 +152,29 @@ const PlantationMap = forwardRef(function PlantationMap(
   useEffect(() => { if (ready) mapRef.current.getSource("areas").setData(areas || EMPTY_FC); }, [ready, areas]);
   useEffect(() => { if (ready) mapRef.current.getSource("context").setData(context || EMPTY_FC); }, [ready, context]);
   useEffect(() => { if (ready) mapRef.current.getSource("trees").setData(trees || EMPTY_FC); }, [ready, trees]);
+  useEffect(() => { if (ready) mapRef.current.getSource("roads").setData(roads || EMPTY_FC); }, [ready, roads]);
+  useEffect(() => {
+    if (!ready) return;
+    ["roads-casing", "roads-line"].forEach((id) =>
+      mapRef.current.setLayoutProperty(id, "visibility", showRoads ? "visible" : "none"));
+  }, [ready, showRoads]);
+
+  /* ---- marker infrastruktur (ikon DOM dengan tooltip judul) ---- */
+  useEffect(() => {
+    if (!ready) return;
+    infraRef.current.forEach((m) => m.remove());
+    infraRef.current = [];
+    if (!showPoints) return;
+    (points || []).forEach((p) => {
+      const el = document.createElement("div");
+      el.title = p.title || p.id;
+      el.style.cssText = "width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #94A3B8;" +
+        "box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:help";
+      el.textContent = p.icon || "•";
+      const m = new maplibregl.Marker({ element: el }).setLngLat(p.lngLat).addTo(mapRef.current);
+      infraRef.current.push(m);
+    });
+  }, [ready, points, showPoints]);
 
   /* ---- highlight terpilih ---- */
   useEffect(() => {

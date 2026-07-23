@@ -2094,6 +2094,30 @@ const MAP_OFFLINE_IMG={url:HS_BASEMAP_HI,coordinates:[
  [HS_BASEMAP_BOUNDS.lonmin,HS_BASEMAP_BOUNDS.latmax],[HS_BASEMAP_BOUNDS.lonmax,HS_BASEMAP_BOUNDS.latmax],
  [HS_BASEMAP_BOUNDS.lonmax,HS_BASEMAP_BOUNDS.latmin],[HS_BASEMAP_BOUNDS.lonmin,HS_BASEMAP_BOUNDS.latmin]]};
 const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc===4?"#EA580C":"#9CA3AF";
+/* Titik infrastruktur kebun — KOORDINAT ESTIMASI (demo) agar layer dapat divisualkan;
+   perbarui dari survei GPS lapangan. ID embung mengikuti data RESERVOIRS. */
+const MAP_INFRA=[
+ {id:"E-01",type:"Embung Besar",name:"Embung Utama E-01",icon:"💧",lat:-6.6598,lon:107.4176},
+ {id:"E-02",type:"Embung Kecil",name:"Embung E-02",icon:"💧",lat:-6.6683,lon:107.4224},
+ {id:"E-03",type:"Embung Kecil",name:"Embung E-03",icon:"💧",lat:-6.6641,lon:107.4158},
+ {id:"SB-01",type:"Sumur Bor",name:"Sumur Bor SB-01",icon:"⛏️",lat:-6.6752,lon:107.4189},
+ {id:"MA-01",type:"Mata Air",name:"Mata Air Gununghejo",icon:"⛲",lat:-6.6612,lon:107.4121},
+ {id:"BT-01",type:"Bale Tani",name:"Bale Tani — Kantor Operasional Kebun",icon:"🏠",lat:-6.6768,lon:107.4166},
+ {id:"GD-01",type:"Gudang",name:"Gudang Saprodi",icon:"📦",lat:-6.6773,lon:107.4172},
+ {id:"GH-01",type:"Green House",name:"Green House Persemaian",icon:"🌱",lat:-6.6761,lon:107.4156},
+];
+const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,title:p.name+" · "+p.type+" — lokasi estimasi (demo)"}));
+/* Jalur jalan produksi — polyline ESTIMASI (demo): poros selatan–utara + dua cabang.
+   Ganti dengan tracking GPS atau data OSM (Overpass) saat tersedia. */
+const MAP_ROADS={type:"FeatureCollection",features:[
+ {type:"Feature",properties:{name:"Jalan produksi utama (estimasi)"},geometry:{type:"LineString",coordinates:[
+  [107.4152,-6.6790],[107.4166,-6.6770],[107.4172,-6.6745],[107.4180,-6.6716],[107.4186,-6.6690],
+  [107.4192,-6.6664],[107.4185,-6.6636],[107.4176,-6.6607],[107.4170,-6.6580],[107.4162,-6.6556]]}},
+ {type:"Feature",properties:{name:"Cabang timur — Blok 2 (estimasi)"},geometry:{type:"LineString",coordinates:[
+  [107.4186,-6.6690],[107.4205,-6.6684],[107.4222,-6.6676],[107.4238,-6.6666]]}},
+ {type:"Feature",properties:{name:"Cabang barat — Blok 3 (estimasi)"},geometry:{type:"LineString",coordinates:[
+  [107.4176,-6.6607],[107.4158,-6.6614],[107.4140,-6.6622]]}},
+]};
 function MapPage(){
  const {treesData,hsTreePts,nav,toast,role,route}=useApp();
  const [metric,setMetric]=useState("health");
@@ -2103,7 +2127,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,jalan:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2183,9 +2207,10 @@ function MapPage(){
   else { subMap=agg.byPetak; kind="petak"; }
   return (id)=>{ const u=HS_GEO.units[id]; if(!u) return null;
    const row=vzRow(id,u.name,"",u.areaHa,subMap[id]); const val=mapRowVal(row,metric);
-   let sub=""; if(kind==="blok"){ sub=HS_GEO.clusters.filter(c=>c.parentId===id).length+" Cluster · "+HS_GEO.plots.filter(p=>p.blockId===id).length+" Petak"; }
-   else if(kind==="cluster"){ sub=HS_GEO.plots.filter(p=>p.parentId===id).length+" Petak"; }
-   else { sub=row.n?fmtN(row.n)+" pohon":""; }
+   const nTan=row.n?fmtN(row.n)+" tanaman":null;
+   let sub=""; if(kind==="blok"){ sub=(nTan?nTan+" · ":"")+HS_GEO.clusters.filter(c=>c.parentId===id).length+" Cluster · "+HS_GEO.plots.filter(p=>p.blockId===id).length+" Petak"; }
+   else if(kind==="cluster"){ sub=(nTan?nTan+" · ":"")+HS_GEO.plots.filter(p=>p.parentId===id).length+" Petak"; }
+   else { sub=nTan||""; }
    const ce=Object.entries(row.com||{}); const com=ce.length?comName(ce.sort((a,b)=>b[1]-a[1])[0][0]):(u.commodity?comName(u.commodity):"—");
    return { name:kind==="blok"?blockLabel(id):(u.name||id), landId:id, ha:fmtHa(u.areaHa), sub, commodity:com,
     metricLabel:mapMetric(metric).label, metricVal:mapFmtVal(metric,val), statusLabel:VZ_LABEL[row.status], statusColor:VZ_COL[row.status], alerts:vzAlert(id), hasData:row.hasData }; };
@@ -2312,14 +2337,15 @@ function MapPage(){
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
+        points={MAP_INFRA_POINTS} showPoints={layers.infra} roads={MAP_ROADS} showRoads={layers.jalan}
         focusTarget={focusTarget} onAreaClick={onMapArea}
         onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
        {/* chip konteks area aktif — mengisi flank kiri-atas, selaras kompas kanan-atas */}
-       <div className="absolute top-2 left-2 hidden sm:block bg-white/92 backdrop-blur-[2px] border border-gray-200 rounded-lg shadow-sm px-2.5 py-1.5 pointer-events-none max-w-[280px]">
-        <div className="text-[11px] font-bold text-gray-900 leading-tight truncate">{drill.petak&&petakUnit?("Petak "+(petakUnit.code||petakUnit.id)):drill.cluster&&clusterUnit?clusterUnit.name:drill.block&&blockUnit?blockLabel(drill.block):"Estate Gunung Hejo"}</div>
-        <div className="text-[10px] text-gray-500 leading-tight truncate">{drill.petak&&petakUnit?(fmtHa(petakUnit.areaHa)+" ha · "+petakMainCom(drill.petak)):drill.cluster&&clusterUnit?(fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak"):drill.block&&blockUnit?(fmtHa(blockUnit.areaHa)+" ha · "+clustersInBlock+" Cluster · "+petakInBlock+" Petak"):(fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")}</div>
+       <div className="absolute top-2 left-2 hidden sm:block bg-white/95 backdrop-blur-[2px] border border-gray-300 rounded-lg shadow-md px-3 py-2 pointer-events-none max-w-[300px]">
+        <div className="text-sm font-bold text-gray-900 leading-tight truncate">{drill.petak&&petakUnit?("Petak "+(petakUnit.code||petakUnit.id)):drill.cluster&&clusterUnit?clusterUnit.name:drill.block&&blockUnit?blockLabel(drill.block):"Estate Gunung Hejo"}</div>
+        <div className="text-xs text-gray-600 leading-tight truncate">{drill.petak&&petakUnit?(fmtHa(petakUnit.areaHa)+" ha · "+petakMainCom(drill.petak)):drill.cluster&&clusterUnit?(fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak"):drill.block&&blockUnit?(fmtHa(blockUnit.areaHa)+" ha · "+clustersInBlock+" Cluster · "+petakInBlock+" Petak"):(fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")}</div>
        </div>
       </div>
       {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.base!=="polos"&&<span className="shrink-0">{layers.base==="satelit"?("Imagery © Esri · cadangan offline "+HS_SAT_ATTR):"© OpenStreetMap contributors"}</span>}</div>}
@@ -2935,6 +2961,12 @@ function WindCompass({day,collapsed,onToggle}){
      <div className="text-[11px] text-gray-500 leading-tight">dari {day.windDir.name}</div>
      <div className="text-[11px] text-gray-600 leading-tight">{day.wind} km/jam</div>
     </div>
+   </div>
+   <div className="mt-1.5 pt-1.5 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-gray-700">
+    <WxIcon cond={day.cond} size={14}/>
+    <span className="font-semibold">{day.tmax}°<span className="text-gray-400 font-normal">/{day.tmin}°</span></span>
+    <span className="truncate">{day.condLabel}</span>
+    <span className="text-gray-500 ml-auto shrink-0 flex items-center gap-0.5"><Droplets size={10}/>{String(day.rainMm).replace(".",",")} mm</span>
    </div>
    <div className="mt-1.5 pt-1.5 border-t border-gray-100 text-[9px] text-gray-400 leading-snug">{day.windFrom} · {day.source==="live"?"data aktual":"simulasi"}. Semprot searah angin, jauhi hilir sensitif.</div>
   </div>);
@@ -3909,7 +3941,9 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    </Group>
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
-    {["Nursery","Embung","Toren","Jalan kebun","Jalur irigasi","Bangunan","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
+    <Row label="Infrastruktur kebun" note="embung, sumur bor, mata air, bale tani, gudang, green house — lokasi estimasi" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
+    <Row label="Jalan produksi" note="jalur estimasi (demo)" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
+    {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>
    <Group title="Remote Sensing">
     <Row label="Nonaktif" control={<Rad name="rs" on={layers.rs==="none"} fn={()=>set("rs","none")}/>}/>
@@ -13765,7 +13799,7 @@ export default function App(){
  const updateUser=(id,patch,logMsg)=>{ setUsers(xs=>xs.map(u=>u.id===id?{...u,...patch}:u)); if(logMsg) uLog(logMsg); };
  const [curUserId,setCurUserId]=useState(null);
  const curUser=users.find(u=>u.id===curUserId)||null;
- const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:ROLES[u.role].def,params:{}}); updateUser(u.id,{lastLogin:"19 Jul 2026 14:05",status:"Aktif"}); uLog(u.name+" ("+u.role+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+u.role); };
+ const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:"map",params:{}}); /* landing seragam: Peta Kebun */ updateUser(u.id,{lastLogin:"19 Jul 2026 14:05",status:"Aktif"}); uLog(u.name+" ("+u.role+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+u.role); };
  const logout=()=>{ if(curUser) uLog(curUser.name+" keluar dari sistem"); setCurUserId(null); setRole(null); };
  const updateHsAlert=(id,patch,logMsg)=>setHsAlerts(xs=>xs.map(a=>a.id===id?{...a,...patch,log:[...(a.log||[]),...(logMsg?[{d:"19 Jul 2026",t:logMsg}]:[])]}:a));
  const addHsInsp=(rec)=>setHsInsp(xs=>[rec,...xs]);
@@ -13816,7 +13850,7 @@ export default function App(){
  const toast=(msg,kind="ok")=>{ const id=Date.now()+Math.random(); setToasts(ts=>[...ts,{id,msg,kind}]); setTimeout(()=>setToasts(ts=>ts.filter(t=>t.id!==id)),3800); };
  const confirmAction=(title,msg,onYes)=>setConfirm({title,msg,onYes});
  const nav=(page,params={})=>{ setRoute({page,params}); };
- const login=(r)=>{ const u=users.find(x=>x.role===r&&x.status==="Aktif"); if(u){ loginUser(u); } else { setRole(r); setRoute({page:ROLES[r].def,params:{}}); toast("Masuk sebagai "+r); } };
+ const login=(r)=>{ const u=users.find(x=>x.role===r&&x.status==="Aktif"); if(u){ loginUser(u); } else { setRole(r); setRoute({page:"map",params:{}}); toast("Masuk sebagai "+r); } };
 
  /* ===== Data Quality Center — state & aksi (prototype in-memory; audit trail hanya bertambah, tidak pernah diedit/dihapus) ===== */
  const [dqIssues,setDqIssues]=useState(DQ_INIT_ISSUES);
