@@ -60,7 +60,7 @@ const PlantationMap = forwardRef(function PlantationMap(
   { height, basemap = "satelit", offlineImage = null, areas, context = null, trees = null,
     labels = [], showLabels = true, selectedId = null, fitKey = "", focusTarget = null,
     points = [], showPoints = true, roads = null, showRoads = true,
-    fsContainer = null, view3d = false, onAreaClick, onTreeClick },
+    fsContainer = null, view3d = false, trees3d = null, onAreaClick, onTreeClick },
   ref
 ) {
   const boxRef = useRef(null);
@@ -141,6 +141,15 @@ const PlantationMap = forwardRef(function PlantationMap(
       map.addLayer({ id: "roads-line", type: "line", source: "roads",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#D97706", "line-width": 1.8, "line-dasharray": [2.2, 1.4] } });
+      /* Pohon 3D (mode 3D): prisma batang + tajuk per pohon, tinggi sensus. */
+      map.addSource("trees3d", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({ id: "trees-3d", type: "fill-extrusion", source: "trees3d",
+        paint: {
+          "fill-extrusion-color": ["get", "color"],
+          "fill-extrusion-base": ["get", "base"],
+          "fill-extrusion-height": ["get", "h"],
+          "fill-extrusion-opacity": 0.95,
+        } });
       map.addLayer({ id: "trees-pts", type: "circle", source: "trees",
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 1.2, 17, 3.4, 20, 7],
@@ -159,6 +168,11 @@ const PlantationMap = forwardRef(function PlantationMap(
         const f = e.features && e.features[0];
         if (f && cbRef.current.onTreeClick) { e.preventDefault(); cbRef.current.onTreeClick(+f.properties.i); }
       });
+      map.on("click", "trees-3d", (e) => {
+        const f = e.features && e.features[0];
+        if (f && cbRef.current.onTreeClick) { e.preventDefault(); cbRef.current.onTreeClick(+f.properties.i); }
+      });
+      map.on("mouseenter", "trees-3d", () => (map.getCanvas().style.cursor = "pointer"));
       map.on("mouseenter", "areas-fill", () => (map.getCanvas().style.cursor = "pointer"));
       map.on("mouseleave", "areas-fill", () => (map.getCanvas().style.cursor = ""));
       map.on("mouseenter", "trees-pts", () => (map.getCanvas().style.cursor = "pointer"));
@@ -194,6 +208,19 @@ const PlantationMap = forwardRef(function PlantationMap(
   useEffect(() => { if (ready) mapRef.current.getSource("areas").setData(areas || EMPTY_FC); }, [ready, areas]);
   useEffect(() => { if (ready) mapRef.current.getSource("context").setData(context || EMPTY_FC); }, [ready, context]);
   useEffect(() => { if (ready) mapRef.current.getSource("trees").setData(trees || EMPTY_FC); }, [ready, trees]);
+  /* Pohon 3D menggantikan titik datar selagi aktif (dan sebaliknya).
+     Guard getSource/getLayer: instans peta lama (mis. lintas HMR) bisa belum
+     memiliki source/layer ini — jangan sampai crash. */
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    const src = map.getSource("trees3d");
+    if (!src || !map.getLayer("trees-3d") || !map.getLayer("trees-pts")) return;
+    const has3d = !!(trees3d && trees3d.features.length);
+    src.setData(trees3d || EMPTY_FC);
+    map.setLayoutProperty("trees-3d", "visibility", has3d ? "visible" : "none");
+    map.setLayoutProperty("trees-pts", "visibility", has3d ? "none" : "visible");
+  }, [ready, trees3d]);
   useEffect(() => { if (ready) mapRef.current.getSource("roads").setData(roads || EMPTY_FC); }, [ready, roads]);
   useEffect(() => {
     if (!ready) return;
@@ -232,18 +259,22 @@ const PlantationMap = forwardRef(function PlantationMap(
     });
   }, [ready, points, showPoints]);
 
-  /* ---- mode 3D: terrain elevasi + kemiringan kamera ---- */
+  /* ---- mode 3D: terrain elevasi + kemiringan kamera ----
+     Saat pohon 3D aktif (level petak), terrain DIMATIKAN: pada skala ±70 m relief
+     tak berarti, dan kombinasi terrain + extrusion pada zoom tinggi rapuh di
+     renderer software (vector layer tak tergambar, transform bisa NaN). */
   useEffect(() => {
     if (!ready) return;
     const map = mapRef.current;
     if (view3d) {
-      try { map.setTerrain({ source: "dem", exaggeration: 1.6 }); } catch (e) { /* dem opsional */ }
+      const useTerrain = !(trees3d && trees3d.features.length);
+      try { map.setTerrain(useTerrain ? { source: "dem", exaggeration: 1.6 } : null); } catch (e) { /* dem opsional */ }
       map.easeTo({ pitch: 55, bearing: -15, duration: 700 });
     } else {
       try { map.setTerrain(null); } catch (e) { /* noop */ }
       map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
     }
-  }, [ready, view3d]);
+  }, [ready, view3d, trees3d]);
 
   /* ---- highlight terpilih ---- */
   useEffect(() => {

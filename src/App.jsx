@@ -2253,6 +2253,28 @@ function MapPage(){
   }
   return featureCollection(feats);
  },[drill.petak,layers.pohon,hsTreePts,plantFilter]);
+ /* Pohon 3D (mode 3D, level petak): batang + tajuk sebagai fill-extrusion.
+    Footprint oktagon dihitung dalam meter→derajat; tinggi dari sensus (cm),
+    diklem 1,5–12 m; warna tajuk mengikuti status kesehatan. */
+ const trees3dFC=useMemo(()=>{
+  if(!view3d||!drill.petak||!layers.pohon||!hsTreePts) return null;
+  const D=hsTreePts; if(!(D.pk&&D.pkc)) return null;
+  const feats=[]; const mLat=1/111320;
+  const oct=(lon,lat,r)=>{ const mLon=1/(111320*Math.cos(lat*Math.PI/180)); const ring=[];
+   for(let a=0;a<8;a++){ const t=a*Math.PI/4; ring.push([lon+Math.cos(t)*r*mLon,lat+Math.sin(t)*r*mLat]); }
+   ring.push(ring[0]); return ring; };
+  for(let i=0;i<D.n;i++){
+   if(D.pkc[D.pk[i]]!==drill.petak) continue;
+   const lon=D.lon0+D.lon[i]/1e6, lat=D.lat0+D.lat[i]/1e6;
+   const sc=D.sc[i];
+   const hM=Math.max(1.5,Math.min(12,((D.h&&D.h[i])||300)/100));
+   feats.push({type:"Feature",geometry:{type:"Polygon",coordinates:[oct(lon,lat,0.35)]},
+    properties:{i,color:"#7C5A3A",base:0,h:+(hM*0.4).toFixed(1)}});
+   feats.push({type:"Feature",geometry:{type:"Polygon",coordinates:[oct(lon,lat,1.7)]},
+    properties:{i,color:MAP_SC_COLOR(sc),base:+(hM*0.35).toFixed(1),h:+hM.toFixed(1)}});
+  }
+  return featureCollection(feats);
+ },[view3d,drill.petak,layers.pohon,hsTreePts]);
  const focusTarget=useMemo(()=>{
   if(!centerOn||!centerOn.id||!HS_GEO.units[centerOn.id]||!HS_GEO.units[centerOn.id].ll) return null;
   return {bounds:unitBounds(HS_GEO.units[centerOn.id]),t:centerOn.t||centerOn.n||1};
@@ -2318,7 +2340,7 @@ function MapPage(){
      <Card pad={false} className="overflow-hidden h-full flex flex-col">
       <div ref={mapFsRef} className="relative map-fs-wrap flex-1" style={{minHeight:MAP_H,...(layers.base!=="polos"?{background:"#3a4453"}:{})}}>
        <PlantationMap height="100%" basemap={layers.base} fsContainer={mapFsRef} view3d={view3d}
-        areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
+        areas={areasFC} context={contextFC} trees={treesFC} trees3d={trees3dFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
         points={MAP_INFRA_POINTS.filter(p=>p.cat==="embung"?layers.embung:p.cat==="joglo"?layers.joglo:true)}
