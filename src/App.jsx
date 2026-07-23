@@ -2081,10 +2081,13 @@ const MAP_INFRA=[
  {id:"EMB-B4A",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103,src:"kml"},
  {id:"EMB-B4B",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094,src:"kml"},
 ];
+/* Marker embung membawa data status lapangan (RESERVOIRS) untuk popup hover peta. */
 const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
  const r=RESERVOIRS.find(x=>"EMB-"+x.id===p.id);
- const st=r?(" · "+r.op+(r.cap!=null?" · "+fmtN(r.cap)+" m³":"")+(r.note?" · "+r.note:"")):"";
- return {id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,title:p.name+st+" — titik KML lapangan"};
+ return {id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,
+  sub:r?(r.op+(r.cap!=null?" · Volume "+fmtN(r.cap)+" m³":"")):p.type,
+  note:(r&&r.note)||null,
+  srcLabel:"Titik KML lapangan"};
 });
 /* Jalur jalan produksi: menunggu data GPS tracking lapangan — layer peta
    (roads) di PlantationMap siap dipakai kembali begitu datanya tersedia. */

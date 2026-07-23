@@ -195,10 +195,23 @@ const PlantationMap = forwardRef(function PlantationMap(
     if (!showPoints) return;
     (points || []).forEach((p) => {
       const el = document.createElement("div");
-      el.title = p.title || p.id;
       el.style.cssText = "width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #94A3B8;" +
-        "box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:help";
+        "box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer";
       el.textContent = p.icon || "•";
+      /* Popup hover dengan data status (bukan tooltip title bawaan browser) */
+      el.addEventListener("mouseenter", () => {
+        if (!popupRef.current || !mapRef.current) return;
+        popupRef.current
+          .setLngLat(p.lngLat)
+          .setHTML(
+            `<div style="font:600 12px Inter,system-ui,sans-serif;color:#111827">${esc(p.name || p.title || p.id)}</div>` +
+            (p.sub ? `<div style="font:11px Inter,system-ui,sans-serif;color:#374151">${esc(p.sub)}</div>` : "") +
+            (p.note ? `<div style="font:11px Inter,system-ui,sans-serif;color:#B45309">${esc(p.note)}</div>` : "") +
+            (p.srcLabel ? `<div style="font:10px Inter,system-ui,sans-serif;color:#9CA3AF;margin-top:2px">${esc(p.srcLabel)}</div>` : "")
+          )
+          .addTo(mapRef.current);
+      });
+      el.addEventListener("mouseleave", () => popupRef.current && popupRef.current.remove());
       const m = new maplibregl.Marker({ element: el }).setLngLat(p.lngLat).addTo(mapRef.current);
       infraRef.current.push(m);
     });
