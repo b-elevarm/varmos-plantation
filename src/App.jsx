@@ -2052,19 +2052,27 @@ function MapKpiStrip({drill,agg}){
   </div>);
 }
 const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc===4?"#EA580C":"#9CA3AF";
-/* Titik infrastruktur kebun — KOORDINAT ESTIMASI (demo) agar layer dapat divisualkan;
-   perbarui dari survei GPS lapangan. ID embung mengikuti data RESERVOIRS. */
+/* Titik infrastruktur kebun. Embung: koordinat NYATA dari KML lapangan
+   "Gunung Hejo Titik Embung" (arsip: data/gunung-hejo-titik-embung.kml).
+   Titik lain masih ESTIMASI (demo) — perbarui dari survei GPS. */
 const MAP_INFRA=[
- {id:"E-01",type:"Embung Besar",name:"Embung Utama E-01",icon:"💧",lat:-6.6598,lon:107.4176},
- {id:"E-02",type:"Embung Kecil",name:"Embung E-02",icon:"💧",lat:-6.6683,lon:107.4224},
- {id:"E-03",type:"Embung Kecil",name:"Embung E-03",icon:"💧",lat:-6.6641,lon:107.4158},
+ {id:"EMB-B1A",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742,src:"kml"},
+ {id:"EMB-B1B",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158,src:"kml"},
+ {id:"EMB-B1C",type:"Embung Besar",name:"Embung B1C",icon:"💧",lat:-6.672999,lon:107.420209,src:"kml"},
+ {id:"EMB-B2A",type:"Embung Besar",name:"Embung B2A",icon:"💧",lat:-6.670836,lon:107.424009,src:"kml"},
+ {id:"EMB-B2B",type:"Embung Besar",name:"Embung B2B",icon:"💧",lat:-6.669258,lon:107.424372,src:"kml"},
+ {id:"EMB-B3A",type:"Embung Besar",name:"Embung B3A",icon:"💧",lat:-6.665284,lon:107.419058,src:"kml"},
+ {id:"EMB-B3B",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580,src:"kml"},
+ {id:"EMB-B4A",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103,src:"kml"},
+ {id:"EMB-B4B",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094,src:"kml"},
  {id:"SB-01",type:"Sumur Bor",name:"Sumur Bor SB-01",icon:"⛏️",lat:-6.6752,lon:107.4189},
  {id:"MA-01",type:"Mata Air",name:"Mata Air Gununghejo",icon:"⛲",lat:-6.6612,lon:107.4121},
  {id:"BT-01",type:"Bale Tani",name:"Bale Tani — Kantor Operasional Kebun",icon:"🏠",lat:-6.6768,lon:107.4166},
  {id:"GD-01",type:"Gudang",name:"Gudang Saprodi",icon:"📦",lat:-6.6773,lon:107.4172},
  {id:"GH-01",type:"Green House",name:"Green House Persemaian",icon:"🌱",lat:-6.6761,lon:107.4156},
 ];
-const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,title:p.name+" · "+p.type+" — lokasi estimasi (demo)"}));
+const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,
+ title:p.name+" · "+p.type+(p.src==="kml"?" — titik KML lapangan":" — lokasi estimasi (demo)")}));
 /* Jalur jalan produksi — polyline ESTIMASI (demo): poros selatan–utara + dua cabang.
    Ganti dengan tracking GPS atau data OSM (Overpass) saat tersedia. */
 const MAP_ROADS={type:"FeatureCollection",features:[
@@ -2169,9 +2177,16 @@ function MapPage(){
    let sub=""; if(kind==="blok"){ sub=(nTan?nTan+" · ":"")+HS_GEO.clusters.filter(c=>c.parentId===id).length+" Cluster · "+HS_GEO.plots.filter(p=>p.blockId===id).length+" Petak"; }
    else if(kind==="cluster"){ sub=(nTan?nTan+" · ":"")+HS_GEO.plots.filter(p=>p.parentId===id).length+" Petak"; }
    else { sub=nTan||""; }
-   const ce=Object.entries(row.com||{}); const com=ce.length?comName(ce.sort((a,b)=>b[1]-a[1])[0][0]):(u.commodity?comName(u.commodity):"—");
-   return { name:kind==="blok"?blockLabel(id):(u.name||id), landId:id, ha:fmtHa(u.areaHa), sub, commodity:com,
-    metricLabel:mapMetric(metric).label, metricVal:mapFmtVal(metric,val), statusLabel:VZ_LABEL[row.status], statusColor:VZ_COL[row.status], alerts:vzAlert(id), hasData:row.hasData }; };
+   const ce=Object.entries(row.com||{}).sort((a,b)=>b[1]-a[1]); const com=ce.length?comName(ce[0][0]):(u.commodity?comName(u.commodity):"—");
+   /* Daftar komoditas aktual (sensus) dengan pangsa — untuk tooltip peta */
+   const comTotal=ce.reduce((a,x)=>a+x[1],0);
+   const comList=ce.length
+    ? ce.slice(0,4).map(([cid,cn])=>comName(cid)+(comTotal&&ce.length>1?" ("+Math.round(100*cn/comTotal)+"%)":"")).join(", ")+(ce.length>4?" +"+(ce.length-4)+" lagi":"")
+    : (u.commodity?comName(u.commodity):null);
+   /* Kesehatan tanaman ditampilkan sebagai persen di tooltip */
+   const metricVal=(metric==="health"&&row.hasData&&val!=null)?Math.round(val)+"%":mapFmtVal(metric,val);
+   return { name:kind==="blok"?blockLabel(id):(u.name||id), landId:id, ha:fmtHa(u.areaHa), sub, commodity:com, comList,
+    metricLabel:mapMetric(metric).label, metricVal, statusLabel:VZ_LABEL[row.status], statusColor:VZ_COL[row.status], alerts:vzAlert(id), hasData:row.hasData }; };
  },[agg,drill.level,metric]);
  const rsColorFn = layers.rs==="none" ? null : (id)=>{ const v=layers.rs==="ndvi"?vzNdvi(id):layers.rs==="sm"?vzSM(id):vzBio(id); return mapMetricColor(layers.rs,v); };
  /* ===== Data siap-pakai untuk PlantationMap (MapLibre) — warna & popup digambar di sini ===== */
@@ -2185,7 +2200,8 @@ function MapPage(){
    return unitFeature(u,{fill,
     pTitle:tip?tip.name:(u.name||u.id),
     pSub:tip?(tip.ha+" ha"+(tip.sub?" · "+tip.sub:"")):"",
-    pVal:tip&&tip.hasData?(tip.metricLabel+": "+tip.metricVal):""});
+    pVal:tip&&tip.hasData?(tip.metricLabel+": "+tip.metricVal):"",
+    pCom:tip&&tip.comList?("Komoditas: "+tip.comList):""});
   }));
  },[drill.level,drill.block,drill.cluster,tooltipFn,metricColorFn,rsColorFn]);
  const contextFC=useMemo(()=>{
@@ -2901,7 +2917,7 @@ function WindCompass({day,collapsed,onToggle}){
  const ax=cx+Math.cos(rad(to))*r, ay=cy+Math.sin(rad(to))*r;
  const tailx=cx-Math.cos(rad(to))*(r*0.7), taily=cy-Math.sin(rad(to))*(r*0.7);
  return (
-  <div className="absolute top-2 right-2 z-10 bg-white/95 border border-gray-200 rounded-lg shadow-sm px-2.5 py-2 w-[152px]">
+  <div className="absolute top-2 right-2 z-10 bg-white/95 border border-gray-200 rounded-lg shadow-sm px-2.5 py-2 w-[176px]">
    <div className="flex items-center justify-between mb-1">
     <span className="text-[11px] font-semibold text-gray-700 flex items-center gap-1"><Wind size={12} className="text-gray-500"/>Arah angin</span>
     <button type="button" onClick={onToggle} aria-label="Sembunyikan arah angin" className="text-gray-300 hover:text-gray-600"><X size={12}/></button>
@@ -2920,11 +2936,13 @@ function WindCompass({day,collapsed,onToggle}){
      <div className="text-[11px] text-gray-600 leading-tight">{day.wind} km/jam</div>
     </div>
    </div>
-   <div className="mt-1.5 pt-1.5 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-gray-700">
-    <WxIcon cond={day.cond} size={14}/>
-    <span className="font-semibold">{day.tmax}°<span className="text-gray-400 font-normal">/{day.tmin}°</span></span>
-    <span className="truncate">{day.condLabel}</span>
-    <span className="text-gray-500 ml-auto shrink-0 flex items-center gap-0.5"><Droplets size={10}/>{String(day.rainMm).replace(".",",")} mm</span>
+   <div className="mt-1.5 pt-1.5 border-t border-gray-100">
+    <div className="flex items-center gap-1.5 text-xs text-gray-800">
+     <WxIcon cond={day.cond} size={15}/>
+     <span className="font-bold">{day.tmax}°<span className="text-gray-400 font-normal">/{day.tmin}°</span></span>
+     <span className="text-gray-500 ml-auto shrink-0 flex items-center gap-0.5"><Droplets size={11}/>{String(day.rainMm).replace(".",",")} mm</span>
+    </div>
+    <div className="text-[11px] text-gray-600 leading-snug mt-0.5">{day.condLabel}</div>
    </div>
    <div className="mt-1.5 pt-1.5 border-t border-gray-100 text-[9px] text-gray-400 leading-snug">{day.windFrom} · {day.source==="live"?"data aktual":"simulasi"}. Semprot searah angin, jauhi hilir sensitif.</div>
   </div>);
@@ -3900,7 +3918,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    </Group>
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
-    <Row label="Infrastruktur kebun" note="embung, sumur bor, mata air, bale tani, gudang, green house — lokasi estimasi" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
+    <Row label="Infrastruktur kebun" note="9 embung (titik KML) · sumur bor, mata air, bale tani, gudang, green house (estimasi)" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
     <Row label="Jalan produksi" note="jalur estimasi (demo)" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
     {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>

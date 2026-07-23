@@ -163,7 +163,8 @@ const PlantationMap = forwardRef(function PlantationMap(
           .setHTML(
             `<div style="font:600 12px Inter,system-ui,sans-serif;color:#111827">${esc(p.pTitle)}</div>` +
             (p.pSub ? `<div style="font:11px Inter,system-ui,sans-serif;color:#6B7280">${esc(p.pSub)}</div>` : "") +
-            (p.pVal ? `<div style="font:11px Inter,system-ui,sans-serif;color:#374151;margin-top:2px">${esc(p.pVal)}</div>` : "")
+            (p.pVal ? `<div style="font:11px Inter,system-ui,sans-serif;color:#374151;margin-top:2px">${esc(p.pVal)}</div>` : "") +
+            (p.pCom ? `<div style="font:11px Inter,system-ui,sans-serif;color:#374151">${esc(p.pCom)}</div>` : "")
           )
           .addTo(map);
       });

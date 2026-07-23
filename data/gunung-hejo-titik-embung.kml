@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document id="12i4ItlAnaLgNalaI5emwOgP32cLXwtdk">
+	<name>Gunung Hejo VarmOS</name>
+	<gx:CascadingStyle kml:id="__managed_style_0B2173332A40C3E16C1B_highlight">
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2385&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0B2173332A40C3E16C1B_normal">
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2385&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_195453D55540C3DFC128_highlight">
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_195453D55540C3DFC128_normal">
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0B2173332A40C3E16C1B">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="__managed_style_195453D55540C3DFC128">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_195453D55540C3DFC128_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_195453D55540C3DFC128_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Folder id="0FC2075DB440C3F7F98B">
+		<name>Titik Embung</name>
+		<open>1</open>
+		<styleUrl>#__managed_style_195453D55540C3DFC128</styleUrl>
+		<Placemark id="09362272C140C3E1249C">
+			<name>Embung B1C</name>
+			<LookAt>
+				<longitude>107.4221314775612</longitude>
+				<latitude>-6.674371455681135</latitude>
+				<altitude>504.4337162804372</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>329.5912804733598</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4202092721578,-6.672998663116434,503.7492496220437</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="0D203452FD40C3E2236B">
+			<name>Embung B1B</name>
+			<LookAt>
+				<longitude>107.4221314775612</longitude>
+				<latitude>-6.674371455681135</latitude>
+				<altitude>504.4337162804372</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>329.5912804733598</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4221583608883,-6.674056529084408,503.7492496220437</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="044DD223DD40C3E5E638">
+			<name>Embung B1A</name>
+			<LookAt>
+				<longitude>107.4221314775612</longitude>
+				<latitude>-6.674371455681135</latitude>
+				<altitude>504.4337162804372</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>329.5912804733598</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4227423225192,-6.676499213381575,503.7492496220437</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="0CEDAB131640C3E66C28">
+			<name>Embung B2A</name>
+			<LookAt>
+				<longitude>107.4237461291407</longitude>
+				<latitude>-6.670916845182562</latitude>
+				<altitude>494.0881974839724</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>568.526301428501</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4240088508835,-6.670836171710606,498.9027888692766</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="0514582C0540C3E69ECE">
+			<name>Embung B2B</name>
+			<LookAt>
+				<longitude>107.4241394102895</longitude>
+				<latitude>-6.669316760686537</latitude>
+				<altitude>480.5527359661586</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>582.0617413234141</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4243718387518,-6.669258112452533,477.9195810397619</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="0BB1BE9AC740C3E76D61">
+			<name>Embung B3A</name>
+			<LookAt>
+				<longitude>107.4198213985748</longitude>
+				<latitude>-6.665843862961852</latitude>
+				<altitude>442.0858953043526</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>725.6405723397621</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4190584411672,-6.665284233709775,453.940704393944</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="027065644A40C3E7B221">
+			<name>Embung B3B</name>
+			<LookAt>
+				<longitude>107.4177309120372</longitude>
+				<latitude>-6.661414899785465</latitude>
+				<altitude>438.5371596342918</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>729.1893872881337</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4175800675544,-6.661409888914507,439.083370746834</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="04F252783A40C3E813CF">
+			<name>Embung B4A</name>
+			<LookAt>
+				<longitude>107.4164709269834</longitude>
+				<latitude>-6.660584498171007</latitude>
+				<altitude>418.242114728653</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>534.0689988539089</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4161034706623,-6.660430717635162,413.4290484927628</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark id="077A0296DA40C3E83B10">
+			<name>Embung B4B</name>
+			<LookAt>
+				<longitude>107.4149331628301</longitude>
+				<latitude>-6.661295962176869</latitude>
+				<altitude>402.5097685282962</altitude>
+				<heading>0</heading>
+				<tilt>0</tilt>
+				<gx:fovy>30</gx:fovy>
+				<range>549.8013506817371</range>
+				<altitudeMode>absolute</altitudeMode>
+			</LookAt>
+			<styleUrl>#__managed_style_0B2173332A40C3E16C1B</styleUrl>
+			<Point>
+				<coordinates>107.4140941174734,-6.662047665351661,425.7321351283967</coordinates>
+			</Point>
+		</Placemark>
+	</Folder>
+</Document>
+</kml>
