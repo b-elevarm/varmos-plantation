@@ -1307,11 +1307,9 @@ function Sidebar(){
     <button onClick={()=>{logout();nav("login");}} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">
      <LogOut size={17}/>{!collapsed && "Keluar"}
     </button>
-    {!collapsed&&<div className="mt-2 pt-2.5 border-t border-gray-100 px-2.5 pb-1">
-     <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5" style={{background:C.dark}}>
-      <span className="text-[9px] uppercase tracking-wider text-green-100/80 whitespace-nowrap">Proprietary of</span>
-      <img src="/elevarm-white.webp" alt="Elevarm" className="h-3.5" draggable={false}/>
-     </div>
+    {!collapsed&&<div className="mt-2 pt-2.5 border-t border-gray-100 px-2.5 pb-1 flex items-center gap-2">
+     <span className="text-[9px] uppercase tracking-wider text-gray-400 whitespace-nowrap">Proprietary of</span>
+     <img src="/elevarm-color.png" alt="Elevarm" className="h-4" draggable={false}/>
     </div>}
    </div>
   </aside>);
@@ -1517,10 +1515,10 @@ function LoginPage(){
        <div>Login manual: email akun (mis. <code className="text-green-700">bayu.syerli@varmos.id</code>) • sandi <code className="text-green-700">varmos123</code> • kode 2FA <code className="text-green-700">246810</code></div>
       </div>
      </div>
-     <div className="lg:hidden mt-6 flex flex-col items-center gap-2.5">
-      <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5" style={{background:C.dark}}>
-       <span className="text-[10px] uppercase tracking-wider text-green-100/80">Proprietary of</span>
-       <img src="/elevarm-white.webp" alt="Elevarm" className="h-4" draggable={false}/>
+     <div className="lg:hidden mt-6 flex flex-col items-center gap-2">
+      <div className="inline-flex items-center gap-2">
+       <span className="text-[10px] uppercase tracking-wider text-gray-400">Proprietary of</span>
+       <img src="/elevarm-color.png" alt="Elevarm" className="h-5" draggable={false}/>
       </div>
       <div className="text-center text-[11px] text-gray-400">Prototipe klik-tayang • 4 blok KML • 200,68 ha • 7 komoditas</div>
      </div>
