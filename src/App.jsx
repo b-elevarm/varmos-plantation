@@ -54,6 +54,7 @@ import {
 } from "recharts";
 import PlantationMap from "./map/PlantationMap.jsx";
 import { unitFeature, featureCollection, unitBounds } from "./map/geo.js";
+import { FARM_ROADS } from "./map/roads.js";
 
 /* ============ Design tokens & helpers ============ */
 const C = { dark:"#166534", green:"#16A34A", light:"#DCFCE7", lime:"#84CC16", blue:"#2563EB", amber:"#F59E0B", red:"#DC2626", purple:"#7C3AED", text:"#111827", sub:"#4B5563", border:"#E5E7EB", bg:"#F9FAFB", card:"#FFFFFF" };
@@ -2088,8 +2089,7 @@ const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
   sub:r?(r.op+(r.cap!=null?" · Volume "+fmtN(r.cap)+" m³":"")):p.type,
   note:(r&&r.note)||null};
 });
-/* Jalur jalan produksi: menunggu data GPS tracking lapangan — layer peta
-   (roads) di PlantationMap siap dipakai kembali begitu datanya tersedia. */
+/* Jalur jalan produksi: FARM_ROADS (src/map/roads.js) — 45 jalur dari KML lapangan. */
 function MapPage(){
  const {treesData,hsTreePts,nav,toast,role,route}=useApp();
  const [metric,setMetric]=useState("health");
@@ -2099,7 +2099,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,jalan:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2316,7 +2316,7 @@ function MapPage(){
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
-        points={MAP_INFRA_POINTS} showPoints={layers.infra}
+        points={MAP_INFRA_POINTS} showPoints={layers.infra} roads={FARM_ROADS} showRoads={layers.jalan}
         focusTarget={focusTarget} onAreaClick={onMapArea}
         onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
@@ -3924,7 +3924,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
     <Row label="Titik embung" note="9 titik dari KML lapangan" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
-    <Row label="Jalan produksi" note="menunggu data GPS tracking" disabled control={<Chk on={false} disabled/>}/>
+    <Row label="Jalan produksi" note="45 jalur dari KML lapangan" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
     {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>
    <Group title="Remote Sensing">
