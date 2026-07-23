@@ -1411,17 +1411,38 @@ function LoginPage(){
  };
  const Field=({label,children})=><label className="block"><span className="text-xs font-medium text-gray-600">{label}</span><div className="mt-1">{children}</div></label>;
  return (
-  <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-6">
-   <div className="w-full max-w-4xl">
-    <div className="flex items-center gap-3 mb-8 justify-center">
-     <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background:C.dark}}><Leaf size={24} className="text-white"/></div>
-     <div>
-      <div className="text-xl font-bold text-gray-900">VarmOS Plantation</div>
-      <div className="text-sm text-gray-500">Plantation Command Center • Kebun Agroforestry Gununghejo</div>
+  <div className="min-h-screen w-full flex bg-gray-50">
+   {/* ===== Panel brand kiri (desktop) ===== */}
+   <div className="hidden lg:flex w-[46%] xl:w-1/2 relative overflow-hidden flex-col justify-between p-12 text-white" style={{background:"linear-gradient(160deg,#14532D 0%,#166534 45%,#0F3D22 100%)"}}>
+    <svg className="absolute inset-0 w-full h-full opacity-[0.07]" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+     {[0,1,2,3,4,5,6,7].map(i=><path key={i} d={"M-60 "+(110+i*95)+" C 150 "+(40+i*95)+", 320 "+(210+i*95)+", 660 "+(90+i*95)} fill="none" stroke="#fff" strokeWidth="1.5"/>)}
+     {[0,1,2,3,4].map(i=><circle key={"c"+i} cx="480" cy="150" r={28+i*26} fill="none" stroke="#fff" strokeWidth="1"/>)}
+     {[0,1,2,3].map(i=><circle key={"d"+i} cx="110" cy="650" r={22+i*22} fill="none" stroke="#fff" strokeWidth="1"/>)}
+    </svg>
+    <div className="relative flex items-center gap-3">
+     <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center ring-1 ring-white/25"><Leaf size={22} className="text-white"/></div>
+     <div><div className="text-lg font-bold leading-tight">VarmOS Plantation</div><div className="text-[11px] text-green-100/80">Plantation Command Center</div></div>
+    </div>
+    <div className="relative max-w-md">
+     <h1 className="text-3xl xl:text-4xl font-bold leading-tight">Satu command center untuk seluruh kebun.</h1>
+     <p className="mt-3.5 text-sm text-green-100/90 leading-relaxed">Peta hidup, work order, sensus pohon, pemantauan digital, hingga mode lapangan offline — Kebun Agroforestry Gunung Hejo, Purwakarta.</p>
+     <div className="mt-7 grid grid-cols-2 gap-2.5 max-w-sm">
+      {[["200,7 ha","luas estate (KML lapangan)"],["4 Blok","22 cluster · 336 petak"],["19.801","pohon tersensus"],["7","komoditas agroforestri"]].map(([v,l])=>(
+       <div key={l} className="rounded-xl bg-white/10 ring-1 ring-white/15 px-3.5 py-3">
+        <div className="text-xl font-bold leading-none">{v}</div><div className="text-[11px] text-green-100/80 mt-1.5">{l}</div>
+       </div>))}
      </div>
     </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div className="relative text-[11px] text-green-100/60">Prototipe klik-tayang • geometri KML lapangan • siap data nyata</div>
+   </div>
+   {/* ===== Kolom kanan: form & akses cepat ===== */}
+   <div className="flex-1 min-h-screen overflow-y-auto">
+    <div className="max-w-md mx-auto px-6 py-10 lg:py-14">
+     <div className="flex lg:hidden items-center gap-3 mb-8">
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{background:C.dark}}><Leaf size={22} className="text-white"/></div>
+      <div><div className="text-lg font-bold text-gray-900 leading-tight">VarmOS Plantation</div><div className="text-xs text-gray-500">Kebun Agroforestry Gununghejo</div></div>
+     </div>
+     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       {mode==="cred"&&<form onSubmit={submitCred} className="space-y-3.5">
        <div><div className="text-base font-bold text-gray-900">Masuk ke akun Anda</div>
         <div className="text-xs text-gray-500 mt-0.5">Gunakan email terdaftar. Sesi &amp; hak akses mengikuti peran akun.</div></div>
@@ -1455,15 +1476,15 @@ function LoginPage(){
        <button type="button" onClick={()=>{setMode("cred");setErr(null);}} className="w-full text-center text-xs text-gray-500 hover:underline">← Kembali</button>
       </form>}
      </div>
-     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+     <div className="mt-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <div className="text-sm font-semibold text-gray-900 mb-1">Akses cepat demo</div>
       <div className="text-xs text-gray-500 mb-3">Masuk sekali klik sebagai perwakilan tiap peran — tanpa mengetik kredensial.</div>
       <div className="grid grid-cols-2 gap-2">
        {Object.keys(ROLES).map(r=>{ const Ic=ROLE_ICONS[r]; const u=users.find(x=>x.role===r&&x.status==="Aktif");
         return (
-        <button key={r} onClick={()=>login(r)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 group">
+        <button key={r} onClick={()=>login(r)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
-          <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white"><Ic size={14}/></div>
+          <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors"><Ic size={14}/></div>
           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900">{r}</div>
            <div className="text-[10px] text-gray-400 truncate">{u?u.name:"—"}</div></div>
          </div>
@@ -1476,8 +1497,8 @@ function LoginPage(){
        <div>Login manual: email akun (mis. <code className="text-green-700">bayu.syerli@varmos.id</code>) • sandi <code className="text-green-700">varmos123</code> • kode 2FA <code className="text-green-700">246810</code></div>
       </div>
      </div>
+     <div className="text-center text-[11px] text-gray-400 mt-6 lg:hidden">Prototipe klik-tayang • 4 blok KML • 200,68 ha • 7 komoditas</div>
     </div>
-    <div className="text-center text-xs text-gray-400 mt-5">Prototipe klik-tayang • Data kosong (siap data nyata) • 4 blok KML • 200,68 ha • 7 komoditas</div>
    </div>
   </div>);
 }
