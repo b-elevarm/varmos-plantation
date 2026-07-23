@@ -1433,7 +1433,11 @@ function LoginPage(){
        </div>))}
      </div>
     </div>
-    <div className="relative text-[11px] text-green-100/60">Prototipe klik-tayang • geometri KML lapangan • siap data nyata</div>
+    <div className="relative">
+     <div className="text-[11px] uppercase tracking-wider text-green-100/70">Proprietary of</div>
+     <img src="/elevarm-white.webp" alt="Elevarm" className="h-9 mt-1.5 -ml-1" draggable={false}/>
+     <div className="text-[11px] text-green-100/60 mt-3">Prototipe klik-tayang • geometri KML lapangan • siap data nyata</div>
+    </div>
    </div>
    {/* ===== Kolom kanan: form & akses cepat ===== */}
    <div className="flex-1 min-h-screen overflow-y-auto">
@@ -1507,7 +1511,13 @@ function LoginPage(){
        <div>Login manual: email akun (mis. <code className="text-green-700">bayu.syerli@varmos.id</code>) • sandi <code className="text-green-700">varmos123</code> • kode 2FA <code className="text-green-700">246810</code></div>
       </div>
      </div>
-     <div className="text-center text-[11px] text-gray-400 mt-6 lg:hidden">Prototipe klik-tayang • 4 blok KML • 200,68 ha • 7 komoditas</div>
+     <div className="lg:hidden mt-6 flex flex-col items-center gap-2.5">
+      <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5" style={{background:C.dark}}>
+       <span className="text-[10px] uppercase tracking-wider text-green-100/80">Proprietary of</span>
+       <img src="/elevarm-white.webp" alt="Elevarm" className="h-4" draggable={false}/>
+      </div>
+      <div className="text-center text-[11px] text-gray-400">Prototipe klik-tayang • 4 blok KML • 200,68 ha • 7 komoditas</div>
+     </div>
     </div>
    </div>
   </div>);
