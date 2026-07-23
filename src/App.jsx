@@ -1480,7 +1480,17 @@ function LoginPage(){
       <div className="text-sm font-semibold text-gray-900 mb-1">Akses cepat demo</div>
       <div className="text-xs text-gray-500 mb-3">Masuk sekali klik sebagai perwakilan tiap peran — tanpa mengetik kredensial.</div>
       <div className="grid grid-cols-2 gap-2">
-       {Object.keys(ROLES).map(r=>{ const Ic=ROLE_ICONS[r]; const u=users.find(x=>x.role===r&&x.status==="Aktif");
+       {Object.keys(ROLES).map(r=>{ const Ic=ROLE_ICONS[r];
+        /* Field Supervisor: tampilkan semua akun per blok penugasan */
+        if(r==="Field Supervisor"){ return users.filter(x=>x.role===r&&x.status==="Aktif").map(u=>(
+         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
+          <div className="flex items-center gap-2">
+           <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors"><Ic size={14}/></div>
+           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{u.name}</div>
+            <div className="text-[10px] text-gray-400 truncate">FS • {(u.blocks||[]).map(blockLabel).join(", ")||"—"}</div></div>
+          </div>
+         </button>)); }
+        const u=users.find(x=>x.role===r&&x.status==="Aktif");
         return (
         <button key={r} onClick={()=>login(r)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
