@@ -544,7 +544,8 @@ const SOIL_TESTS=[
 
 /* 9 embung sesuai titik KML lapangan (data/gunung-hejo-titik-embung.kml).
    op/cap/note = DATA LAPANGAN "Status Embung Agroforestri Gunung Hejo" (Jul 2026);
-   pemetaan "Embung 1/2/3" per blok → kode A/B/C berurutan. Volume tabel = kapasitas (m³).
+   pemetaan "Embung 1/2/3" per blok → kode A/B/C berurutan (DIKONFIRMASI pemilik, 23 Jul 2026).
+   Volume tabel = kapasitas (m³).
    level (% terisi) MASIH DEMO; status air: <40 Kritis · 40–64 Waspada · ≥65 Normal,
    dengan status konstruksi (Bocor/Sedang dibangun/Belum dibangun) menggantikan status air. */
 const RESERVOIRS=[
