@@ -71,6 +71,7 @@ const PlantationMap = forwardRef(function PlantationMap(
   const markersRef = useRef([]);
   const infraRef = useRef([]);
   const popupRef = useRef(null);
+  const markerPopupRef = useRef(null);
   const cbRef = useRef({});
   cbRef.current = { onAreaClick, onTreeClick };
 
@@ -153,7 +154,11 @@ const PlantationMap = forwardRef(function PlantationMap(
       map.on("mouseleave", "areas-fill", () => (map.getCanvas().style.cursor = ""));
       map.on("mouseenter", "trees-pts", () => (map.getCanvas().style.cursor = "pointer"));
 
+      /* Dua instans popup terpisah: hover poligon vs hover marker. Satu instans
+         bersama menimbulkan race — mouseleave layer poligon (yang terpicu saat
+         pointer pindah ke DOM marker di atasnya) ikut menutup popup marker. */
       popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, maxWidth: "260px" });
+      markerPopupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 16, maxWidth: "260px" });
       map.on("mousemove", "areas-fill", (e) => {
         const f = e.features && e.features[0];
         if (!f) return;
@@ -200,8 +205,9 @@ const PlantationMap = forwardRef(function PlantationMap(
       el.textContent = p.icon || "•";
       /* Popup hover dengan data status (bukan tooltip title bawaan browser) */
       el.addEventListener("mouseenter", () => {
-        if (!popupRef.current || !mapRef.current) return;
-        popupRef.current
+        if (!markerPopupRef.current || !mapRef.current) return;
+        if (popupRef.current) popupRef.current.remove(); /* tutup popup poligon di bawahnya */
+        markerPopupRef.current
           .setLngLat(p.lngLat)
           .setHTML(
             `<div style="font:600 12px Inter,system-ui,sans-serif;color:#111827">${esc(p.name || p.title || p.id)}</div>` +
@@ -211,7 +217,7 @@ const PlantationMap = forwardRef(function PlantationMap(
           )
           .addTo(mapRef.current);
       });
-      el.addEventListener("mouseleave", () => popupRef.current && popupRef.current.remove());
+      el.addEventListener("mouseleave", () => markerPopupRef.current && markerPopupRef.current.remove());
       const m = new maplibregl.Marker({ element: el }).setLngLat(p.lngLat).addTo(mapRef.current);
       infraRef.current.push(m);
     });
