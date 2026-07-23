@@ -2076,17 +2076,8 @@ const MAP_INFRA=[
 ];
 const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,
  title:p.name+" · "+p.type+" — titik KML lapangan"}));
-/* Jalur jalan produksi — polyline ESTIMASI (demo): poros selatan–utara + dua cabang.
-   Ganti dengan tracking GPS atau data OSM (Overpass) saat tersedia. */
-const MAP_ROADS={type:"FeatureCollection",features:[
- {type:"Feature",properties:{name:"Jalan produksi utama (estimasi)"},geometry:{type:"LineString",coordinates:[
-  [107.4152,-6.6790],[107.4166,-6.6770],[107.4172,-6.6745],[107.4180,-6.6716],[107.4186,-6.6690],
-  [107.4192,-6.6664],[107.4185,-6.6636],[107.4176,-6.6607],[107.4170,-6.6580],[107.4162,-6.6556]]}},
- {type:"Feature",properties:{name:"Cabang timur — Blok 2 (estimasi)"},geometry:{type:"LineString",coordinates:[
-  [107.4186,-6.6690],[107.4205,-6.6684],[107.4222,-6.6676],[107.4238,-6.6666]]}},
- {type:"Feature",properties:{name:"Cabang barat — Blok 3 (estimasi)"},geometry:{type:"LineString",coordinates:[
-  [107.4176,-6.6607],[107.4158,-6.6614],[107.4140,-6.6622]]}},
-]};
+/* Jalur jalan produksi: menunggu data GPS tracking lapangan — layer peta
+   (roads) di PlantationMap siap dipakai kembali begitu datanya tersedia. */
 function MapPage(){
  const {treesData,hsTreePts,nav,toast,role,route}=useApp();
  const [metric,setMetric]=useState("health");
@@ -2096,7 +2087,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,jalan:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2313,7 +2304,7 @@ function MapPage(){
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
-        points={MAP_INFRA_POINTS} showPoints={layers.infra} roads={MAP_ROADS} showRoads={layers.jalan}
+        points={MAP_INFRA_POINTS} showPoints={layers.infra}
         focusTarget={focusTarget} onAreaClick={onMapArea}
         onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
@@ -3921,7 +3912,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
     <Row label="Titik embung" note="9 titik dari KML lapangan" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
-    <Row label="Jalan produksi" note="jalur estimasi (demo)" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
+    <Row label="Jalan produksi" note="menunggu data GPS tracking" disabled control={<Chk on={false} disabled/>}/>
     {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>
    <Group title="Remote Sensing">
