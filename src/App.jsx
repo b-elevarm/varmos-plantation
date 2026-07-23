@@ -2366,7 +2366,9 @@ function MapPage(){
     </> : <AreaInsightPanel drill={drill} metric={metric} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} setHover={setHoverId} onSelect={handleSelect} onCollapse={()=>setInsightCollapsed(true)} plotUx={plotUx}/>}
    </div>
    {/* ===== Analytics section ===== */}
-   <div ref={anaRef} className="mt-4 scroll-mt-4"><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus}/></div>
+   {/* Lebar analitik disamakan dengan lebar kartu peta: beri margin kanan
+       selebar panel insight (terbuka/tertutup) + gap, hanya di layar ≥lg. */}
+   <div ref={anaRef} className={"mt-4 scroll-mt-4 "+(insightCollapsed?"lg:mr-[48px]":"lg:mr-[372px] xl:mr-[392px]")}><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus}/></div>
    {inspOpen&&drill.petak && <PlotInspectionDrawer petakId={drill.petak} onClose={()=>setInspOpen(false)}/>}
    {sel&&drill.level==="blok" && <BlockDrawer blockId={sel} onClose={()=>setSel(null)}/>}
    {layerOpen && <MapLayerDrawer layers={layers} setLayers={setLayers} onClose={()=>setLayerOpen(false)}/>}
@@ -2748,7 +2750,7 @@ function AreaDataViz({drill,goBlok,goCluster,onDrill,comF,setComF,setHover,onSel
  <Card pad={false}>
   {/* ===== Header ramping (detail area sudah di page header & insight panel) ===== */}
   <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-100 flex-wrap">
-   <div className="flex items-center gap-2 min-w-0"><Layers size={15} className="text-green-700 shrink-0"/><span className="font-semibold text-gray-800">Analitik Area</span><span className="text-xs text-gray-400 truncate hidden sm:inline">· {LVL.toLowerCase()} aktif: {areaName}</span></div>
+   <div className="flex items-center gap-2 min-w-0"><Layers size={15} className="text-green-700 shrink-0"/><span className="font-semibold text-gray-800">Analitik</span><span className="text-xs text-gray-400 truncate hidden sm:inline">· {LVL.toLowerCase()} aktif: {areaName}</span></div>
    {ctx.level!=="estate" && <Btn size="sm" variant="secondary" onClick={back}><ChevronLeft size={13}/>Level sebelumnya</Btn>}
   </div>
   {ctx.level==="petak"&&pd&&(()=>{ const code=pd.unit.code||drill.petak; const clNum=String(drill.cluster||"").split("C").pop(); return (
