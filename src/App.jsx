@@ -2068,25 +2068,38 @@ function MapKpiStrip({drill,agg}){
   </div>);
 }
 const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc===4?"#EA580C":"#9CA3AF";
-/* Titik infrastruktur kebun: HANYA 9 embung dengan koordinat NYATA dari KML
-   lapangan "Gunung Hejo Titik Embung" (arsip: data/gunung-hejo-titik-embung.kml).
-   Titik lain (sumur bor, bale tani, dll.) menyusul setelah ada survei GPS. */
+/* Titik infrastruktur kebun — semua koordinat NYATA dari KML lapangan:
+   9 embung  (arsip: data/gunung-hejo-titik-embung.kml)
+   4 joglo   (arsip: data/gunung-hejo-joglo-tani.kml)
+   Titik lain (sumur bor, gudang, dll.) menyusul setelah ada survei GPS. */
 const MAP_INFRA=[
- {id:"EMB-B1A",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742,src:"kml"},
- {id:"EMB-B1B",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158,src:"kml"},
- {id:"EMB-B1C",type:"Embung Besar",name:"Embung B1C",icon:"💧",lat:-6.672999,lon:107.420209,src:"kml"},
- {id:"EMB-B2A",type:"Embung Besar",name:"Embung B2A",icon:"💧",lat:-6.670836,lon:107.424009,src:"kml"},
- {id:"EMB-B2B",type:"Embung Besar",name:"Embung B2B",icon:"💧",lat:-6.669258,lon:107.424372,src:"kml"},
- {id:"EMB-B3A",type:"Embung Besar",name:"Embung B3A",icon:"💧",lat:-6.665284,lon:107.419058,src:"kml"},
- {id:"EMB-B3B",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580,src:"kml"},
- {id:"EMB-B4A",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103,src:"kml"},
- {id:"EMB-B4B",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094,src:"kml"},
+ {id:"EMB-B1A",cat:"embung",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742},
+ {id:"EMB-B1B",cat:"embung",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158},
+ {id:"EMB-B1C",cat:"embung",type:"Embung Besar",name:"Embung B1C",icon:"💧",lat:-6.672999,lon:107.420209},
+ {id:"EMB-B2A",cat:"embung",type:"Embung Besar",name:"Embung B2A",icon:"💧",lat:-6.670836,lon:107.424009},
+ {id:"EMB-B2B",cat:"embung",type:"Embung Besar",name:"Embung B2B",icon:"💧",lat:-6.669258,lon:107.424372},
+ {id:"EMB-B3A",cat:"embung",type:"Embung Besar",name:"Embung B3A",icon:"💧",lat:-6.665284,lon:107.419058},
+ {id:"EMB-B3B",cat:"embung",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580},
+ {id:"EMB-B4A",cat:"embung",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103},
+ {id:"EMB-B4B",cat:"embung",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094},
+ {id:"JT-1",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 1",icon:"🛖",lat:-6.674324,lon:107.422211},
+ {id:"JT-2",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 2",icon:"🛖",lat:-6.669329,lon:107.424068},
+ {id:"JT-3",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 3",icon:"🛖",lat:-6.662256,lon:107.420850},
+ {id:"JT-4",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 4",icon:"🛖",lat:-6.657270,lon:107.413483},
 ];
-/* Marker embung membawa data status lapangan (RESERVOIRS) untuk popup hover peta. */
+/* Marker embung membawa data status lapangan (RESERVOIRS) untuk popup hover peta:
+   kapasitas vs tersisa (dari level % terisi — level masih demo). */
 const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
- const r=RESERVOIRS.find(x=>"EMB-"+x.id===p.id);
- return {id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,
-  sub:r?(r.op+(r.cap!=null?" · Volume "+fmtN(r.cap)+" m³":"")):p.type,
+ const r=p.cat==="embung"?RESERVOIRS.find(x=>"EMB-"+x.id===p.id):null;
+ let sub=p.type;
+ if(r){
+  sub=r.op;
+  if(r.cap!=null&&r.level!=null){
+   const sisa=Math.round(r.cap*r.level/100);
+   sub+=" · Kapasitas "+fmtN(r.cap)+" m³ · Tersisa ±"+fmtN(sisa)+" m³ ("+r.level+"%)";
+  } else if(r.cap!=null){ sub+=" · Kapasitas "+fmtN(r.cap)+" m³"; }
+ }
+ return {id:p.id,cat:p.cat,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,sub,
   note:(r&&r.note)||null};
 });
 /* Jalur jalan produksi: FARM_ROADS (src/map/roads.js) — 45 jalur dari KML lapangan. */
@@ -2099,7 +2112,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,infra:true,jalan:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,embung:true,joglo:true,jalan:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2316,9 +2329,17 @@ function MapPage(){
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
-        points={MAP_INFRA_POINTS} showPoints={layers.infra} roads={FARM_ROADS} showRoads={layers.jalan}
+        points={MAP_INFRA_POINTS.filter(p=>p.cat==="embung"?layers.embung:p.cat==="joglo"?layers.joglo:true)}
+        showPoints={layers.embung||layers.joglo} roads={FARM_ROADS} showRoads={layers.jalan}
         focusTarget={focusTarget} onAreaClick={onMapArea}
         onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
+       {/* Chip toggle kategori layer — akses cepat tanpa membuka drawer Layer */}
+       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-wrap justify-center gap-1.5 max-w-[92%] pointer-events-none">
+        {[["embung","💧 Embung"],["joglo","🛖 Joglo"],["jalan","🛤️ Jalan"],["label","🏷️ Label"],["pohon","🌳 Pohon"]].map(([k,l])=>(
+         <button key={k} type="button" onClick={()=>toggle(k)} aria-pressed={!!layers[k]}
+          className={"pointer-events-auto px-2.5 py-1 rounded-full text-[11px] font-medium border shadow-sm backdrop-blur-[2px] transition-colors "+(layers[k]?"bg-green-600 text-white border-green-600":"bg-white/90 text-gray-500 border-gray-200 hover:border-green-500 hover:text-green-700")}>{l}</button>
+        ))}
+       </div>
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
        {/* chip konteks area aktif — mengisi flank kiri-atas, selaras kompas kanan-atas */}
@@ -3923,7 +3944,8 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    </Group>
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
-    <Row label="Titik embung" note="9 titik dari KML lapangan" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
+    <Row label="Titik embung" note="9 titik dari KML lapangan" control={<Chk on={layers.embung} fn={()=>set("embung",!layers.embung)}/>}/>
+    <Row label="Joglo Tani" note="4 titik dari KML lapangan" control={<Chk on={layers.joglo} fn={()=>set("joglo",!layers.joglo)}/>}/>
     <Row label="Jalan produksi" note="45 jalur dari KML lapangan" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
     {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>

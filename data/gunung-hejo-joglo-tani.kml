@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document id="12i4ItlAnaLgNalaI5emwOgP32cLXwtdk">
+	<name>Gunung Hejo VarmOS</name>
+	<gx:CascadingStyle kml:id="__managed_style_0B283E8E8840C437A848_highlight">
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2164&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0B283E8E8840C437A848_normal">
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2164&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0B283E8E8840C437A848">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0B283E8E8840C437A848_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0B283E8E8840C437A848_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="0A3F13D12B40C4374229">
+		<name>Joglo Tani 3</name>
+		<LookAt>
+			<longitude>107.4223410696312</longitude>
+			<latitude>-6.674244216291234</latitude>
+			<altitude>504.6148527532255</altitude>
+			<heading>334.9567119832923</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>257.1662656579429</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B283E8E8840C437A848</styleUrl>
+		<Point>
+			<coordinates>107.4208495187109,-6.662256148495056,504.7481244149636</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0F7179698140C437E277">
+		<name>Joglo Tani 1</name>
+		<LookAt>
+			<longitude>107.4223410696312</longitude>
+			<latitude>-6.674244216291234</latitude>
+			<altitude>504.6148527532255</altitude>
+			<heading>334.9567119832923</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>257.1662656579429</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B283E8E8840C437A848</styleUrl>
+		<Point>
+			<coordinates>107.422211288019,-6.674324340618443,504.7481244149636</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="083E5D10D040C4391419">
+		<name>Joglo Tani 2</name>
+		<LookAt>
+			<longitude>107.4223410696312</longitude>
+			<latitude>-6.674244216291234</latitude>
+			<altitude>504.6148527532255</altitude>
+			<heading>334.9567119832923</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>257.1662656579429</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B283E8E8840C437A848</styleUrl>
+		<Point>
+			<coordinates>107.4240675857698,-6.669328520071265,504.7481244149636</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0D09096EB540C439D3A8">
+		<name>Joglo Tani 4</name>
+		<LookAt>
+			<longitude>107.4102625080143</longitude>
+			<latitude>-6.658728847785379</latitude>
+			<altitude>347.9165437244382</altitude>
+			<heading>-9.294941297844849</heading>
+			<tilt>61.15068729925715</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>651.3342549619119</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B283E8E8840C437A848</styleUrl>
+		<Point>
+			<coordinates>107.413482757889,-6.657269963612707,368.6017684634397</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>
