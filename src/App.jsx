@@ -2034,7 +2034,7 @@ function mwParseQuery(search){
 }
 /* Panel Hierarki Lahan & Pohon — dua arah dgn peta: klik item → navigasi drill; drill berubah →
    jalur leluhur auto-terbuka + item aktif tersorot. Tanpa state selection sendiri (anti-divergensi §15). */
-function MapHierarchyExplorer({drill,onNavigate,onTree,statusFn,compact}){
+function MapHierarchyExplorer({drill,onNavigate,onTree,statusFn,compact,scope}){
  const [q,setQ]=useState("");
  const [open,setOpen]=useState({});
  const listRef=useRef(null);
@@ -2045,7 +2045,8 @@ function MapHierarchyExplorer({drill,onNavigate,onTree,statusFn,compact}){
  useEffect(()=>{ try{ const el=listRef.current&&listRef.current.querySelector('[data-hier-active="1"]'); el&&el.scrollIntoView({block:"nearest"}); }catch(e){} },[activeId]);
  const dotCol=(s)=>s==="kritis"?"#DC2626":s==="waspada"?"#F59E0B":s==="sehat"?"#16A34A":"#D1D5DB";
  const treeQ=/T\d+$/i.test(q.trim())&&/C\d+P\d+/i.test(q.trim());
- const matches=q&&!treeQ?Object.keys(HS_GEO.units).filter(id=>{const u=HS_GEO.units[id];return (id.toLowerCase().includes(q.toLowerCase())||(u.name||"").toLowerCase().includes(q.toLowerCase()))&&u.level!=="estate";}).slice(0,8):[];
+ const inHierScope=(u)=>!scope||!u?true:(u.level==="block"?scope.includes(u.id):u.level==="cluster"?scope.includes(u.parentId):u.level==="plot"?scope.includes(u.blockId):true);
+ const matches=q&&!treeQ?Object.keys(HS_GEO.units).filter(id=>{const u=HS_GEO.units[id];return (id.toLowerCase().includes(q.toLowerCase())||(u.name||"").toLowerCase().includes(q.toLowerCase()))&&u.level!=="estate"&&inHierScope(u);}).slice(0,8):[];
  const Row=({u,depth})=>{
   const kids=u.level==="block"?HS_GEO.clusters.filter(c=>c.parentId===u.id):u.level==="cluster"?HS_GEO.plots.filter(p=>p.parentId===u.id):[];
   const active=activeId===u.id; const st=statusFn?statusFn(u.id):null;
@@ -2076,10 +2077,10 @@ function MapHierarchyExplorer({drill,onNavigate,onTree,statusFn,compact}){
     className="w-full text-left text-xs text-green-700 font-semibold bg-green-50 border border-green-200 rounded-md px-2 py-1.5 mb-2">Buka paspor pohon {q.trim().toUpperCase()}</button>}
    {q&&!treeQ&&(matches.length?matches.map(id=>{const u=HS_GEO.units[id];return <button type="button" key={id} onClick={()=>{onNavigate(u);setQ("");}} className="block w-full text-left text-xs text-green-700 hover:bg-green-50 rounded px-2 py-1">{u.level==="plot"?(u.code||id):(u.name||id)} <span className="text-gray-400">· {u.level==="block"?"Blok":u.level==="cluster"?"Cluster":"Petak"}</span></button>;}):<div className="text-xs text-gray-400 px-2 py-1">Tidak ada area yang cocok.</div>)}
    {!q&&<div ref={listRef} className={"overflow-y-auto pr-1 "+(compact?"max-h-72":"max-h-[520px]")}>
-    <div data-hier-active={activeId==="GH"?"1":undefined} className={"flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] cursor-pointer "+(activeId==="GH"?"bg-green-100 text-green-900 font-semibold ring-1 ring-green-300":"hover:bg-gray-50 text-gray-700")} onClick={()=>onNavigate(HS_GEO.estate)}>
+    {!scope&&<div data-hier-active={activeId==="GH"?"1":undefined} className={"flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] cursor-pointer "+(activeId==="GH"?"bg-green-100 text-green-900 font-semibold ring-1 ring-green-300":"hover:bg-gray-50 text-gray-700")} onClick={()=>onNavigate(HS_GEO.estate)}>
      <Crosshair size={13} className="text-gray-400 shrink-0"/><span className="flex-1">Gunung Hejo <span className="text-gray-400 font-normal">(Estate)</span></span><span className="text-[10px] text-gray-400">{String(HS_GEO.estate.areaHa).replace(".",",")} ha</span>
-    </div>
-    {HS_GEO.blocks.map(b=><Row key={b.id} u={b} depth={1}/>)}
+    </div>}
+    {HS_GEO.blocks.filter(b=>!scope||scope.includes(b.id)).map(b=><Row key={b.id} u={b} depth={1}/>)}
    </div>}
   </div>);
 }
@@ -2118,19 +2119,19 @@ const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc==
    4 joglo   (arsip: data/gunung-hejo-joglo-tani.kml)
    Titik lain (sumur bor, gudang, dll.) menyusul setelah ada survei GPS. */
 const MAP_INFRA=[
- {id:"EMB-B1A",cat:"embung",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742},
- {id:"EMB-B1B",cat:"embung",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158},
- {id:"EMB-B1C",cat:"embung",type:"Embung Besar",name:"Embung B1C",icon:"💧",lat:-6.672999,lon:107.420209},
- {id:"EMB-B2A",cat:"embung",type:"Embung Besar",name:"Embung B2A",icon:"💧",lat:-6.670836,lon:107.424009},
- {id:"EMB-B2B",cat:"embung",type:"Embung Besar",name:"Embung B2B",icon:"💧",lat:-6.669258,lon:107.424372},
- {id:"EMB-B3A",cat:"embung",type:"Embung Besar",name:"Embung B3A",icon:"💧",lat:-6.665284,lon:107.419058},
- {id:"EMB-B3B",cat:"embung",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580},
- {id:"EMB-B4A",cat:"embung",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103},
- {id:"EMB-B4B",cat:"embung",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094},
- {id:"JT-1",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 1",icon:"🛖",lat:-6.674324,lon:107.422211},
- {id:"JT-2",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 2",icon:"🛖",lat:-6.669329,lon:107.424068},
- {id:"JT-3",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 3",icon:"🛖",lat:-6.661164,lon:107.418561},
- {id:"JT-4",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 4",icon:"🛖",lat:-6.657270,lon:107.413483},
+ {id:"EMB-B1A",cat:"embung",block:"GH-B01",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742},
+ {id:"EMB-B1B",cat:"embung",block:"GH-B01",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158},
+ {id:"EMB-B1C",cat:"embung",block:"GH-B01",type:"Embung Besar",name:"Embung B1C",icon:"💧",lat:-6.672999,lon:107.420209},
+ {id:"EMB-B2A",cat:"embung",block:"GH-B02",type:"Embung Besar",name:"Embung B2A",icon:"💧",lat:-6.670836,lon:107.424009},
+ {id:"EMB-B2B",cat:"embung",block:"GH-B02",type:"Embung Besar",name:"Embung B2B",icon:"💧",lat:-6.669258,lon:107.424372},
+ {id:"EMB-B3A",cat:"embung",block:"GH-B03",type:"Embung Besar",name:"Embung B3A",icon:"💧",lat:-6.665284,lon:107.419058},
+ {id:"EMB-B3B",cat:"embung",block:"GH-B03",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580},
+ {id:"EMB-B4A",cat:"embung",block:"GH-B04",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103},
+ {id:"EMB-B4B",cat:"embung",block:"GH-B04",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094},
+ {id:"JT-1",cat:"joglo",block:"GH-B01",type:"Joglo Tani",name:"Joglo Tani 1",icon:"🛖",lat:-6.674324,lon:107.422211},
+ {id:"JT-2",cat:"joglo",block:"GH-B02",type:"Joglo Tani",name:"Joglo Tani 2",icon:"🛖",lat:-6.669329,lon:107.424068},
+ {id:"JT-3",cat:"joglo",block:"GH-B03",type:"Joglo Tani",name:"Joglo Tani 3",icon:"🛖",lat:-6.661164,lon:107.418561},
+ {id:"JT-4",cat:"joglo",block:"GH-B04",type:"Joglo Tani",name:"Joglo Tani 4",icon:"🛖",lat:-6.657270,lon:107.413483},
 ];
 /* Marker embung membawa data status lapangan (RESERVOIRS) untuk popup hover peta:
    kapasitas vs tersisa (dari level % terisi — level masih demo). */
@@ -2144,23 +2145,22 @@ const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
    sub+=" · Kapasitas "+fmtN(r.cap)+" m³ · Tersisa ±"+fmtN(sisa)+" m³ ("+r.level+"%)";
   } else if(r.cap!=null){ sub+=" · Kapasitas "+fmtN(r.cap)+" m³"; }
  }
- return {id:p.id,cat:p.cat,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,sub,
+ return {id:p.id,cat:p.cat,block:p.block||null,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,sub,
   note:(r&&r.note)||null};
 });
 /* Jalur jalan produksi: FARM_ROADS (src/map/roads.js) — 45 jalur dari KML lapangan. */
 function MapPage(){
  const {treesData,hsTreePts,nav,toast,role,route,curUser}=useApp();
- const sbMap=scopeBlocks(role,curUser); /* soft scope FS: buka langsung di blok penugasan, estate tetap bisa dilihat */
+ const sbMap=scopeBlocks(role,curUser); /* hard scope FS: peta, panel insight, dan analitik dibatasi blok penugasan */
+ const fsRoot=sbMap&&sbMap.length===1?sbMap[0]:null; /* FS satu blok: blok jadi akar hierarki peta */
  const [metric,setMetric]=useState("health");
  const [period,setPeriod]=useState("30 hari terakhir");
  const [zoom,setZoom]=useState(1);
- const [sel,setSel]=useState(()=>sbMap&&sbMap.length===1?sbMap[0]:null);
+ const [sel,setSel]=useState(null);
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
- const [fBlock,setFBlock]=useState(()=>sbMap&&sbMap.length===1?sbMap[0]:"Semua");
- /* ganti akun via switcher (tanpa remount): fokus ulang ke blok penugasan FS baru */
- useEffect(()=>{ if(sbMap&&sbMap.length===1){ setSel(sbMap[0]); setFBlock(sbMap[0]); } },[curUser&&curUser.id]);
- const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,embung:true,joglo:true,jalan:true,rs:"none",rsOpacity:0.6});
+ const [fBlock,setFBlock]=useState("Semua");
+ const [layers,setLayers]=useState(()=>({base:"satelit",pohon:true,label:true,embung:true,joglo:true,jalan:!fsRoot,rs:"none",rsOpacity:0.6})); /* FS: jalur jalan estate-wide default mati */
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2186,11 +2186,17 @@ function MapPage(){
  const handleSelect=(id)=>{ setPinnedId(id); setCenterOn({id,n:Date.now()}); };
  const mapFsRef=useRef(null); /* wrapper peta — target fullscreen (ikut membawa chip/legenda/kompas) */
  const [view3d,setView3d]=useState(false); /* mode 3D: terrain elevasi + kamera miring */
+ const fsClampDrill=(d)=>{ /* FS: level estate & blok lain tidak dapat diakses — klamp ke blok penugasan */
+  if(!sbMap) return d;
+  if(d&&d.block&&sbMap.includes(d.block)) return d;
+  return {level:"cluster",block:fsRoot||sbMap[0],cluster:null,petak:null}; };
  const [drill,setDrill]=useState(()=>{ /* restorasi deep link: route.params (antar-halaman) lalu ?block=&cluster=&plot= (URL) */
   const rp=(route&&route.params)||{};
-  if(rp.block||rp.cluster||rp.plot){ const q="?"+["block","cluster","plot"].filter(k=>rp[k]).map(k=>k+"="+encodeURIComponent(rp[k])).join("&"); return mwParseQuery(q); }
-  try{ if(typeof window!=="undefined"&&window.location&&window.location.search) return mwParseQuery(window.location.search); }catch(e){}
-  return {level:"blok",block:null,cluster:null,petak:null}; });
+  if(rp.block||rp.cluster||rp.plot){ const q="?"+["block","cluster","plot"].filter(k=>rp[k]).map(k=>k+"="+encodeURIComponent(rp[k])).join("&"); return fsClampDrill(mwParseQuery(q)); }
+  try{ if(typeof window!=="undefined"&&window.location&&window.location.search) return fsClampDrill(mwParseQuery(window.location.search)); }catch(e){}
+  return fsClampDrill({level:"blok",block:null,cluster:null,petak:null}); });
+ /* ganti akun via switcher (tanpa remount): fokus ulang ke blok penugasan user baru */
+ useEffect(()=>{ if(sbMap){ setDrill(fsClampDrill({level:"blok",block:null,cluster:null,petak:null})); setSel(null); setPinnedId(null); } },[curUser&&curUser.id]);
  const [hierCollapsed,setHierCollapsed]=useState(()=> typeof window!=="undefined" ? window.innerWidth<1280 : true); /* panel hierarki: default terbuka di ≥xl */
  useEffect(()=>{ /* tulis pilihan area ke URL (share/refresh); gagal diam2 di sandbox artifact */
   try{ if(typeof window!=="undefined"&&window.history&&window.history.replaceState) window.history.replaceState(null,"",window.location.pathname+mwBuildQuery(drill)); }catch(e){}
@@ -2198,7 +2204,7 @@ function MapPage(){
  const toggle=(k)=>setLayers(l=>({...l,[k]:!l[k]}));
  const layerLabels={satelit:"Citra satelit",label:"Label area",pohon:"Titik pohon"};
  const onDrill=(lvl,block,cluster,petak)=>{ setPlantFilter({status:null,com:null}); if(lvl==="petakSel"){ setDrill(d=>({...d,petak})); return; } setPinnedId(null); setDrill({level:lvl,block:block||null,cluster:cluster||null,petak:null}); };
- const goBlok=()=>{ setPinnedId(null); setPlantFilter({status:null,com:null}); setDrill({level:"blok",block:null,cluster:null,petak:null}); setSel(null); };
+ const goBlok=()=>{ setPinnedId(null); setPlantFilter({status:null,com:null}); setDrill(fsClampDrill({level:"blok",block:null,cluster:null,petak:null})); setSel(null); };
  const goCluster=(bid)=>{ setPinnedId(null); setPlantFilter({status:null,com:null}); setDrill({level:"cluster",block:bid,cluster:null,petak:null}); };
  const blockUnit=drill.block?HS_GEO.units[drill.block]:null;
  const clusterUnit=drill.cluster?HS_GEO.units[drill.cluster]:null;
@@ -2258,7 +2264,7 @@ function MapPage(){
  const rsColorFn = layers.rs==="none" ? null : (id)=>{ const v=layers.rs==="ndvi"?vzNdvi(id):layers.rs==="sm"?vzSM(id):vzBio(id); return mapMetricColor(layers.rs,v); };
  /* ===== Data siap-pakai untuk PlantationMap (MapLibre) — warna & popup digambar di sini ===== */
  const areasFC=useMemo(()=>{
-  const subUnits=drill.level==="blok"?HS_GEO.blocks
+  const subUnits=drill.level==="blok"?HS_GEO.blocks.filter(b=>inScope(sbMap,b.id))
    :drill.level==="cluster"?HS_GEO.clusters.filter(c=>c.parentId===drill.block)
    :HS_GEO.plots.filter(p=>p.parentId===drill.cluster);
   return featureCollection(subUnits.map(u=>{
@@ -2270,7 +2276,7 @@ function MapPage(){
     pVal:tip&&tip.hasData?(tip.metricLabel+": "+tip.metricVal):"",
     pCom:tip&&tip.comList?("Komoditas: "+tip.comList):""});
   }));
- },[drill.level,drill.block,drill.cluster,tooltipFn,metricColorFn,rsColorFn]);
+ },[drill.level,drill.block,drill.cluster,tooltipFn,metricColorFn,rsColorFn,sbMap&&sbMap.join(",")]);
  const contextFC=useMemo(()=>{
   const feats=[];
   if(drill.level!=="blok"&&drill.block&&HS_GEO.units[drill.block]) feats.push(unitFeature(HS_GEO.units[drill.block],{}));
@@ -2278,13 +2284,13 @@ function MapPage(){
   return featureCollection(feats);
  },[drill.level,drill.block,drill.cluster]);
  const mapLabels=useMemo(()=>{
-  const units=drill.level==="blok"?HS_GEO.blocks
+  const units=drill.level==="blok"?HS_GEO.blocks.filter(b=>inScope(sbMap,b.id))
    :drill.level==="cluster"?HS_GEO.clusters.filter(c=>c.parentId===drill.block)
    :HS_GEO.plots.filter(p=>p.parentId===drill.cluster);
   return units.map(u=>({id:u.id,lngLat:u.centroid,
    text:drill.level==="blok"?blockLabel(u.id):u.name,
    sub:drill.level==="petak"?null:String(u.areaHa).replace(".",",")+" ha"}));
- },[drill.level,drill.block,drill.cluster]);
+ },[drill.level,drill.block,drill.cluster,sbMap&&sbMap.join(",")]);
  const treesFC=useMemo(()=>{
   if(!drill.petak||!layers.pohon||!hsTreePts) return null;
   const D=hsTreePts, feats=[];
@@ -2345,8 +2351,8 @@ function MapPage(){
      <div className="flex items-center gap-2 flex-wrap"><h1 className="text-xl font-bold text-gray-900">Peta Kebun</h1><DqModuleBadge domains={["Data Spasial"]}/></div>
      {/* breadcrumb hierarki aktif */}
      <div className="flex flex-wrap items-center gap-1 text-sm mt-0.5">
-      <button onClick={goBlok} className={"font-medium "+(drill.level==="blok"?"text-green-700":"text-gray-500 hover:text-green-700")}>Estate Gunung Hejo</button>
-      {drill.block&&<><ChevronRight size={13} className="text-gray-300"/><button onClick={()=>goCluster(drill.block)} className={"font-medium "+(drill.level==="cluster"?"text-green-700":"text-gray-500 hover:text-green-700")}>{blockLabel(drill.block)}</button></>}
+      {!fsRoot&&<button onClick={goBlok} className={"font-medium "+(drill.level==="blok"?"text-green-700":"text-gray-500 hover:text-green-700")}>Estate Gunung Hejo</button>}
+      {drill.block&&<>{!fsRoot&&<ChevronRight size={13} className="text-gray-300"/>}<button onClick={()=>goCluster(drill.block)} className={"font-medium "+(drill.level==="cluster"?"text-green-700":"text-gray-500 hover:text-green-700")}>{blockLabel(drill.block)}</button></>}
       {drill.cluster&&<><ChevronRight size={13} className="text-gray-300"/><span className="font-medium text-green-700">{clusterUnit?clusterUnit.name:drill.cluster}</span></>}
      </div>
      <div className="text-xs text-gray-500 mt-0.5">{areaMeta}</div>
@@ -2358,7 +2364,7 @@ function MapPage(){
       <Btn variant={activeChips.length?"primary":"secondary"} size="md" onClick={()=>setFilterOpen(o=>!o)}><Filter size={14}/>Filter{activeChips.length?" ("+activeChips.length+")":""}</Btn>
       {filterOpen&&<div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-30 w-64 space-y-2.5">
        <div className="text-xs font-semibold text-gray-700">Filter area</div>
-       <div><Lbl>Blok</Lbl><Sel value={fBlock} onChange={e=>{setFBlock(e.target.value); if(e.target.value!=="Semua"){setSel(e.target.value);} else setSel(null);}} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]} className="w-full"/></div>
+       <div><Lbl>Blok</Lbl><Sel value={fBlock} onChange={e=>{setFBlock(e.target.value); if(e.target.value!=="Semua"){setSel(e.target.value);} else setSel(null);}} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sbMap,b.id)).map(b=>[b.id,b.name])]} className="w-full"/></div>
        <div><Lbl>Komoditas</Lbl><Sel value={fCom} onChange={e=>setFCom(e.target.value)} options={[["Semua","Semua komoditas"],...COMMODITIES.map(c=>[c.id,c.name])]} className="w-full"/></div>
        <div><Lbl>Status kesehatan</Lbl><Sel value={fRisk} onChange={e=>setFRisk(e.target.value)} options={[["Semua","Semua status"],["Sehat","Sehat"],["Waspada","Waspada"],["Kritis","Kritis"]]} className="w-full"/></div>
        <div className="flex justify-between pt-1"><button onClick={()=>{setFBlock("Semua");setFCom("Semua");setFRisk("Semua");setSel(null);}} className="text-xs text-gray-500 hover:text-red-600">Reset semua</button><Btn size="sm" onClick={()=>setFilterOpen(false)}>Terapkan</Btn></div>
@@ -2391,7 +2397,7 @@ function MapPage(){
         areas={areasFC} context={contextFC} trees={treesFC} trees3d={trees3dFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
-        points={MAP_INFRA_POINTS.filter(p=>p.cat==="embung"?layers.embung:p.cat==="joglo"?layers.joglo:true)}
+        points={MAP_INFRA_POINTS.filter(p=>inScope(sbMap,p.block)&&(p.cat==="embung"?layers.embung:p.cat==="joglo"?layers.joglo:true))}
         showPoints={layers.embung||layers.joglo} roads={FARM_ROADS} showRoads={layers.jalan}
         focusTarget={focusTarget} onAreaClick={onMapArea}
         onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
@@ -2414,7 +2420,7 @@ function MapPage(){
             <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5"><ListTree size={14}/>Hierarki lahan</span>
             <button type="button" onClick={()=>setHierCollapsed(true)} title="Ciutkan hierarki" aria-label="Ciutkan hierarki" className="text-gray-400 hover:text-gray-700"><X size={14}/></button>
            </div>
-           <div className="p-2.5 overflow-y-auto flex-1 min-h-0"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact/></div>
+           <div className="p-2.5 overflow-y-auto flex-1 min-h-0"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact scope={sbMap}/></div>
           </div>}
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
@@ -2438,12 +2444,12 @@ function MapPage(){
      {/* Pegangan buka panel (desktop) — ikon jelas, tooltip native tidak terpotong, tanpa teks vertikal */}
      <button onClick={()=>setInsightCollapsed(false)} title="Tampilkan panel insight" aria-label="Tampilkan panel insight" className="hidden lg:flex w-9 shrink-0 self-stretch items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm text-gray-500 hover:text-green-700 hover:border-green-600"><ChevronLeft size={16}/></button>
      <button onClick={()=>setInsightCollapsed(false)} className="lg:hidden w-full py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg bg-white hover:border-green-600 hover:text-green-700">Tampilkan panel insight</button>
-    </> : <AreaInsightPanel drill={drill} metric={metric} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} setHover={setHoverId} onSelect={handleSelect} onCollapse={()=>setInsightCollapsed(true)} plotUx={plotUx}/>}
+    </> : <AreaInsightPanel drill={drill} metric={metric} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} setHover={setHoverId} onSelect={handleSelect} onCollapse={()=>setInsightCollapsed(true)} plotUx={plotUx} scope={sbMap}/>}
    </div>
    {/* ===== Analytics section ===== */}
    {/* Analitik lebar penuh — mengisi juga ruang di bawah panel insight kanan
        (kolom peta & insight kini sama tinggi, jadi baris berakhir rata). */}
-   <div ref={anaRef} className="mt-4 scroll-mt-4"><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus}/></div>
+   <div ref={anaRef} className="mt-4 scroll-mt-4"><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus} scope={sbMap}/></div>
    {inspOpen&&drill.petak && <PlotInspectionDrawer petakId={drill.petak} onClose={()=>setInspOpen(false)}/>}
    {sel&&drill.level==="blok" && <BlockDrawer blockId={sel} onClose={()=>setSel(null)}/>}
    {layerOpen && <MapLayerDrawer layers={layers} setLayers={setLayers} onClose={()=>setLayerOpen(false)}/>}
@@ -2729,7 +2735,7 @@ function AnalyticsInsightSummary({items}){
   {items.map((t,i)=><div key={i} className="text-xs text-gray-600 flex gap-1.5 leading-relaxed"><span>•</span><span>{t}</span></div>)}
  </div>);
 }
-function AreaDataViz({drill,goBlok,goCluster,onDrill,comF,setComF,setHover,onSelect,period,setPeriod,tab:tabProp,onTab,plantFilter={status:null,com:null},onPlantFilter,alertFocus=0}){
+function AreaDataViz({drill,goBlok,goCluster,onDrill,comF,setComF,setHover,onSelect,period,setPeriod,tab:tabProp,onTab,plantFilter={status:null,com:null},onPlantFilter,alertFocus=0,scope}){
  const {hsTreePts,alerts}=useApp();
  const [metric,setMetric]=useState("n");
  const [sortK,setSortK]=useState("n");
@@ -2752,8 +2758,8 @@ function AreaDataViz({drill,goBlok,goCluster,onDrill,comF,setComF,setHover,onSel
   if(drill.petak){ return {level:"petak",unit:HS_GEO.units[drill.petak],subLabel:null,subMap:null,subUnits:null,drillSub:null,shortFn:null}; }
   if(drill.level==="petak"){ return {level:"cluster",unit:HS_GEO.units[drill.cluster],subLabel:"Petak",subMap:agg.byPetak,subUnits:HS_GEO.plots.filter(p=>p.parentId===drill.cluster),drillSub:(id)=>onDrill("petakSel",drill.block,drill.cluster,id),shortFn:shortPk}; }
   if(drill.level==="cluster"){ return {level:"blok",unit:HS_GEO.units[drill.block],subLabel:"Cluster",subMap:agg.byCluster,subUnits:HS_GEO.clusters.filter(c=>c.parentId===drill.block),drillSub:(id)=>onDrill("petak",drill.block,id),shortFn:shortCl}; }
-  return {level:"estate",unit:HS_GEO.estate,subLabel:"Blok",subMap:agg.byBlock,subUnits:HS_GEO.blocks,drillSub:(id)=>goCluster(id),shortFn:shortBlk};
- },[agg,drill]);
+  return {level:"estate",unit:HS_GEO.estate,subLabel:"Blok",subMap:agg.byBlock,subUnits:HS_GEO.blocks.filter(b=>inScope(scope,b.id)),drillSub:(id)=>goCluster(id),shortFn:shortBlk};
+ },[agg,drill,scope&&scope.join(",")]);
 
  if(!D||!ctx||!ctx.unit) return <div className="mt-4"><Card title="Visualisasi Data Area"><VzSkeleton/></Card></div>;
 
@@ -2826,14 +2832,14 @@ function AreaDataViz({drill,goBlok,goCluster,onDrill,comF,setComF,setHover,onSel
   {/* ===== Header ramping (detail area sudah di page header & insight panel) ===== */}
   <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-gray-100 flex-wrap">
    <div className="flex items-center gap-2 min-w-0"><Layers size={15} className="text-green-700 shrink-0"/><span className="font-semibold text-gray-800">Analitik</span><span className="text-xs text-gray-400 truncate hidden sm:inline">· {LVL.toLowerCase()} aktif: {areaName}</span></div>
-   {ctx.level!=="estate" && <Btn size="sm" variant="secondary" onClick={back}><ChevronLeft size={13}/>Level sebelumnya</Btn>}
+   {ctx.level!=="estate" && !(ctx.level==="blok"&&scope&&scope.length===1) && <Btn size="sm" variant="secondary" onClick={back}><ChevronLeft size={13}/>Level sebelumnya</Btn>}
   </div>
   {ctx.level==="petak"&&pd&&(()=>{ const code=pd.unit.code||drill.petak; const clNum=String(drill.cluster||"").split("C").pop(); return (
    <div className="px-4 py-1.5 border-b border-gray-50 flex items-center gap-2 flex-wrap text-[11px]">
     <span className="inline-flex items-center gap-1 font-medium" style={{color:VZ_COL[pd.row.status]}}><span className="w-1.5 h-1.5 rounded-full" style={{background:VZ_COL[pd.row.status]}}/>{code} • {VZ_LABEL[pd.row.status]}</span>
     <span className="text-gray-400">• {period}</span>
     <span className="text-gray-400 ml-auto hidden sm:flex items-center gap-1">
-     <button onClick={goBlok} className="hover:text-green-700 hover:underline">Estate Gunung Hejo</button>/
+     {!(scope&&scope.length===1)&&<><button onClick={goBlok} className="hover:text-green-700 hover:underline">Estate Gunung Hejo</button>/</>}
      <button onClick={()=>goCluster(drill.block)} className="hover:text-green-700 hover:underline">{blockLabel(drill.block)}</button>/
      <button onClick={()=>onDrill("petak",drill.block,drill.cluster)} className="hover:text-green-700 hover:underline">Cluster {clNum}</button>/
      <span className="text-gray-600">P{String(code).split("P").pop()}</span>
@@ -3896,7 +3902,7 @@ function SensingSummaryCard({areaId,role,nav,setHsSel}){
    </div>
   </Card>);
 }
-function AreaInsightPanel({drill,metric,goBlok,goCluster,onDrill,setHover,onSelect,onCollapse,plotUx}){
+function AreaInsightPanel({drill,metric,goBlok,goCluster,onDrill,setHover,onSelect,onCollapse,plotUx,scope}){
  const {hsTreePts,role,nav,toast,hsTreeErr,retryHsLoad,setHsSel}=useApp();
  const D=hsTreePts;
  const agg=useMemo(()=>D?vzAggregate(D,"Semua"):null,[D]);
@@ -3908,7 +3914,7 @@ function AreaInsightPanel({drill,metric,goBlok,goCluster,onDrill,setHover,onSele
  if(drill.petak){ level="petak"; unit=HS_GEO.units[drill.petak]; }
  else if(drill.level==="petak"){ level="cluster"; unit=HS_GEO.units[drill.cluster]; subUnits=HS_GEO.plots.filter(p=>p.parentId===drill.cluster); subMap=agg.byPetak; subLabel="Petak"; drillSub=(id)=>onDrill("petakSel",drill.block,drill.cluster,id); }
  else if(drill.level==="cluster"){ level="blok"; unit=HS_GEO.units[drill.block]; subUnits=HS_GEO.clusters.filter(c=>c.parentId===drill.block); subMap=agg.byCluster; subLabel="Cluster"; drillSub=(id)=>onDrill("petak",drill.block,id); }
- else { level="estate"; unit=HS_GEO.estate; subUnits=HS_GEO.blocks; subMap=agg.byBlock; subLabel="Blok"; drillSub=(id)=>goCluster(id); }
+ else { level="estate"; unit=HS_GEO.estate; subUnits=HS_GEO.blocks.filter(b=>inScope(scope,b.id)); subMap=agg.byBlock; subLabel="Blok"; drillSub=(id)=>goCluster(id); }
  const LVL={estate:"ESTATE",blok:"BLOK",cluster:"CLUSTER",petak:"PETAK"}[level];
  const short=(u)=> level==="blok"?("C"+String(u.id).split("C").pop()):level==="cluster"?("P"+String(u.id).split("P").pop()):u.name;
  const rows=(subUnits||[]).map(u=>vzRow(u.id,u.name,short(u),u.areaHa,subMap[u.id]));
@@ -3956,7 +3962,7 @@ function AreaInsightPanel({drill,metric,goBlok,goCluster,onDrill,setHover,onSele
      </div>
      <button onClick={onCollapse} title="Sembunyikan panel insight" aria-label="Sembunyikan panel insight" className="hidden lg:inline-flex text-gray-400 hover:text-gray-700 shrink-0 p-0.5"><ChevronRight size={16}/></button>
     </div>
-    {level!=="estate"&&<button onClick={()=> level==="petak"?onDrill("petak",drill.block,drill.cluster): level==="cluster"?goCluster(drill.block):goBlok()} className="mt-1.5 text-xs text-gray-500 hover:text-green-700 flex items-center gap-1"><ChevronLeft size={12}/>Kembali ke level atas</button>}
+    {level!=="estate"&&!(level==="blok"&&scope&&scope.length===1)&&<button onClick={()=> level==="petak"?onDrill("petak",drill.block,drill.cluster): level==="cluster"?goCluster(drill.block):goBlok()} className="mt-1.5 text-xs text-gray-500 hover:text-green-700 flex items-center gap-1"><ChevronLeft size={12}/>Kembali ke level atas</button>}
    </div>
    <div className="p-3">
     <div className="flex items-center justify-between mb-1"><span className="text-sm font-semibold text-gray-800">Kesehatan tanaman</span><span className="text-[11px] text-gray-400">coverage {cov}%</span></div>
