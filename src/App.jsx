@@ -871,34 +871,56 @@ const REPORT_GROUPS=[
 const NAV=[
  {id:"map",label:"Peta Kebun",icon:Map,page:"map"},
  {id:"command-center",label:"Command Center",icon:LayoutDashboard,page:"command-center"},
- {id:"g-plant",label:"Tanaman",icon:Trees,children:[{page:"trees",label:"Registri Pohon"},{page:"census",label:"Sensus Tanaman"},{page:"planting",label:"Progres Penanaman"}]},
- {id:"g-plan",label:"Perencanaan",icon:CalendarDays,children:[{page:"plan-dashboard",label:"Dashboard Perencanaan"},{page:"plan-annual",label:"Rencana Tahunan"},{page:"calendar",label:"Kalender Operasional"},{page:"plan-weekly",label:"Rencana Mingguan"},{page:"plan-resources",label:"Sumber Daya & Kesiapan"},{page:"plan-scenario",label:"Skenario & Simulasi"}]},
- {id:"g-agro",label:"Agronomi",icon:FlaskConical,children:[{page:"protocols",label:"Pustaka SOP"},{page:"health",label:"Kesehatan Tanaman"},{page:"surveillance",label:"Surveilans OPT"},{page:"weather",label:"Klimatologi Agronomi"},{page:"fertilization",label:"Pemupukan & Tanah"}]},
- {id:"g-hs",label:"Hybrid Sensing",icon:Satellite,children:[
-  {page:"hs-map",label:"Command Map"},{page:"hs-satellite",label:"Monitoring Satelit"},{page:"hs-drone",label:"Monitoring Drone"},
-  {page:"hs-sensors",label:"Sensor Tanah"},{page:"hs-trees",label:"Monitoring Pohon"},{page:"hs-verification",label:"Verifikasi Lapangan"},
-  {page:"hs-history",label:"Analisis Historis"},{page:"hs-compare",label:"Perbandingan Area"},{page:"hs-alerts",label:"Anomali Sensing",badge:"hs"},
-  {page:"hs-data",label:"Ketersediaan Data"}]},
- {id:"g-ops",label:"Operasional Lapangan",icon:ClipboardList,children:[{page:"workorders",label:"Work Order",badge:"wo"},{page:"verification",label:"Antrian Verifikasi",badge:"verif"}]},
- {id:"g-field",label:"Lapangan (PWA Offline)",icon:Smartphone,children:[
-  {page:"field-home",label:"Beranda Lapangan"},{page:"field-tasks",label:"Tugas Saya"},{page:"field-attendance",label:"Kehadiran"},
-  {page:"field-work",label:"Pelaksanaan Work Order"},{page:"field-inspection",label:"Inspeksi"},{page:"field-census",label:"Sensus"},
-  {page:"field-map",label:"Peta Offline"},{page:"field-drafts",label:"Data Tersimpan"},{page:"field-sync",label:"Sync Center",badge:"field"},
-  {page:"field-downloads",label:"Download Field Pack"}]},
- {id:"g-res",label:"Sumber Daya",icon:Package,children:[{page:"water",label:"Manajemen Air"},{page:"inventory",label:"Inventori Material"}]},
- {id:"g-labor",label:"Tenaga Kerja",icon:Users,children:[{page:"labor",label:"Dashboard"},{page:"workers",label:"Database Pekerja"},{page:"assign",label:"Penugasan & Kehadiran"},{page:"hokrecap",label:"Rekapitulasi HOK"},{page:"hokrate",label:"Tarif HOK"}]},
- {id:"harvest",label:"Panen",icon:Wheat,page:"harvest"},
- {id:"budget",label:"Keuangan & Kinerja",icon:Wallet,page:"budget"},
- {id:"alerts",label:"Pusat Alert",icon:Bell,page:"alerts",badge:"alerts"},
- {id:"ai-recs",label:"Rekomendasi AI",icon:Activity,page:"ai-recs",badge:"ai"},
- {id:"g-dq",label:"Data Quality",icon:Database,children:[{page:"dq-dashboard",label:"Dashboard"},{page:"dq-issues",label:"Data Issues",badge:"dq"},{page:"dq-sources",label:"Sources & Sync"},{page:"dq-rules",label:"Validation Rules"}]},
- {id:"reports",label:"Pusat Laporan",icon:FileText,page:"reports"},
- {id:"integrations",label:"Integration Hub",icon:RefreshCw,page:"integrations"},
- {id:"g-admin",label:"Administrasi",icon:Settings,children:[{page:"admin",label:"Pengaturan & Peran"},{page:"users",label:"Manajemen Pengguna"}]},
+ {section:"ESTATE"},
+ {id:"g-estate",label:"Estate & Tanaman",icon:Trees,children:[
+  {page:"trees",label:"Registri Pohon"},{page:"census",label:"Sensus Tanaman"},
+  {page:"planting",label:"Progres Penanaman"},{page:"harvest",label:"Panen"}]},
+ {id:"g-agro",label:"Agronomi & Pemantauan",icon:FlaskConical,children:[
+  {page:"health",label:"Kesehatan Tanaman"},{page:"surveillance",label:"Surveilans OPT"},
+  {page:"hs-map",label:"Pemantauan Digital"},{page:"weather",label:"Klimatologi"},
+  {page:"fertilization",label:"Pemupukan & Tanah"},{page:"protocols",label:"Pustaka SOP"}]},
+ {section:"OPERASI"},
+ {id:"g-work",label:"Rencana & Pekerjaan",icon:ClipboardList,children:[
+  {page:"workorders",label:"Work Order",badge:"wo"},{page:"verification",label:"Verifikasi",badge:"verif"},
+  {page:"calendar",label:"Kalender"},{page:"plan-weekly",label:"Rencana Mingguan"},
+  {page:"plan-dashboard",label:"Perencanaan"}]},
+ {id:"g-res",label:"Sumber Daya",icon:Package,children:[
+  {page:"labor",label:"Tenaga Kerja & HOK"},{page:"inventory",label:"Inventori Material"},
+  {page:"water",label:"Manajemen Air"}]},
+ {section:"KENDALI"},
+ {id:"g-perf",label:"Kinerja & Risiko",icon:Activity,children:[
+  {page:"alerts",label:"Pusat Alert",badge:"alerts"},{page:"budget",label:"Keuangan"},
+  {page:"ai-recs",label:"Rekomendasi"},{page:"reports",label:"Laporan"},
+  {page:"dq-issues",label:"Data Issues",badge:"dq"}]},
+ {section:"SISTEM"},
+ {id:"g-sys",label:"Sistem",icon:Settings,children:[
+  {page:"admin",label:"Pengaturan & Peran"},{page:"users",label:"Manajemen Pengguna"},
+  {page:"integrations",label:"Integrasi Sistem"},{page:"dq-sources",label:"Sumber Data"},
+  {page:"dq-rules",label:"Aturan Validasi"}]},
 ];
-const PAGE_TITLE={"command-center":"Command Center",map:"Peta Kebun",block:"Detail Blok",trees:"Registri Pohon",tree:"Paspor Digital Pohon",planting:"Progres Penanaman",calendar:"Kalender Operasional","plan-dashboard":"Dashboard Perencanaan","plan-annual":"Rencana Tahunan","plan-weekly":"Rencana Mingguan & Paket Kerja","plan-resources":"Sumber Daya & Kesiapan","plan-scenario":"Skenario & Simulasi",protocols:"Pustaka SOP",health:"Kesehatan Tanaman",surveillance:"Surveilans OPT",weather:"Klimatologi & Keputusan Agronomi","case":"Detail Kasus Kesehatan",fertilization:"Pemupukan & Tanah",workorders:"Work Order","wo":"Detail Work Order","wo-new":"Buat Work Order",verification:"Antrian Verifikasi",water:"Manajemen Air",inventory:"Inventori Material",budget:"Biaya & Anggaran",alerts:"Pusat Alert","alert":"Detail Alert","ai-recs":"Rekomendasi AI (Explainable)",reports:"Pusat Laporan",admin:"Administrasi",harvest:"Panen","hs-map":"Hybrid Sensing Command Map","hs-satellite":"Monitoring Satelit","hs-drone":"Monitoring Drone","hs-sensors":"Sensor Tanah","hs-trees":"Monitoring Pohon (Hybrid Sensing)","hs-verification":"Verifikasi Lapangan (Sensing)","hs-history":"Analisis Historis Sensing","hs-compare":"Perbandingan Area","hs-alerts":"Anomali & Alert Sensing","hs-data":"Ketersediaan Data Sensing",integrations:"Integration Hub",users:"Manajemen Pengguna",census:"Sensus Tanaman",labor:"Dashboard Tenaga Kerja",workers:"Database Pekerja",worker:"Profil Pekerja",assign:"Penugasan & Kehadiran",hokrecap:"Rekapitulasi HOK",hokrate:"Tarif Pekerjaan (HOK)","dq-dashboard":"Data Quality Dashboard","dq-issues":"Data Issues","dq-issue":"Detail Data Issue","dq-sources":"Sources & Sync","dq-rules":"Validation Rules","field-home":"Beranda Lapangan","field-tasks":"Tugas Saya (Lapangan)","field-attendance":"Kehadiran Lapangan","field-work":"Pelaksanaan Work Order (Offline)","field-inspection":"Inspeksi Lapangan (Offline)","field-census":"Sensus Lapangan (Offline)","field-map":"Peta Offline","field-drafts":"Data Tersimpan di Perangkat","field-sync":"Sync Center Lapangan","field-downloads":"Download Field Pack"};
+/* Tab kontekstual: halaman yang keluar dari sidebar tetap terjangkau lewat tab
+   pada halaman induknya (route & permission tidak berubah). */
+const NAV_TABGROUPS=[
+ {items:[["hs-map","Peta Pemantauan"],["hs-satellite","Satelit"],["hs-drone","Drone"],["hs-sensors","Sensor Tanah"],["hs-trees","Monitoring Pohon"],["hs-history","Historis"],["hs-compare","Perbandingan"],["hs-data","Ketersediaan Data"]]},
+ {items:[["plan-dashboard","Ringkasan"],["plan-annual","Rencana Tahunan"],["plan-resources","Sumber Daya & Kesiapan"],["plan-scenario","Skenario & Simulasi"]]},
+ {items:[["labor","Dashboard"],["workers","Database Pekerja"],["assign","Penugasan & Kehadiran"],["hokrecap","Rekap HOK"],["hokrate","Tarif HOK"]]},
+ {items:[["verification","Antrian Verifikasi"],["hs-verification","Verifikasi Sensing"]]},
+ {items:[["alerts","Pusat Alert"],["hs-alerts","Anomali Sensing"]]},
+ {items:[["dq-issues","Data Issues"],["dq-dashboard","Ringkasan Data Quality"]]},
+];
+function CtxTabs({page,nav,hide}){
+ const grp=NAV_TABGROUPS.find(g=>g.items.some(([pp])=>pp===page));
+ if(!grp) return null;
+ const items=grp.items.filter(([pp])=>pp===page||!hide.includes(pp));
+ if(items.length<2) return null;
+ return (<div className="flex flex-wrap gap-1.5 mb-3">
+  {items.map(([pp,l])=>(<button key={pp} type="button" onClick={()=>nav(pp)}
+   className={"px-3 py-1.5 rounded-full text-xs font-medium border "+(pp===page?"bg-green-600 text-white border-green-600":"bg-white text-gray-600 border-gray-200 hover:border-green-500 hover:text-green-700")}>{l}</button>))}
+ </div>);
+}
+const PAGE_TITLE={"command-center":"Command Center",map:"Peta Kebun",block:"Detail Blok",trees:"Registri Pohon",tree:"Paspor Digital Pohon",planting:"Progres Penanaman",calendar:"Kalender Operasional","plan-dashboard":"Dashboard Perencanaan","plan-annual":"Rencana Tahunan","plan-weekly":"Rencana Mingguan & Paket Kerja","plan-resources":"Sumber Daya & Kesiapan","plan-scenario":"Skenario & Simulasi",protocols:"Pustaka SOP",health:"Kesehatan Tanaman",surveillance:"Surveilans OPT",weather:"Klimatologi","case":"Detail Kasus Kesehatan",fertilization:"Pemupukan & Tanah",workorders:"Work Order","wo":"Detail Work Order","wo-new":"Buat Work Order",verification:"Antrian Verifikasi",water:"Manajemen Air",inventory:"Inventori Material",budget:"Biaya & Anggaran",alerts:"Pusat Alert","alert":"Detail Alert","ai-recs":"Rekomendasi",reports:"Pusat Laporan",admin:"Administrasi",harvest:"Panen","hs-map":"Pemantauan Digital","hs-satellite":"Monitoring Satelit","hs-drone":"Monitoring Drone","hs-sensors":"Sensor Tanah","hs-trees":"Monitoring Pohon (Hybrid Sensing)","hs-verification":"Verifikasi Lapangan (Sensing)","hs-history":"Analisis Historis Sensing","hs-compare":"Perbandingan Area","hs-alerts":"Anomali & Alert Sensing","hs-data":"Ketersediaan Data Sensing",integrations:"Integrasi Sistem",users:"Manajemen Pengguna",census:"Sensus Tanaman",labor:"Dashboard Tenaga Kerja",workers:"Database Pekerja",worker:"Profil Pekerja",assign:"Penugasan & Kehadiran",hokrecap:"Rekapitulasi HOK",hokrate:"Tarif Pekerjaan (HOK)","dq-dashboard":"Data Quality Dashboard","dq-issues":"Data Issues","dq-issue":"Detail Data Issue","dq-sources":"Sumber Data","dq-rules":"Aturan Validasi","field-home":"Beranda Lapangan","field-tasks":"Tugas Saya (Lapangan)","field-attendance":"Kehadiran Lapangan","field-work":"Pelaksanaan Work Order (Offline)","field-inspection":"Inspeksi Lapangan (Offline)","field-census":"Sensus Lapangan (Offline)","field-map":"Peta Offline","field-drafts":"Data Tersimpan di Perangkat","field-sync":"Sync Center Lapangan","field-downloads":"Download Field Pack"};
 const ROLES={
- "Super Admin":{def:"admin",hide:[],desc:"Akses penuh sistem, konfigurasi, dan manajemen pengguna"},
+ "Super Admin":{def:"command-center",hide:[],desc:"Akses penuh sistem, konfigurasi, dan manajemen pengguna"},
  "Direksi":{def:"command-center",hide:["wo-new","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Ringkasan strategis, risiko, dan keputusan manajemen"},
  "Mitra Lahan":{def:"command-center",hide:["integrations","wo-new","admin","users","budget","verification","fertilization","water","inventory","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","planting","census","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Pemilik lahan (landowner) — pemantauan kinerja, kesehatan, panen, dan laporan kebun"},
  "Estate Manager":{def:"command-center",hide:["admin","field-attendance","field-work","field-inspection","field-census"],desc:"Kendali penuh operasional harian estate"},
@@ -1200,7 +1222,7 @@ function TreePhoto(props){
 function Sidebar(){
  const {role,route,nav,collapsed,setCollapsed,counts,setRole,logout}=useApp();
  const hide=ROLES[role].hide;
- const [open,setOpen]=useState({"g-ops":true,"g-agro":false,"g-plant":false,"g-res":false});
+ const [open,setOpen]=useState({"g-work":true}); /* accordion: maks satu grup terbuka */
  const badgeVal=(b)=> b==="wo"?counts.wo : b==="verif"?counts.verif : b==="alerts"?counts.alerts : b==="dq"?counts.dq : b==="ai"?(counts.ai||0) : b==="field"?(counts.field||0) : 0;
  const visibleChildren=(item)=> (item.children||[]).filter(c=>!hide.includes(c.page));
  const isActive=(p)=> route.page===p || (p==="workorders"&&["wo","wo-new"].includes(route.page)) || (p==="trees"&&route.page==="tree") || (p==="health"&&route.page==="case") || (p==="map"&&route.page==="block") || (p==="dq-issues"&&route.page==="dq-issue");
@@ -1220,13 +1242,16 @@ function Sidebar(){
    </div>
    <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
     {NAV.map(item=>{
+     if(item.section) return collapsed
+      ? <div key={item.section} className="pt-2 mt-1 border-t border-gray-100"/>
+      : <div key={item.section} className="px-2.5 pt-3 pb-1 text-[10px] font-bold tracking-wider text-gray-400">{item.section}</div>;
      if(item.children){
       const kids=visibleChildren(item);
       if(kids.length===0) return null;
       const anyActive=kids.some(k=>isActive(k.page));
       return (
        <div key={item.id}>
-        <button onClick={()=> collapsed ? nav(kids[0].page) : setOpen(o=>({...o,[item.id]:!o[item.id]}))}
+        <button onClick={()=> collapsed ? nav(kids[0].page) : setOpen(o=>({[item.id]:!o[item.id]}))}
           className={"w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm "+(anyActive?"text-green-800 bg-green-50 font-semibold":"text-gray-700 hover:bg-gray-50")}>
          <item.icon size={17} className="shrink-0"/>
          {!collapsed && <><span className="flex-1 text-left truncate">{item.label}</span><ChevronDown size={14} className={"transition-transform "+(open[item.id]?"":"-rotate-90")}/></>}
@@ -1254,6 +1279,9 @@ function Sidebar(){
     })}
    </nav>
    <div className="border-t border-gray-200 p-2 space-y-1">
+    {!hide.includes("field-home")&&<button onClick={()=>nav("field-home")} title="Masuk Mode Lapangan (PWA offline)"
+     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-green-700 hover:bg-green-50 font-medium">
+     <Smartphone size={17} className="shrink-0"/>{!collapsed && "Mode Lapangan"}</button>}
     <button onClick={()=>setCollapsed(!collapsed)} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">
      {collapsed?<ChevronRight size={17}/>:<ChevronLeft size={17}/>}{!collapsed && "Ciutkan menu"}
     </button>
@@ -10172,7 +10200,7 @@ function FieldWorkExecutionPage(){
  const [progOpen,setProgOpen]=useState(false);
  const [subOpen,setSubOpen]=useState(false);
  const [ck,setCk]=useState({});
- const [prog,setProg]=useState({progress:"",areaDone:"",treesOk:"",treesFail:"",hok:"",hours:"",obstacle:"",weather:"Cerah",note:"",mats:{}});
+ const [prog,setProg]=useState({progress:"",areaDone:"",treesOk:"",treesFail:"",hok:"",hours:"",obstacle:"",weather:"Klimatologi",note:"",mats:{}});
  const [mediaIds,setMediaIds]=useState([]);
  useEffect(()=>{ setCk({}); setMediaIds([]); },[woId]);
  const evAct=async(type)=>{ if(!wo) return;
@@ -13248,7 +13276,7 @@ function PlanCalendarSection({acts,onOpen}){
    ============================================================ */
 const AI_ACTION_LABEL={case:"Setujui & Buat Case",plan:"Setujui & Tambah ke Rencana",shift:"Setujui & Geser Jadwal",wo:"Setujui & Terbitkan WO"};
 const AI_SRC_LABEL={weather:"Klimatologi","hs-satellite":"Satelit","hs-sensors":"Sensor Tanah",health:"Kesehatan",protocols:"Pustaka SOP",census:"Sensus",inventory:"Inventori",plan:"Perencanaan",equip:"Peralatan"};
-const AI_SRC_PAGE={weather:"weather","hs-satellite":"hs-satellite","hs-sensors":"hs-sensors",health:"health",protocols:"protocols",census:"census",inventory:"inventory",plan:"plan-resources",equip:"plan-resources"};
+const AI_SRC_PAGE={weather:"Klimatologi","hs-satellite":"hs-satellite","hs-sensors":"hs-sensors",health:"health",protocols:"protocols",census:"census",inventory:"inventory",plan:"plan-resources",equip:"plan-resources"};
 const AI_RULES=[
  {id:"AIR-HLT-01",name:"Konvergensi sinyal kesehatan tanaman",domain:"Kesehatan Tanaman",ver:"1.0",eff:"2026-07-01",signals:["NDVI/anomali sensing","curah hujan kumulatif","kasus & riwayat blok","jendela SOP"],logic:"Rekomendasi kasus dibuat bila ≥2 sinyal independen melewati ambang pada blok/cluster yang sama dan SOP terkait memiliki jendela preventif aktif."},
  {id:"AIR-POP-01",name:"Mortalitas blok di atas ambang",domain:"Populasi",ver:"1.0",eff:"2026-07-01",signals:["rasio pohon mati sensus","jendela musim tanam","cakupan rencana existing"],logic:"Penyulaman direkomendasikan bila pohon mati >8% populasi blok dan belum tercakup rencana, dijadwalkan pada jendela musim tanam terdekat."},
@@ -14099,7 +14127,7 @@ export default function App(){
       <Sidebar/>
       <div className="flex-1 flex flex-col overflow-hidden">
        <TopNav/>
-       <main className="flex-1 overflow-y-auto p-4 lg:p-6">{page}</main>
+       <main className="flex-1 overflow-y-auto p-4 lg:p-6"><CtxTabs page={route.page} nav={nav} hide={(ROLES[role]&&ROLES[role].hide)||[]}/>{page}</main>
       </div>
      </div>))}
     <CommandPalette/>
