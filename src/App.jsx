@@ -102,6 +102,9 @@ const STATUS_STYLE = {
   "Sedang":{bg:"#FEF3C7",fg:"#B45309"},
   "Berat":{bg:"#FFEDD5",fg:"#C2410C"},
   "Kritis":{bg:"#FEE2E2",fg:"#B91C1C"},
+  "Bocor":{bg:"#FFEDD5",fg:"#C2410C"},
+  "Sedang dibangun":{bg:"#DBEAFE",fg:"#1D4ED8"},
+  "Belum dibangun":{bg:"#F3F4F6",fg:"#6B7280"},
   "Tinggi":{bg:"#FFEDD5",fg:"#C2410C"},
   "Rendah":{bg:"#F3F4F6",fg:"#4B5563"},
   "Normal":{bg:"#DCFCE7",fg:"#166534"},
@@ -540,17 +543,20 @@ const SOIL_TESTS=[
 ];
 
 /* 9 embung sesuai titik KML lapangan (data/gunung-hejo-titik-embung.kml).
-   Kapasitas & level masih data demo; status: <40 Kritis · 40–64 Waspada · ≥65 Normal. */
+   op/cap/note = DATA LAPANGAN "Status Embung Agroforestri Gunung Hejo" (Jul 2026);
+   pemetaan "Embung 1/2/3" per blok → kode A/B/C berurutan. Volume tabel = kapasitas (m³).
+   level (% terisi) MASIH DEMO; status air: <40 Kritis · 40–64 Waspada · ≥65 Normal,
+   dengan status konstruksi (Bocor/Sedang dibangun/Belum dibangun) menggantikan status air. */
 const RESERVOIRS=[
- {id:"B1A",name:"Embung B1A",cap:4000,level:32,status:"Kritis"},
- {id:"B1B",name:"Embung B1B",cap:2500,level:41,status:"Waspada"},
- {id:"B1C",name:"Embung B1C",cap:2000,level:55,status:"Waspada"},
- {id:"B2A",name:"Embung B2A",cap:3000,level:62,status:"Waspada"},
- {id:"B2B",name:"Embung B2B",cap:2000,level:58,status:"Waspada"},
- {id:"B3A",name:"Embung B3A",cap:2500,level:68,status:"Normal"},
- {id:"B3B",name:"Embung B3B",cap:1800,level:74,status:"Normal"},
- {id:"B4A",name:"Embung B4A",cap:2200,level:71,status:"Normal"},
- {id:"B4B",name:"Embung B4B",cap:1500,level:66,status:"Normal"},
+ {id:"B1A",name:"Embung B1A",cap:1280,level:32,status:"Kritis",op:"Beroperasi",note:"Masih menggunakan terpal."},
+ {id:"B1B",name:"Embung B1B",cap:567,level:41,status:"Waspada",op:"Beroperasi",note:null},
+ {id:"B1C",name:"Embung B1C",cap:883,level:55,status:"Waspada",op:"Beroperasi",note:null},
+ {id:"B2A",name:"Embung B2A",cap:1074,level:62,status:"Waspada",op:"Beroperasi",note:"Sudah dipasang geomembrane."},
+ {id:"B2B",name:"Embung B2B",cap:null,level:null,status:"Sedang dibangun",op:"Sedang dibangun",note:null},
+ {id:"B3A",name:"Embung B3A",cap:null,level:null,status:"Belum dibangun",op:"Belum dibangun",note:null},
+ {id:"B3B",name:"Embung B3B",cap:1526,level:68,status:"Normal",op:"Beroperasi",note:"Sudah dipasang geomembrane."},
+ {id:"B4A",name:"Embung B4A",cap:998,level:71,status:"Bocor",op:"Bocor",note:null},
+ {id:"B4B",name:"Embung B4B",cap:928,level:66,status:"Normal",op:"Beroperasi",note:null},
 ];
 const PUMPS=[
  {id:"P-01",zone:"Jalur A",status:"Aktif",flow:"18 m³/jam",hours:1240},
@@ -559,7 +565,7 @@ const PUMPS=[
  {id:"P-04",zone:"Cadangan",status:"Standby",flow:"22 m³/jam",hours:420},
 ];
 const IRRIGATION_SCHEDULE=[
- {slot:"05.00–08.00",zone:"Blok 4 (prioritas)",source:"B4A + P-04",vol:"180 m³"},
+ {slot:"05.00–08.00",zone:"Blok 4 (prioritas)",source:"B4B + P-04",vol:"180 m³"},
  {slot:"08.00–11.00",zone:"Blok 1",source:"B1A + B1B",vol:"160 m³"},
  {slot:"13.00–16.00",zone:"Blok 2",source:"B2A",vol:"120 m³"},
  {slot:"16.00–18.00",zone:"Pembibitan Blok 4",source:"B4B",vol:"40 m³"},
@@ -649,7 +655,7 @@ function wxIrrigationBalance(forecast,reservoirs){
  const totEt=+forecast.reduce((a,d)=>a+d.et0,0).toFixed(1);
  const deficit=+(totEt-totRain).toFixed(1); /* mm; positif = perlu irigasi */
  const dryDays=forecast.filter(d=>d.rainMm<1).length;
- const critical=(reservoirs||[]).filter(r=>r.status==="Kritis"||r.level<40);
+ const critical=(reservoirs||[]).filter(r=>r.status==="Kritis"||r.status==="Bocor"||(r.level!=null&&r.level<40));
  const level=deficit>15&&dryDays>=4?"Tinggi":deficit>6?"Sedang":deficit>0?"Rendah":"Surplus";
  const perDay=+(deficit/forecast.length).toFixed(1);
  return {totRain,totEt,deficit,perDay,dryDays,level,critical:critical.map(r=>r.id),critN:critical.length};
@@ -2074,8 +2080,11 @@ const MAP_INFRA=[
  {id:"EMB-B4A",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103,src:"kml"},
  {id:"EMB-B4B",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094,src:"kml"},
 ];
-const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,
- title:p.name+" · "+p.type+" — titik KML lapangan"}));
+const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
+ const r=RESERVOIRS.find(x=>"EMB-"+x.id===p.id);
+ const st=r?(" · "+r.op+(r.cap!=null?" · "+fmtN(r.cap)+" m³":"")+(r.note?" · "+r.note:"")):"";
+ return {id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,title:p.name+st+" — titik KML lapangan"};
+});
 /* Jalur jalan produksi: menunggu data GPS tracking lapangan — layer peta
    (roads) di PlantationMap siap dipakai kembali begitu datanya tersedia. */
 function MapPage(){
@@ -5370,7 +5379,7 @@ function WaterPage(){
   <div>
    <PageHeader title="Manajemen Air" subtitle="Embung, jaringan irigasi, dan status kelembapan tanah — musim kemarau."/>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-    <Kpi label="Level rata-rata embung" value={Math.round(RESERVOIRS.reduce((a,r)=>a+r.level,0)/RESERVOIRS.length)+"%"} icon={Droplets} tone="amber" trend={-8}/>
+    <Kpi label="Level rata-rata embung" value={(()=>{const ops=RESERVOIRS.filter(r=>r.level!=null);return Math.round(ops.reduce((a,r)=>a+r.level,0)/ops.length)+"%";})()} icon={Droplets} tone="amber" trend={-8} sub={RESERVOIRS.filter(r=>r.level!=null).length+" beroperasi dari "+RESERVOIRS.length+" embung"}/>
     <Kpi label="Embung status kritis" value={String(RESERVOIRS.filter(r=>r.status==="Kritis").length)} icon={AlertTriangle} tone="red" sub={RESERVOIRS.filter(r=>r.status==="Kritis").map(r=>r.id+" ("+r.level+"%)").join(" • ")||"—"} onClick={()=>nav("alerts",{focus:"AL-001"})}/>
     <Kpi label="Blok kelembapan rendah" value="3" icon={MapPin} tone="red" sub="Blok 4 • Blok 1 • Blok 2"/>
     <Kpi label="Pompa gangguan" value="1" icon={Gauge} tone="amber" sub="P-03 (jalur C)"/>
@@ -5380,8 +5389,11 @@ function WaterPage(){
      {RESERVOIRS.map(r=>(
       <div key={r.id} className="py-2 border-b border-gray-50">
        <div className="flex items-center justify-between text-sm"><span className="font-medium text-gray-900">{r.name}</span><Badge v={r.status}/></div>
-       <div className="flex items-center gap-2 mt-1.5"><ProgressBar v={r.level} tone={r.level<40?"#DC2626":r.level<65?"#F59E0B":"#16A34A"}/><span className="text-sm font-bold w-10 text-right">{r.level}%</span></div>
-       <div className="text-xs text-gray-500 mt-0.5">Kapasitas {fmtN(r.cap)} m³ • tersisa ±{fmtN(Math.round(r.cap*r.level/100))} m³</div>
+       {r.level!=null?<>
+        <div className="flex items-center gap-2 mt-1.5"><ProgressBar v={r.level} tone={r.level<40?"#DC2626":r.level<65?"#F59E0B":"#16A34A"}/><span className="text-sm font-bold w-10 text-right">{r.level}%</span></div>
+        <div className="text-xs text-gray-500 mt-0.5">Kapasitas {fmtN(r.cap)} m³ • tersisa ±{fmtN(Math.round(r.cap*r.level/100))} m³{r.status==="Bocor"?" • perlu perbaikan kebocoran":""}</div>
+       </>:<div className="text-xs text-gray-500 mt-0.5">{r.op==="Belum dibangun"?"Konstruksi belum dimulai":"Dalam tahap konstruksi"} — volume belum tersedia</div>}
+       {r.note&&<div className="text-[11px] text-amber-700 mt-0.5">{r.note}</div>}
       </div>))}
     </Card>
     <Card title="Pemakaian air bulanan (m³)">
