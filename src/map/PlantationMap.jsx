@@ -310,7 +310,10 @@ const PlantationMap = forwardRef(function PlantationMap(
     monitorDate === "none" ? " — pass tidak ditemukan (offline?)" :
     monitorDate ? " · pass " + monitorDate : " · mencari pass terbaru…";
   return (
-    <div className="vz-map-root" style={{ position: "relative", width: "100%", height }}>
+    <div className="vz-map-root" style={height === "100%"
+      /* height="100%": absolute-fill wrapper — rantai persen tinggi putus di flex item */
+      ? { position: "absolute", inset: 0 }
+      : { position: "relative", width: "100%", height }}>
       <div ref={boxRef} style={{ width: "100%", height: "100%" }} />
       {attribution && (
         <div style={{ position: "absolute", bottom: 2, right: 2, zIndex: 5, font: "9px Inter,system-ui,sans-serif",

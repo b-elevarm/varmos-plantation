@@ -2312,9 +2312,11 @@ function MapPage(){
    <div className="flex flex-col lg:flex-row gap-3 items-stretch">
     {/* Panel hierarki kini overlay di dalam peta (lihat di bawah) — ikut tampil saat fullscreen */}
     <div className="flex-1 min-w-0 w-full">
-     <Card pad={false} className="overflow-hidden">
-      <div ref={mapFsRef} className="relative map-fs-wrap" style={layers.base!=="polos"?{background:"#3a4453"}:null}>
-       <PlantationMap height={MAP_H} basemap={layers.base} fsContainer={mapFsRef}
+     {/* Kartu peta mengisi tinggi kolom (h-full) agar tidak ada ruang putih di bawah
+         peta saat panel insight lebih tinggi; peta melar mengisi sisa ruang. */}
+     <Card pad={false} className="overflow-hidden h-full flex flex-col">
+      <div ref={mapFsRef} className="relative map-fs-wrap flex-1" style={{minHeight:MAP_H,...(layers.base!=="polos"?{background:"#3a4453"}:{})}}>
+       <PlantationMap height="100%" basemap={layers.base} fsContainer={mapFsRef}
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
