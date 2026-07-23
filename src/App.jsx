@@ -1241,10 +1241,17 @@ function Sidebar(){
     </select>}
    </div>
    <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-    {NAV.map(item=>{
-     if(item.section) return collapsed
-      ? <div key={item.section} className="pt-2 mt-1 border-t border-gray-100"/>
-      : <div key={item.section} className="px-2.5 pt-3 pb-1 text-[10px] font-bold tracking-wider text-gray-400">{item.section}</div>;
+    {NAV.map((item,idx)=>{
+     if(item.section){
+      /* label section hanya tampil bila ada grup terlihat di bawahnya (role-aware) */
+      let has=false;
+      for(let i=idx+1;i<NAV.length;i++){ const n=NAV[i]; if(n.section) break;
+       if(n.children?visibleChildren(n).length>0:!hide.includes(n.page)){ has=true; break; } }
+      if(!has) return null;
+      return collapsed
+       ? <div key={item.section} className="pt-2 mt-1 border-t border-gray-100"/>
+       : <div key={item.section} className="px-2.5 pt-3 pb-1 text-[10px] font-bold tracking-wider text-gray-400">{item.section}</div>;
+     }
      if(item.children){
       const kids=visibleChildren(item);
       if(kids.length===0) return null;
