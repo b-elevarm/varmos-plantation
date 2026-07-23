@@ -869,8 +869,8 @@ const REPORT_GROUPS=[
 
 /* ============ Navigasi & peran ============ */
 const NAV=[
- {id:"g-dash",label:"Command Center",icon:LayoutDashboard,children:[{page:"exec",label:"Eksekutif"},{page:"ops",label:"Operasional"}]},
  {id:"map",label:"Peta Kebun",icon:Map,page:"map"},
+ {id:"command-center",label:"Command Center",icon:LayoutDashboard,page:"command-center"},
  {id:"g-plant",label:"Tanaman",icon:Trees,children:[{page:"trees",label:"Registri Pohon"},{page:"census",label:"Sensus Tanaman"},{page:"planting",label:"Progres Penanaman"}]},
  {id:"g-plan",label:"Perencanaan",icon:CalendarDays,children:[{page:"plan-dashboard",label:"Dashboard Perencanaan"},{page:"plan-annual",label:"Rencana Tahunan"},{page:"calendar",label:"Kalender Operasional"},{page:"plan-weekly",label:"Rencana Mingguan"},{page:"plan-resources",label:"Sumber Daya & Kesiapan"},{page:"plan-scenario",label:"Skenario & Simulasi"}]},
  {id:"g-agro",label:"Agronomi",icon:FlaskConical,children:[{page:"protocols",label:"Pustaka SOP"},{page:"health",label:"Kesehatan Tanaman"},{page:"surveillance",label:"Surveilans OPT"},{page:"weather",label:"Klimatologi Agronomi"},{page:"fertilization",label:"Pemupukan & Tanah"}]},
@@ -896,16 +896,16 @@ const NAV=[
  {id:"integrations",label:"Integration Hub",icon:RefreshCw,page:"integrations"},
  {id:"g-admin",label:"Administrasi",icon:Settings,children:[{page:"admin",label:"Pengaturan & Peran"},{page:"users",label:"Manajemen Pengguna"}]},
 ];
-const PAGE_TITLE={exec:"Command Center Eksekutif",ops:"Dashboard Operasional",map:"Peta Kebun",block:"Detail Blok",trees:"Registri Pohon",tree:"Paspor Digital Pohon",planting:"Progres Penanaman",calendar:"Kalender Operasional","plan-dashboard":"Dashboard Perencanaan","plan-annual":"Rencana Tahunan","plan-weekly":"Rencana Mingguan & Paket Kerja","plan-resources":"Sumber Daya & Kesiapan","plan-scenario":"Skenario & Simulasi",protocols:"Pustaka SOP",health:"Kesehatan Tanaman",surveillance:"Surveilans OPT",weather:"Klimatologi & Keputusan Agronomi","case":"Detail Kasus Kesehatan",fertilization:"Pemupukan & Tanah",workorders:"Work Order","wo":"Detail Work Order","wo-new":"Buat Work Order",verification:"Antrian Verifikasi",water:"Manajemen Air",inventory:"Inventori Material",budget:"Biaya & Anggaran",alerts:"Pusat Alert","alert":"Detail Alert","ai-recs":"Rekomendasi AI (Explainable)",reports:"Pusat Laporan",admin:"Administrasi",harvest:"Panen","hs-map":"Hybrid Sensing Command Map","hs-satellite":"Monitoring Satelit","hs-drone":"Monitoring Drone","hs-sensors":"Sensor Tanah","hs-trees":"Monitoring Pohon (Hybrid Sensing)","hs-verification":"Verifikasi Lapangan (Sensing)","hs-history":"Analisis Historis Sensing","hs-compare":"Perbandingan Area","hs-alerts":"Anomali & Alert Sensing","hs-data":"Ketersediaan Data Sensing",integrations:"Integration Hub",users:"Manajemen Pengguna",census:"Sensus Tanaman",labor:"Dashboard Tenaga Kerja",workers:"Database Pekerja",worker:"Profil Pekerja",assign:"Penugasan & Kehadiran",hokrecap:"Rekapitulasi HOK",hokrate:"Tarif Pekerjaan (HOK)","dq-dashboard":"Data Quality Dashboard","dq-issues":"Data Issues","dq-issue":"Detail Data Issue","dq-sources":"Sources & Sync","dq-rules":"Validation Rules","field-home":"Beranda Lapangan","field-tasks":"Tugas Saya (Lapangan)","field-attendance":"Kehadiran Lapangan","field-work":"Pelaksanaan Work Order (Offline)","field-inspection":"Inspeksi Lapangan (Offline)","field-census":"Sensus Lapangan (Offline)","field-map":"Peta Offline","field-drafts":"Data Tersimpan di Perangkat","field-sync":"Sync Center Lapangan","field-downloads":"Download Field Pack"};
+const PAGE_TITLE={"command-center":"Command Center",map:"Peta Kebun",block:"Detail Blok",trees:"Registri Pohon",tree:"Paspor Digital Pohon",planting:"Progres Penanaman",calendar:"Kalender Operasional","plan-dashboard":"Dashboard Perencanaan","plan-annual":"Rencana Tahunan","plan-weekly":"Rencana Mingguan & Paket Kerja","plan-resources":"Sumber Daya & Kesiapan","plan-scenario":"Skenario & Simulasi",protocols:"Pustaka SOP",health:"Kesehatan Tanaman",surveillance:"Surveilans OPT",weather:"Klimatologi & Keputusan Agronomi","case":"Detail Kasus Kesehatan",fertilization:"Pemupukan & Tanah",workorders:"Work Order","wo":"Detail Work Order","wo-new":"Buat Work Order",verification:"Antrian Verifikasi",water:"Manajemen Air",inventory:"Inventori Material",budget:"Biaya & Anggaran",alerts:"Pusat Alert","alert":"Detail Alert","ai-recs":"Rekomendasi AI (Explainable)",reports:"Pusat Laporan",admin:"Administrasi",harvest:"Panen","hs-map":"Hybrid Sensing Command Map","hs-satellite":"Monitoring Satelit","hs-drone":"Monitoring Drone","hs-sensors":"Sensor Tanah","hs-trees":"Monitoring Pohon (Hybrid Sensing)","hs-verification":"Verifikasi Lapangan (Sensing)","hs-history":"Analisis Historis Sensing","hs-compare":"Perbandingan Area","hs-alerts":"Anomali & Alert Sensing","hs-data":"Ketersediaan Data Sensing",integrations:"Integration Hub",users:"Manajemen Pengguna",census:"Sensus Tanaman",labor:"Dashboard Tenaga Kerja",workers:"Database Pekerja",worker:"Profil Pekerja",assign:"Penugasan & Kehadiran",hokrecap:"Rekapitulasi HOK",hokrate:"Tarif Pekerjaan (HOK)","dq-dashboard":"Data Quality Dashboard","dq-issues":"Data Issues","dq-issue":"Detail Data Issue","dq-sources":"Sources & Sync","dq-rules":"Validation Rules","field-home":"Beranda Lapangan","field-tasks":"Tugas Saya (Lapangan)","field-attendance":"Kehadiran Lapangan","field-work":"Pelaksanaan Work Order (Offline)","field-inspection":"Inspeksi Lapangan (Offline)","field-census":"Sensus Lapangan (Offline)","field-map":"Peta Offline","field-drafts":"Data Tersimpan di Perangkat","field-sync":"Sync Center Lapangan","field-downloads":"Download Field Pack"};
 const ROLES={
  "Super Admin":{def:"admin",hide:[],desc:"Akses penuh sistem, konfigurasi, dan manajemen pengguna"},
- "Direksi":{def:"exec",hide:["wo-new","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Ringkasan strategis, risiko, dan keputusan manajemen"},
- "Mitra Lahan":{def:"exec",hide:["integrations","wo-new","admin","users","budget","verification","fertilization","water","inventory","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","planting","census","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Pemilik lahan (landowner) — pemantauan kinerja, kesehatan, panen, dan laporan kebun"},
- "Estate Manager":{def:"ops",hide:["admin","field-attendance","field-work","field-inspection","field-census"],desc:"Kendali penuh operasional harian estate"},
+ "Direksi":{def:"command-center",hide:["wo-new","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Ringkasan strategis, risiko, dan keputusan manajemen"},
+ "Mitra Lahan":{def:"command-center",hide:["integrations","wo-new","admin","users","budget","verification","fertilization","water","inventory","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","planting","census","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Pemilik lahan (landowner) — pemantauan kinerja, kesehatan, panen, dan laporan kebun"},
+ "Estate Manager":{def:"command-center",hide:["admin","field-attendance","field-work","field-inspection","field-census"],desc:"Kendali penuh operasional harian estate"},
  "Agronomy Head":{def:"health",hide:["budget","admin","users","dq-rules","field-attendance","field-work","field-census"],desc:"Kesehatan tanaman, SOP, dan program pemupukan"},
- "Field Supervisor":{def:"ops",hide:["integrations","budget","admin","users","reports","exec","plan-scenario","dq-dashboard","dq-sources","dq-rules"],desc:"Eksekusi dan pelaporan pekerjaan lapangan"},
- "Warehouse Officer":{def:"inventory",hide:["budget","admin","users","census","ai-recs","exec","health","calendar","plan-dashboard","plan-annual","plan-weekly","plan-scenario","protocols","fertilization","verification","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Stok material, batch, dan distribusi gudang"},
- "Seedling Officer":{def:"planting",hide:["integrations","budget","admin","users","exec","reports","ai-recs","verification","fertilization","water","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-attendance","field-inspection"],desc:"Pembibitan, penyulaman, dan pengelolaan bibit di nursery"},
+ "Field Supervisor":{def:"command-center",hide:["integrations","budget","admin","users","reports","plan-scenario","dq-dashboard","dq-sources","dq-rules"],desc:"Eksekusi dan pelaporan pekerjaan lapangan"},
+ "Warehouse Officer":{def:"inventory",hide:["budget","admin","users","census","ai-recs","health","calendar","plan-dashboard","plan-annual","plan-weekly","plan-scenario","protocols","fertilization","verification","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Stok material, batch, dan distribusi gudang"},
+ "Seedling Officer":{def:"planting",hide:["integrations","budget","admin","users","reports","ai-recs","verification","fertilization","water","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-attendance","field-inspection"],desc:"Pembibitan, penyulaman, dan pengelolaan bibit di nursery"},
  "Finance":{def:"budget",hide:["verification","wo-new","admin","users","census","planting","plan-weekly","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Anggaran, realisasi, dan varian biaya"},
 };
 const ROLE_ICONS={"Super Admin":Settings,"Direksi":User,"Mitra Lahan":Users,"Estate Manager":Gauge,"Agronomy Head":FlaskConical,"Field Supervisor":ClipboardList,"Warehouse Officer":Warehouse,"Seedling Officer":Sprout,"Finance":Wallet};
@@ -1200,7 +1200,7 @@ function TreePhoto(props){
 function Sidebar(){
  const {role,route,nav,collapsed,setCollapsed,counts,setRole,logout}=useApp();
  const hide=ROLES[role].hide;
- const [open,setOpen]=useState({"g-dash":true,"g-ops":true,"g-agro":false,"g-plant":false,"g-res":false});
+ const [open,setOpen]=useState({"g-ops":true,"g-agro":false,"g-plant":false,"g-res":false});
  const badgeVal=(b)=> b==="wo"?counts.wo : b==="verif"?counts.verif : b==="alerts"?counts.alerts : b==="dq"?counts.dq : b==="ai"?(counts.ai||0) : b==="field"?(counts.field||0) : 0;
  const visibleChildren=(item)=> (item.children||[]).filter(c=>!hide.includes(c.page));
  const isActive=(p)=> route.page===p || (p==="workorders"&&["wo","wo-new"].includes(route.page)) || (p==="trees"&&route.page==="tree") || (p==="health"&&route.page==="case") || (p==="map"&&route.page==="block") || (p==="dq-issues"&&route.page==="dq-issue");
@@ -4164,131 +4164,207 @@ function ExecEstateHealthMap({selBlock,setSelBlock,onOpenDrawer}){
 const fmtHaX=(x)=>String((+x).toFixed(1)).replace(".",",");
 
 /* ============ Dashboard Eksekutif ============ */
-function ExecDashboard(){
- const {counts,alerts,nav,toast,dateRange,treesData}=useApp();
- const [selBlock,setSelBlock]=useState(EXEC_SEL_CACHE); /* bertahan saat kembali dari deep link */
- useEffect(()=>{ EXEC_SEL_CACHE=selBlock; },[selBlock]);
- const [drawerBlock,setDrawerBlock]=useState(null); /* BlockDrawer kini via aksi "Detail lengkap" */
- const activeAlerts=alerts.filter(a=>a.status!=="Selesai"&&a.severity==="Kritis");
- const healthDist=[
-  {name:"Sangat Sehat",value:CEN_DATA.byStatus["Sangat Sehat"],color:"#15803D"},
-  {name:"Cukup Sehat",value:CEN_DATA.byStatus["Cukup Sehat"],color:"#65A30D"},
-  {name:"Sakit Ringan",value:CEN_DATA.byStatus["Sakit Ringan"],color:"#F59E0B"},
-  {name:"Sakit Berat",value:CEN_DATA.byStatus["Sakit Berat"],color:"#EA580C"},
-  {name:"Mati",value:CEN_DATA.byStatus["Mati"],color:"#9CA3AF"},
- ];
- const riskRank=[...BLOCKS].map(b=>{ const cd=CEN_DATA.byBlock[b.id]; const hp=cd?Math.round(100*(cd.byStatus["Sangat Sehat"]+cd.byStatus["Cukup Sehat"])/cd.total):null; return {...b,health:hp,risk:hp==null?"—":hp>=85?"Rendah":hp>=70?"Sedang":"Tinggi"}; }).sort((a,b)=>(a.health??999)-(b.health??999)).slice(0,6);
- return (
-  <div>
-   <PageHeader title="Command Center Eksekutif" subtitle={"Kebun Agroforestry Gununghejo • periode: "+dateRange}
-    actions={<Btn variant="secondary" onClick={()=>toast("Ringkasan eksekutif diekspor sebagai PDF (simulasi)")}><Download size={14}/>Ekspor Ringkasan</Btn>}/>
-   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-4">
-    <Kpi label="Luas Estate" value="200,68 ha" sub="4 blok (geometri KML)" icon={Map}/>
-    <Kpi label="Populasi Pohon" value={fmtN(CEN_DATA.total)} sub="Sensus Des 2025" icon={Trees}/>
-    <Kpi label="Survival Rate" value={fmtPct((100*(CEN_DATA.total-CEN_DATA.byStatus["Mati"])/CEN_DATA.total).toFixed(1))} sub="hidup / total sensus" icon={Sprout} tone="green"/>
-    <Kpi label="Pohon Sehat" value={fmtN(CEN_DATA.byStatus["Sangat Sehat"]+CEN_DATA.byStatus["Cukup Sehat"])} sub={fmtPct((100*(CEN_DATA.byStatus["Sangat Sehat"]+CEN_DATA.byStatus["Cukup Sehat"])/CEN_DATA.total).toFixed(0))+" dari total"} icon={CheckCircle2} tone="green"/>
-    <Kpi label="Pohon Sulaman YTD" value={fmtN(0)} sub={fmtN(CEN_DATA.byStatus["Mati"])+" mati (perlu sulam)"} icon={RefreshCw} tone="gray"/>
-    <Kpi label="Work Order Aktif" value={counts.wo} sub={counts.overdue+" terlambat"} icon={ClipboardList} tone="blue" onClick={()=>nav("workorders")}/>
-    <Kpi label="Antrian Verifikasi" value={counts.verif} sub="pengajuan menunggu" icon={Eye} tone="purple" onClick={()=>nav("verification")}/>
-    <Kpi label="Alert Kritis" value={counts.alerts} sub="butuh keputusan" icon={AlertTriangle} tone="red" onClick={()=>nav("alerts")}/>
-    <Kpi label="Realisasi Anggaran" value="92,5%" sub="Rp 1,72 M / 1,86 M" icon={Wallet} tone="green"/>
-    <Kpi label="Kasus SLA Terlewat" value="0" sub="kesehatan tanaman" icon={Clock} tone="amber" onClick={()=>nav("health")}/>
-   </div>
-   <AlertLoopExecStrip/>
-   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+/* ============ Command Center Terpadu (role-adaptive) ============
+   Konsolidasi ExecDashboard + OpsDashboard (review: docs/command-center-
+   consolidation-review.md). Satu route, satu component; urutan & visibilitas
+   section mengikuti role. Angka blok dari SATU kontrak: vzBlockCommandAll. */
+function vzBlockCommandAll(agg,criticalAlerts){
+ return vzBlockExecAll(agg,criticalAlerts).map(b=>{ const seed=BLOCKS.find(x=>x.id===b.id)||{};
+  const embung=RESERVOIRS.filter(r=>("GH-B0"+r.id[1])===b.id);
+  const waterBad=embung.filter(r=>r.status==="Kritis"||r.status==="Bocor"||(r.level!=null&&r.level<40)).length;
+  return {...b,activeWO:seed.activeWO||0,activeCases:seed.activeCases||0,supervisor:seed.supervisor||"—",embungN:embung.length,waterBad};
+ });
+}
+/* Antrean prioritas terpadu: alert kritis, WO terlambat, verifikasi, embung, alat, keputusan due. */
+function ccBuildQueue({alerts,wos,counts,decisions}){
+ const items=[];
+ alerts.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai").forEach(a=>items.push({
+  sev:3,badge:"Kritis",cat:"Alert",issue:a.title,area:blockLabel(a.block)||"Estate",
+  pic:a.ownerName||"Belum ada owner",due:(typeof alertIsOverdue==="function"&&alertIsOverdue(a))?"SLA terlewat":"SLA berjalan",
+  act:["Review Alert","alerts",{focus:a.id}]}));
+ wos.filter(w=>w.status==="Terlambat"||(w.due&&w.due<TODAY&&!["Selesai","Dibatalkan","Ditolak"].includes(w.status))).forEach(w=>items.push({
+  sev:3,badge:"Terlambat",cat:"Work Order",issue:w.title,area:blockLabel(w.block),pic:w.supervisor||"—",
+  due:w.due?("tenggat "+fmtD(w.due)):"—",act:["Buka WO","wo",{woId:w.id}]}));
+ if(counts.verif>0) items.push({sev:2,badge:"Menunggu",cat:"Verifikasi",issue:fmtN(counts.verif)+" pengajuan menunggu verifikasi",
+  area:"Estate",pic:"Estate Manager",due:"hari ini",act:["Verifikasi","verification",{}]});
+ RESERVOIRS.filter(r=>r.status==="Kritis"||r.status==="Bocor").forEach(r=>items.push({
+  sev:r.status==="Kritis"?3:2,badge:r.status,cat:"Air / Embung",
+  issue:r.name+(r.status==="Bocor"?" bocor — perlu perbaikan":" level "+r.level+"% (kritis)"),
+  area:"Blok "+r.id[1],pic:FS_BY_BLOCK["GH-B0"+r.id[1]]||"Estate Manager",due:"—",act:["Manajemen Air","water",{}]}));
+ PUMPS.filter(pp=>pp.status==="Gangguan").forEach(pp=>items.push({
+  sev:2,badge:"Gangguan",cat:"Alat",issue:"Pompa "+pp.id+" ("+pp.zone+") gangguan",area:pp.zone,pic:"Teknisi Irigasi",due:"—",act:["Manajemen Air","water",{}]}));
+ (decisions||[]).filter(d=>d.status!=="Selesai"&&d.due&&d.due<=WX_ADD_DAYS(TODAY,3)).forEach(d=>items.push({
+  sev:d.due<TODAY?3:2,badge:d.due<TODAY?"Lewat tenggat":"Segera",cat:"Keputusan",issue:d.t,area:"Manajemen",pic:d.pic,due:fmtD(d.due),act:null}));
+ return items.sort((a,b)=>b.sev-a.sev);
+}
+/* Section yang dapat diciutkan — progressive disclosure per role */
+function CcSection({title,icon:Icon,defaultCollapsed,action,children}){
+ const [open,setOpen]=useState(!defaultCollapsed);
+ return (<Card pad={false} className="mb-4">
+  <div className="px-4 py-2.5 flex items-center justify-between border-b border-gray-100">
+   <button type="button" onClick={()=>setOpen(o=>!o)} className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
+    {Icon&&<Icon size={14} className="text-green-700"/>}{title}
+    <ChevronDown size={15} className={"text-gray-400 transition-transform "+(open?"":"-rotate-90")}/>
+   </button>
+   {action}
+  </div>
+  {open&&<div className="p-4">{children}</div>}
+ </Card>);
+}
+/* Konfigurasi role-adaptive: urutan section + collapsed/hidden (satu component, satu route) */
+const CC_ROLE_CFG={
+ "Direksi":        {order:["queue","map","pulse","dec","snap"],collapsed:["snap"],hidden:[]},
+ "Mitra Lahan":    {order:["queue","map","pulse","dec","snap"],collapsed:["snap"],hidden:[]},
+ "Estate Manager": {order:["queue","map","snap","pulse","dec"],collapsed:[],hidden:[]},
+ "Agronomy Head":  {order:["queue","map","pulse","snap","dec"],collapsed:["dec"],hidden:[]},
+ "Field Supervisor":{order:["queue","snap","map","pulse"],collapsed:["map","pulse"],hidden:["dec"]},
+ "Warehouse Officer":{order:["queue","snap","map"],collapsed:["map"],hidden:["dec","pulse"]},
+ "Seedling Officer":{order:["queue","snap","map"],collapsed:["map"],hidden:["dec","pulse"]},
+ "Finance":        {order:["queue","pulse","dec","map"],collapsed:["map"],hidden:["snap"]},
+ "Super Admin":    {order:["queue","map","snap","pulse","dec"],collapsed:[],hidden:[]},
+};
+const CC_SEV_BADGE={3:"Kritis",2:"Sedang"};
+function CommandCenterPage(){
+ const {alerts,wos,counts,nav,role,dateRange,hsTreePts,toast,decisions,updateDecision}=useApp();
+ const cfg=CC_ROLE_CFG[role]||CC_ROLE_CFG["Super Admin"];
+ const criticalAlerts=useMemo(()=>alerts.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai"),[alerts]);
+ const agg=useMemo(()=>hsTreePts?vzAggregate(hsTreePts,"Semua"):null,[hsTreePts]);
+ const blocks=useMemo(()=>vzBlockCommandAll(agg,criticalAlerts),[agg,criticalAlerts]);
+ const estate=useMemo(()=>vzEstateExec(blocks),[blocks]);
+ const queueAll=useMemo(()=>ccBuildQueue({alerts,wos,counts,decisions}),[alerts,wos,counts,decisions]);
+ const [selBlock,setSelBlock]=useState(null);
+ const [drawerBlock,setDrawerBlock]=useState(null);
+ const [qExpand,setQExpand]=useState(false);
+ const [confOpen,setConfOpen]=useState(false);
+ /* cross-highlight: blok terpilih di peta memfilter antrean */
+ const queue=selBlock?queueAll.filter(q=>q.area===blockLabel(selBlock)||q.area==="Estate"):queueAll;
+ const qShown=qExpand?queue:queue.slice(0,7);
+ const critN=queueAll.filter(q=>q.sev===3).length;
+ /* ---- KPI Level 1 ---- */
+ const onTime=counts.wo?Math.max(0,Math.round(100*(1-counts.overdue/Math.max(1,counts.wo)))):100;
+ const embOps=RESERVOIRS.filter(r=>r.level!=null);
+ const embAvg=embOps.length?Math.round(embOps.reduce((a,r)=>a+r.level,0)/embOps.length):null;
+ const pumpsDown=PUMPS.filter(pp=>pp.status==="Gangguan").length;
+ const resReady=Math.max(0,Math.round(100*128/142)-pumpsDown*5-RESERVOIRS.filter(r=>r.status==="Bocor"||r.status==="Kritis").length*5);
+ const finFull=["Direksi","Finance","Estate Manager","Super Admin"].includes(role);
+ const finHighlight=role==="Mitra Lahan"; /* keputusan produk: Mitra hanya highlight, tanpa detail/drill */
+ const canDecide=["Direksi","Estate Manager","Super Admin"].includes(role);
+ const todayWos=wos.filter(w=>["Berjalan"].includes(w.status)||(w.scheduled===TODAY&&w.status==="Terjadwal"));
+ const censusDays=Math.round((new Date(TODAY)-new Date("2025-12-27"))/864e5);
+ const primaryCta=
+  can(role,"createWo")?<Btn onClick={()=>nav("wo-new")}><Plus size={14}/>Buat Work Order</Btn>
+  :["Direksi","Mitra Lahan"].includes(role)?<Btn variant="secondary" onClick={()=>toast("Ringkasan eksekutif diekspor sebagai PDF (simulasi)")}><Download size={14}/>Ekspor Ringkasan</Btn>
+  :role==="Finance"?<Btn variant="secondary" onClick={()=>nav("budget")}><Wallet size={14}/>Keuangan</Btn>
+  :role==="Warehouse Officer"?<Btn variant="secondary" onClick={()=>nav("inventory")}><Package size={14}/>Inventori</Btn>
+  :role==="Seedling Officer"?<Btn variant="secondary" onClick={()=>nav("planting")}><Sprout size={14}/>Pembibitan</Btn>
+  :null;
+ /* ---- sections ---- */
+ const secQueue=(
+  <CcSection key="queue" title={"Prioritas & Tindakan ("+queue.length+")"} icon={AlertTriangle}
+   action={selBlock?<button onClick={()=>setSelBlock(null)} className="text-xs text-green-700 font-medium hover:underline">Filter: {blockLabel(selBlock)} ×</button>:<span className="text-[11px] text-gray-400">terurut severity</span>}>
+   {queue.length===0?<EmptyState t="Tidak ada item prioritas" d="Semua indikator dalam kondisi normal."/>:
+   <div className="space-y-1.5">
+    {qShown.map((q,i)=>(
+     <div key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+      <Badge v={q.sev===3?"Kritis":"Sedang"}/>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-20 shrink-0">{q.cat}</span>
+      <span className="text-sm text-gray-800 flex-1 min-w-[180px]">{q.issue}</span>
+      <span className="text-xs text-gray-500 shrink-0">{q.area}</span>
+      <span className="text-xs text-gray-500 shrink-0 hidden md:inline">PIC: {q.pic}</span>
+      <span className={"text-xs shrink-0 "+(q.badge==="SLA terlewat"||q.badge==="Lewat tenggat"?"text-red-600 font-semibold":"text-gray-500")}>{q.due}</span>
+      {q.act&&<Btn size="sm" variant="secondary" onClick={()=>nav(q.act[1],q.act[2])}>{q.act[0]}</Btn>}
+     </div>))}
+    {queue.length>7&&<button onClick={()=>setQExpand(e=>!e)} className="text-xs font-medium text-green-700 hover:underline">{qExpand?"Tampilkan lebih sedikit":"+"+(queue.length-7)+" item lainnya"}</button>}
+   </div>}
+  </CcSection>);
+ const secMap=(
+  <CcSection key="map" title="Peta Kesehatan Estate" icon={Map} defaultCollapsed={cfg.collapsed.includes("map")}
+   action={<button onClick={()=>nav("map")} className="text-xs font-semibold text-green-700 hover:underline">Peta Kebun →</button>}>
+   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
     <ExecEstateHealthMap selBlock={selBlock} setSelBlock={setSelBlock} onOpenDrawer={setDrawerBlock}/>
    </div>
-   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
-    <Card title={"Tren survival rate ("+dateRange+")"}>
-     <ResponsiveContainer width="100%" height={200}><LineChart data={SURVIVAL_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis domain={[88,96]} {...AXIS}/><RTooltip {...ChartTip}/><Line type="monotone" dataKey="v" name="Survival %" stroke="#16A34A" strokeWidth={2} dot={{r:3}}/></LineChart></ResponsiveContainer>
+  </CcSection>);
+ const secPulse=(
+  <CcSection key="pulse" title="Performance Pulse" icon={Activity} defaultCollapsed={cfg.collapsed.includes("pulse")}>
+   <div className={"grid grid-cols-1 lg:grid-cols-2 "+(finFull?"xl:grid-cols-3":"")+" gap-4"}>
+    <Card title={"Tren survival ("+dateRange+")"}>
+     <ResponsiveContainer width="100%" height={190}><LineChart data={SURVIVAL_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis domain={[88,96]} {...AXIS}/><RTooltip {...ChartTip}/><Line dataKey="v" name="Survival %" stroke="#16A34A" strokeWidth={2} dot={false}/></LineChart></ResponsiveContainer>
     </Card>
-    <Card title="Anggaran vs aktual (Rp juta)">
-     <ResponsiveContainer width="100%" height={200}><BarChart data={BUDGET_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="anggaran" name="Anggaran" fill="#93C5FD" radius={[3,3,0,0]}/><Bar dataKey="aktual" name="Aktual" fill="#16A34A" radius={[3,3,0,0]}/></BarChart></ResponsiveContainer>
+    <Card title="Eksekusi WO harian">
+     <ResponsiveContainer width="100%" height={190}><AreaChart data={DAILY_PROGRESS}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="d" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Area type="monotone" dataKey="v" name="WO selesai" stroke="#2563EB" fill="#2563EB" fillOpacity={0.25}/></AreaChart></ResponsiveContainer>
     </Card>
-    <Card title="Penyelesaian work order (Juli)">
-     <ResponsiveContainer width="100%" height={200}><BarChart data={WO_COMPLETION}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="target" name="Target" fill="#E5E7EB" radius={[3,3,0,0]}/><Bar dataKey="selesai" name="Selesai" fill="#2563EB" radius={[3,3,0,0]}/></BarChart></ResponsiveContainer>
-    </Card>
-    <Card title="Distribusi kesehatan populasi">
-     <ResponsiveContainer width="100%" height={200}><PieChart><Pie data={healthDist} dataKey="value" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>{healthDist.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><RTooltip {...ChartTip} formatter={(v)=>fmtN(v)}/><Legend wrapperStyle={{fontSize:11}}/></PieChart></ResponsiveContainer>
-    </Card>
-    <Card title="Populasi per komoditas" className="xl:col-span-2">
-     <ResponsiveContainer width="100%" height={200}><BarChart data={COMMODITIES} layout="vertical" margin={{left:8}}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis type="number" {...AXIS}/><YAxis type="category" dataKey="name" width={76} {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>fmtN(v)}/><Bar dataKey="trees" name="Pohon" radius={[0,4,4,0]}>{COMMODITIES.map((c,i)=><Cell key={i} fill={c.color}/>)}</Bar></BarChart></ResponsiveContainer>
-    </Card>
+    {finFull&&<Card title="Anggaran vs aktual (Rp juta)">
+     <ResponsiveContainer width="100%" height={190}><BarChart data={BUDGET_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="plan" name="Anggaran" fill="#93C5FD"/><Bar dataKey="actual" name="Aktual" fill="#2563EB"/></BarChart></ResponsiveContainer>
+    </Card>}
    </div>
-   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <Card title="Peringkat risiko blok" pad={false}>
-     <div className="overflow-x-auto"><table className={T.table}>
-      <thead><tr><th className={T.th}>Blok</th><th className={T.th}>Risiko</th><th className={T.th}>Skor Sehat</th><th className={T.th}>Survival</th><th className={T.th}>Air</th><th className={T.th}>Varian</th><th className={T.th}></th></tr></thead>
-      <tbody>{riskRank.map(b=>(
-       <tr key={b.id} className={T.tr} onClick={()=>setSelBlock(b.id)}>
-        <td className={T.td+" font-semibold"}>{b.name}</td><td className={T.td}><Badge v={b.risk}/></td><td className={T.td}>{b.health}</td><td className={T.td}>{fmtPct(b.survival)}</td>
-        <td className={T.td}>{b.water}</td><td className={T.td}>{b.variance?((b.variance>0?"+":"")+fmtPct(b.variance)):"—"}</td>
-        <td className={T.td}><Btn size="sm" variant="secondary" onClick={(e)=>{e.stopPropagation();nav("block",{blockId:b.id});}}>Lihat Blok</Btn></td>
-       </tr>))}</tbody>
-     </table></div>
-    </Card>
-    <Card title="Keputusan manajemen berjalan" pad={false}>
-     <div className="overflow-x-auto"><table className={T.table}>
-      <thead><tr><th className={T.th}>Keputusan / Tindak Lanjut</th><th className={T.th}>PIC</th><th className={T.th}>Tenggat</th><th className={T.th}>Status</th></tr></thead>
-      <tbody>{DECISIONS.map((d,i)=>(
-       <tr key={i}><td className={T.td+" whitespace-normal"}>{d.t}</td><td className={T.td}>{d.pic}</td><td className={T.td}>{fmtD(d.due)}</td><td className={T.td}><Badge v={d.status}/></td></tr>))}</tbody>
-     </table></div>
-    </Card>
+  </CcSection>);
+ const secSnap=(
+  <CcSection key="snap" title="Execution Snapshot" icon={ClipboardList} defaultCollapsed={cfg.collapsed.includes("snap")}
+   action={<button onClick={()=>nav("workorders")} className="text-xs font-semibold text-green-700 hover:underline">Semua WO →</button>}>
+   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-center">
+    {[["WO hari ini",todayWos.length,null],["Verifikasi",counts.verif,null],["HOK","~128/142","demo"],["Level embung",embAvg!=null?embAvg+"%":"—","rata-rata beroperasi"],["Alat gangguan",pumpsDown,null]].map(([l,v,note],i)=>(
+     <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-2">
+      <div className="text-base font-bold text-gray-900">{v}</div>
+      <div className="text-[10px] text-gray-500 leading-tight">{l}{note?" · "+note:""}</div>
+     </div>))}
    </div>
-   {drawerBlock && <BlockDrawer blockId={drawerBlock} onClose={()=>setDrawerBlock(null)}/>}
-  </div>);
-}
-
-/* ============ Dashboard Operasional ============ */
-function OpsDashboard(){
- const {wos,counts,nav,role}=useApp();
- const todayWos=wos.filter(w=>["Berjalan"].includes(w.status) || (w.scheduled===TODAY && w.status==="Terjadwal"));
- const blockRank=[...BLOCKS].map(b=>{ const cd=CEN_DATA.byBlock[b.id]; const hp=cd?Math.round(100*(cd.byStatus["Sangat Sehat"]+cd.byStatus["Cukup Sehat"])/cd.total):null; return {...b,_hp:hp,risk:hp==null?"—":hp>=85?"Rendah":hp>=70?"Sedang":"Tinggi",supervisor:(b.supervisor&&b.supervisor!=="—")?b.supervisor:"Field Supervisor "+b.name}; }).sort((a,b)=>(a._hp??999)-(b._hp??999)).slice(0,6);
+   {todayWos.length===0?<EmptyState t="Tidak ada pekerjaan hari ini" d="Buat work order baru atau cek jadwal minggu ini."/>:
+   <div className="overflow-x-auto"><table className={T.table}>
+    <thead><tr><th className={T.th}>ID</th><th className={T.th}>Pekerjaan</th><th className={T.th}>Blok</th><th className={T.th}>Supervisor</th><th className={T.th}>Status</th><th className={T.th}>Progres</th></tr></thead>
+    <tbody>{todayWos.slice(0,6).map(w=>(
+     <tr key={w.id} className={T.tr} onClick={()=>nav("wo",{woId:w.id})}>
+      <td className={T.td+" font-medium text-green-700"}>{w.id}</td><td className={T.td}>{w.title}</td><td className={T.td}>{blockLabel(w.block)}</td>
+      <td className={T.td}>{w.supervisor}</td><td className={T.td}><Badge v={w.status}/></td>
+      <td className={T.td}><div className="flex items-center gap-2 w-28"><ProgressBar v={w.progress}/><span className="text-xs text-gray-500">{w.progress}%</span></div></td>
+     </tr>))}</tbody>
+   </table></div>}
+  </CcSection>);
+ const decNext={"Baru":"Berjalan","Berjalan":"Selesai"};
+ const secDec=(
+  <CcSection key="dec" title="Keputusan & Akuntabilitas" icon={CheckCircle2} defaultCollapsed={cfg.collapsed.includes("dec")}>
+   <div className="overflow-x-auto"><table className={T.table}>
+    <thead><tr><th className={T.th}>Keputusan / Tindak Lanjut</th><th className={T.th}>PIC</th><th className={T.th}>Tenggat</th><th className={T.th}>Status</th>{canDecide&&<th className={T.th}></th>}</tr></thead>
+    <tbody>{decisions.map((d,i)=>(
+     <tr key={i}>
+      <td className={T.td+" whitespace-normal"}>{d.t}</td><td className={T.td}>{d.pic}</td>
+      <td className={T.td+(d.due<TODAY&&d.status!=="Selesai"?" text-red-600 font-semibold":"")}>{fmtD(d.due)}</td>
+      <td className={T.td}><Badge v={d.status}/></td>
+      {canDecide&&<td className={T.td}>{decNext[d.status]&&<Btn size="sm" variant="secondary" onClick={()=>updateDecision(i,{status:decNext[d.status]})}>→ {decNext[d.status]}</Btn>}</td>}
+     </tr>))}</tbody>
+   </table></div>
+  </CcSection>);
+ const SECTIONS={queue:secQueue,map:secMap,pulse:secPulse,snap:secSnap,dec:secDec};
  return (
   <div>
-   <PageHeader title="Dashboard Operasional" subtitle="Kendali harian pekerjaan lapangan, tim, dan sumber daya"
-    actions={can(role,"createWo")?<Btn onClick={()=>nav("wo-new")}><Plus size={14}/>Buat Work Order</Btn>:null}/>
-   <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
-    <Kpi label="WO Hari Ini" value={todayWos.length} sub="berjalan / mulai hari ini" icon={ClipboardList} tone="blue" onClick={()=>nav("workorders")}/>
-    <Kpi label="WO Terlambat" value={counts.overdue} icon={Clock} tone="red" onClick={()=>nav("workorders",{overdue:true})}/>
-    <Kpi label="Tenaga Kerja" value="128/142" sub="HOK tersedia hari ini" icon={Users}/>
-    <Kpi label="Kendala Material" value="2 WO" sub="stok NPK & abamektin" icon={Package} tone="amber" onClick={()=>nav("inventory")}/>
-    <Kpi label="Downtime Alat" value="1 unit" sub="Pompa P-03 gangguan" icon={Gauge} tone="amber" onClick={()=>nav("water")}/>
-    <Kpi label="Backlog Verifikasi" value={counts.verif} icon={Eye} tone="purple" onClick={()=>nav("verification")}/>
-    <Kpi label="Status Air" value="2 blok" sub="di bawah ambang kelembapan" icon={Droplets} tone="red" onClick={()=>nav("water")}/>
+   <PageHeader title="Command Center" subtitle={"Kebun Agroforestry Gununghejo • periode: "+dateRange}
+    actions={<div className="flex items-center gap-2">
+     <div className="relative">
+      <button onClick={()=>setConfOpen(o=>!o)} className="text-[11px] px-2 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-600 hover:border-green-600" title="Kesegaran & sumber data">
+       ⓘ Data: sensus {censusDays} hr · citra 20 Jul · WO live
+      </button>
+      {confOpen&&<div className="absolute right-0 mt-1 z-30 w-72 rounded-lg border border-gray-200 bg-white shadow-lg p-3 text-xs text-gray-600 space-y-1">
+       <div className="font-semibold text-gray-800 mb-1">Kesegaran & confidence data</div>
+       <div>• Sensus pohon: Des 2025 ({censusDays} hari) · coverage ±96%</div>
+       <div>• Citra sensing: 20 Jul 2026 · satelit + sensor</div>
+       <div>• Work order & alert: live (sesi)</div>
+       <div>• Embung & pompa: data lapangan Jul 2026</div>
+       <div>• Tenaga kerja, material, anggaran: <b>~ demo</b> (belum tersambung)</div>
+       <div className="pt-1 border-t border-gray-100">Konflik antar-sumber dikelola di <button className="text-green-700 font-medium hover:underline" onClick={()=>nav("dq-issues")}>Data Issues</button>.</div>
+      </div>}
+     </div>
+     {primaryCta}
+    </div>}/>
+   {/* Level 1 — Estate Status */}
+   <div className={"grid grid-cols-2 md:grid-cols-3 "+((finFull||finHighlight)?"xl:grid-cols-5":"xl:grid-cols-4")+" gap-3 mb-4"}>
+    <Kpi label="Estate Health Score" value={estate.score!=null?estate.score+"/100":"—"} sub={fmtN(estate.n)+" pohon · sensus + sensing"} icon={Sprout} tone={estate.score>=80?"green":estate.score>=60?"amber":"red"} onClick={()=>nav("map")}/>
+    <Kpi label="Critical Exceptions" value={critN} sub={critN>0?"butuh tindakan segera":"tidak ada item kritis"} icon={AlertTriangle} tone={critN>=4?"red":critN>0?"amber":"green"}/>
+    <Kpi label="WO Tepat Waktu" value={onTime+"%"} sub={fmtN(counts.wo)+" aktif · "+fmtN(counts.overdue)+" terlambat"} icon={ClipboardList} tone={onTime>=90?"green":onTime>=75?"amber":"red"} onClick={()=>nav("workorders")}/>
+    <Kpi label="Resource Readiness" value={"~"+resReady+"%"} sub={"HOK·material·alat·air (sebagian demo)"} icon={Gauge} tone={resReady>=90?"green":resReady>=70?"amber":"red"}/>
+    {finFull&&<Kpi label="Budget Variance" value="~92,5%" sub="Rp 1,72 M / 1,86 M (demo)" icon={Wallet} tone="green" onClick={()=>nav("budget")}/>}
+    {finHighlight&&<Kpi label="Realisasi Anggaran" value="~92,5%" icon={Wallet} tone="green"/>}
    </div>
-   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
-    <Card title="Biaya per aktivitas — Juli (Rp juta)" className="xl:col-span-2">
-     <ResponsiveContainer width="100%" height={220}><BarChart data={COST_BY_ACTIVITY}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="name" {...AXIS} interval={0} angle={-14} textAnchor="end" height={52}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Bar dataKey="v" name="Biaya (jt)" fill="#16A34A" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>
-    </Card>
-    <Card title="Progres harian penyelesaian WO">
-     <ResponsiveContainer width="100%" height={220}><AreaChart data={DAILY_PROGRESS}><CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/><XAxis dataKey="d" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Area type="monotone" dataKey="v" name="WO selesai" stroke="#2563EB" fill="#DBEAFE" strokeWidth={2}/></AreaChart></ResponsiveContainer>
-    </Card>
-   </div>
-   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <Card title={"Pekerjaan hari ini ("+todayWos.length+")"} pad={false} action={<Btn size="sm" variant="ghost" onClick={()=>nav("workorders")}>Semua WO<ChevronRight size={13}/></Btn>}>
-     {todayWos.length===0 ? <EmptyState t="Tidak ada pekerjaan hari ini" d="Buat work order baru atau cek jadwal minggu ini."/> :
-     <div className="overflow-x-auto"><table className={T.table}>
-      <thead><tr><th className={T.th}>ID</th><th className={T.th}>Pekerjaan</th><th className={T.th}>Blok</th><th className={T.th}>Supervisor</th><th className={T.th}>Status</th><th className={T.th}>Progres</th></tr></thead>
-      <tbody>{todayWos.map(w=>(
-       <tr key={w.id} className={T.tr} onClick={()=>nav("wo",{woId:w.id})}>
-        <td className={T.td+" font-medium text-green-700"}>{w.id}</td><td className={T.td}>{w.title}</td><td className={T.td}>{blockLabel(w.block)}</td>
-        <td className={T.td}>{w.supervisor}</td><td className={T.td}><Badge v={w.status}/></td>
-        <td className={T.td}><div className="flex items-center gap-2 w-28"><ProgressBar v={w.progress}/><span className="text-xs text-gray-500">{w.progress}%</span></div></td>
-       </tr>))}</tbody>
-     </table></div>}
-    </Card>
-    <Card title="Peringkat blok berdasarkan beban kerja" pad={false}>
-     <div className="overflow-x-auto"><table className={T.table}>
-      <thead><tr><th className={T.th}>Blok</th><th className={T.th}>WO Aktif</th><th className={T.th}>Kasus</th><th className={T.th}>Risiko</th><th className={T.th}>Supervisor</th></tr></thead>
-      <tbody>{blockRank.map(b=>(
-       <tr key={b.id} className={T.tr} onClick={()=>nav("block",{blockId:b.id})}>
-        <td className={T.td+" font-semibold"}>{b.name}</td><td className={T.td}>{b.activeWO}</td><td className={T.td}>{b.activeCases}</td>
-        <td className={T.td}><Badge v={b.risk}/></td><td className={T.td}>{b.supervisor}</td>
-       </tr>))}</tbody>
-     </table></div>
-    </Card>
-   </div>
+   {cfg.order.filter(k=>!cfg.hidden.includes(k)).map(k=>SECTIONS[k])}
+   {drawerBlock&&<BlockDrawer blockId={drawerBlock} onClose={()=>setDrawerBlock(null)}/>}
   </div>);
 }
 
@@ -5710,7 +5786,7 @@ function HarvestPage(){
 function AdminPage(){
  const {toast,confirmAction,resetDemo,users,role,nav}=useApp();
  const features=[
-  ["Command Center Eksekutif","exec"],["Buat & jalankan WO","createWo"],["Verifikasi pekerjaan","verify"],
+  ["Command Center","command-center"],["Buat & jalankan WO","createWo"],["Verifikasi pekerjaan","verify"],
   ["Aksi kasus kesehatan","caseAction"],["Keuangan & anggaran","budget"],["Manajemen pengguna","users"],["Administrasi","admin"]
  ];
  const roleHas=(r,key)=>{
@@ -11625,34 +11701,6 @@ function ALStepper({a}){
   </div>);
 }
 /* Strip ringkas untuk Command Center (klik → filter Pusat Alert) */
-function AlertLoopExecStrip(){
- const {alerts,nav}=useApp();
- const open=alerts.filter(a=>alertLifecycleStatus(a)==="Open");
- const mttr=(()=>{ const cl=alerts.filter(a=>a.closedAt&&a.detectedAt&&!a.disposition); if(!cl.length) return "—";
-  return (cl.reduce((s,a)=>s+alHoursBetween(a.detectedAt,a.closedAt),0)/cl.length/24).toFixed(1).replace(".",",")+" hari"; })();
- const items=[
-  ["Kritis aktif",open.filter(a=>a.severity==="Kritis").length,"kritis"],
-  ["Belum diakui",open.filter(a=>a.stage===AL_S.NEW).length,"unack"],
-  ["SLA terlewat",open.filter(a=>alertIsOverdue(a)).length,"overdue"],
-  ["Menunggu verifikasi",open.filter(a=>a.stage===AL_S.PENDING_VERIFICATION).length,"verif"],
-  ["Reopened",open.filter(a=>a.stage===AL_S.REOPENED).length,"reopen"],
-  ["MTTR",mttr,null],
- ];
- return (
-  <Card className="mb-4" pad={false}>
-   <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-1.5"><Bell size={13}/>Closed-Loop Alert</span>
-    <button onClick={()=>nav("alerts")} className="text-xs font-semibold text-green-700 hover:underline">Pusat Alert →</button>
-   </div>
-   <div className="px-3 py-2 grid grid-cols-3 md:grid-cols-6 gap-2">
-    {items.map(([l,v,qf],i)=>(
-     <button key={i} onClick={()=>qf?nav("alerts",{qf}):nav("alerts")} className="rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5 text-left hover:border-green-600">
-      <div className={"text-base font-bold "+((typeof v==="number"&&v>0&&["kritis","overdue","reopen","unack"].includes(qf))?"text-red-700":"text-gray-900")}>{v}</div>
-      <div className="text-[10px] text-gray-500 leading-tight">{l}</div>
-     </button>))}
-   </div>
-  </Card>);
-}
 /* Panel konteks alert pada Antrian Verifikasi */
 function AlertVerificationContext({wo}){
  const app=useApp(); const {alerts,nav}=app; const L=app.alertLoop;
@@ -13814,6 +13862,8 @@ export default function App(){
  const [route,setRoute]=useState({page:"login",params:{}});
  const [collapsed,setCollapsed]=useState(false);
  const [wos,setWos]=useState(()=>AL_SEED_WOS.concat(INIT_WOS));
+ const [decisions,setDecisions]=useState(DECISIONS); /* keputusan manajemen — status-flow ringan */
+ const updateDecision=(i,patch)=>setDecisions(ds=>ds.map((d,x)=>x===i?{...d,...patch}:d));
  const [hsSel,setHsSel]=useState("GH");
  const [hsSource,setHsSource]=useState("all");
  const [hsMetricId,setHsMetricId]=useState("NDVI");
@@ -13883,7 +13933,8 @@ export default function App(){
 
  const toast=(msg,kind="ok")=>{ const id=Date.now()+Math.random(); setToasts(ts=>[...ts,{id,msg,kind}]); setTimeout(()=>setToasts(ts=>ts.filter(t=>t.id!==id)),3800); };
  const confirmAction=(title,msg,onYes)=>setConfirm({title,msg,onYes});
- const nav=(page,params={})=>{ setRoute({page,params}); };
+ const CC_ROUTE_ALIAS={exec:"command-center",ops:"command-center"};
+ const nav=(page,params={})=>{ setRoute({page:CC_ROUTE_ALIAS[page]||page,params}); };
  const login=(r)=>{ const u=users.find(x=>x.role===r&&x.status==="Aktif"); if(u){ loginUser(u); } else { setRole(r); setRoute({page:"map",params:{}}); toast("Masuk sebagai "+r); } };
 
  /* ===== Data Quality Center — state & aksi (prototype in-memory; audit trail hanya bertambah, tidak pernah diedit/dihapus) ===== */
@@ -13951,7 +14002,7 @@ export default function App(){
   }).catch(()=>setHsTreeErr(true));
  },[hsTreeTry]);
 
- const ctx={role,setRole,switchRole,login,route,nav,collapsed,setCollapsed,counts,
+ const ctx={role,setRole,switchRole,login,route,nav,collapsed,setCollapsed,counts,decisions,updateDecision,
   wos,updateWo,addWo,cases,updateCase,addCase,alerts,updateAlert,addAlert,
   alertLoop, alertInspections:alertLoop.inspections, alertActionPlans:alertLoop.plans, alertEvidence:alertLoop.evidence, alertVerifications:alertLoop.verifications, alertAssignments:alertLoop.assignments,
   treesData,setTreesData,hsTreePts,toast,confirmAction,paletteOpen,setPaletteOpen,dateRange,setDateRange,resetDemo,dark,setDark,workers,setWorkers,
@@ -13963,8 +14014,7 @@ export default function App(){
 
  const page=(()=>{
   switch(route.page){
-   case "exec": return <ExecDashboard/>;
-   case "ops": return <OpsDashboard/>;
+   case "command-center": case "exec": case "ops": return <CommandCenterPage/>;
    case "map": return <MapPage/>;
    case "block": return <BlockDetailPage/>;
    case "trees": return <TreeRegistryPage/>;
