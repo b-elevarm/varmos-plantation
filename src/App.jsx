@@ -2137,6 +2137,7 @@ function MapPage(){
  const plotUx={ openInspect:()=>setInspOpen(true), openAlerts:()=>{ setAnaTab("alert"); setAlertFocus(Date.now()); scrollAna(); }, openDetail:scrollAna };
  const handleSelect=(id)=>{ setPinnedId(id); setCenterOn({id,n:Date.now()}); };
  const mapFsRef=useRef(null); /* wrapper peta — target fullscreen (ikut membawa chip/legenda/kompas) */
+ const [view3d,setView3d]=useState(false); /* mode 3D: terrain elevasi + kamera miring */
  const [drill,setDrill]=useState(()=>{ /* restorasi deep link: route.params (antar-halaman) lalu ?block=&cluster=&plot= (URL) */
   const rp=(route&&route.params)||{};
   if(rp.block||rp.cluster||rp.plot){ const q="?"+["block","cluster","plot"].filter(k=>rp[k]).map(k=>k+"="+encodeURIComponent(rp[k])).join("&"); return mwParseQuery(q); }
@@ -2316,7 +2317,7 @@ function MapPage(){
          peta saat panel insight lebih tinggi; peta melar mengisi sisa ruang. */}
      <Card pad={false} className="overflow-hidden h-full flex flex-col">
       <div ref={mapFsRef} className="relative map-fs-wrap flex-1" style={{minHeight:MAP_H,...(layers.base!=="polos"?{background:"#3a4453"}:{})}}>
-       <PlantationMap height="100%" basemap={layers.base} fsContainer={mapFsRef}
+       <PlantationMap height="100%" basemap={layers.base} fsContainer={mapFsRef} view3d={view3d}
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
@@ -2330,6 +2331,8 @@ function MapPage(){
          <button key={k} type="button" onClick={()=>toggle(k)} aria-pressed={!!layers[k]}
           className={"pointer-events-auto px-2.5 py-1 rounded-full text-[11px] font-medium border shadow-sm backdrop-blur-[2px] transition-colors "+(layers[k]?"bg-green-600 text-white border-green-600":"bg-white/90 text-gray-500 border-gray-200 hover:border-green-500 hover:text-green-700")}>{l}</button>
         ))}
+        <button type="button" onClick={()=>setView3d(v=>!v)} aria-pressed={view3d} title="Terrain elevasi + kamera miring"
+         className={"pointer-events-auto px-2.5 py-1 rounded-full text-[11px] font-bold border shadow-sm backdrop-blur-[2px] transition-colors "+(view3d?"bg-blue-600 text-white border-blue-600":"bg-white/90 text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-700")}>⛰️ 3D</button>
        </div>
        {/* ===== Hierarki lahan — overlay di dalam peta (tersedia juga saat fullscreen) ===== */}
        {hierCollapsed
@@ -3935,7 +3938,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    <Group title="Peta Dasar">
     <Row label="Satelit" note="tile Esri World Imagery" control={<Rad name="base" on={layers.base==="satelit"} fn={()=>set("base","satelit")}/>}/>
     <Row label="Tanpa citra (polos)" control={<Rad name="base" on={layers.base==="polos"} fn={()=>set("base","polos")}/>}/>
-    <Row label="Terrain" note="fase 3 (3D)" disabled control={<Rad name="base" on={false} disabled/>}/>
+    <Row label="Terrain 3D" note="aktifkan via toggle ⛰️ 3D di peta" disabled control={<Rad name="base" on={false} disabled/>}/>
     <Row label="Street map" note="OpenStreetMap" control={<Rad name="base" on={layers.base==="jalan"} fn={()=>set("base","jalan")}/>}/>
     <Row label="Sentinel-2 monitoring" note="pass terbaru ±30 m · NASA GIBS (kesegaran, bukan detail)" control={<Rad name="base" on={layers.base==="monitoring"} fn={()=>set("base","monitoring")}/>}/>
     <Row label="Hybrid" note="perlu tile" disabled control={<Rad name="base" on={false} disabled/>}/>

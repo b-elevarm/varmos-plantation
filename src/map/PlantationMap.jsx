@@ -60,7 +60,7 @@ const PlantationMap = forwardRef(function PlantationMap(
   { height, basemap = "satelit", offlineImage = null, areas, context = null, trees = null,
     labels = [], showLabels = true, selectedId = null, fitKey = "", focusTarget = null,
     points = [], showPoints = true, roads = null, showRoads = true,
-    fsContainer = null, onAreaClick, onTreeClick },
+    fsContainer = null, view3d = false, onAreaClick, onTreeClick },
   ref
 ) {
   const boxRef = useRef(null);
@@ -107,7 +107,7 @@ const PlantationMap = forwardRef(function PlantationMap(
     });
     mapRef.current = map;
     if (typeof window !== "undefined") window.__vzmap = map; // alat inspeksi (dev)
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
     /* Fullscreen atas wrapper luar (bukan hanya kanvas) agar chip toggle,
        legenda, dan kompas angin ikut tampil saat layar penuh. */
     if (fsContainer && fsContainer.current)
@@ -116,6 +116,11 @@ const PlantationMap = forwardRef(function PlantationMap(
     map.touchZoomRotate.enable();
 
     map.on("load", () => {
+      /* DEM elevasi nyata (AWS Terrain Tiles, terrarium, tanpa API key) untuk mode 3D.
+         Tile baru diambil saat setTerrain aktif — tanpa 3D tidak ada trafik ekstra. */
+      if (!map.getSource("dem"))
+        map.addSource("dem", { type: "raster-dem", encoding: "terrarium", tileSize: 256, maxzoom: 15,
+          tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"] });
       map.addSource("areas", { type: "geojson", data: EMPTY_FC, promoteId: "id" });
       map.addSource("context", { type: "geojson", data: EMPTY_FC });
       map.addSource("trees", { type: "geojson", data: EMPTY_FC });
@@ -227,6 +232,19 @@ const PlantationMap = forwardRef(function PlantationMap(
     });
   }, [ready, points, showPoints]);
 
+  /* ---- mode 3D: terrain elevasi + kemiringan kamera ---- */
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    if (view3d) {
+      try { map.setTerrain({ source: "dem", exaggeration: 1.6 }); } catch (e) { /* dem opsional */ }
+      map.easeTo({ pitch: 55, bearing: -15, duration: 700 });
+    } else {
+      try { map.setTerrain(null); } catch (e) { /* noop */ }
+      map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
+    }
+  }, [ready, view3d]);
+
   /* ---- highlight terpilih ---- */
   useEffect(() => {
     if (ready) mapRef.current.setFilter("areas-selected", ["==", ["get", "id"], selectedId || "__none__"]);
@@ -318,7 +336,7 @@ const PlantationMap = forwardRef(function PlantationMap(
       {attribution && (
         <div style={{ position: "absolute", bottom: 2, right: 2, zIndex: 5, font: "9px Inter,system-ui,sans-serif",
           color: "rgba(255,255,255,.92)", background: "rgba(0,0,0,.4)", padding: "1px 5px", borderRadius: 4 }}>
-          {attribution}{monitorNote}{offlineImage && basemap === "satelit" ? " · offline © Google Earth" : ""}
+          {attribution}{monitorNote}{view3d ? " · Terrain © Mapzen/AWS" : ""}{offlineImage && basemap === "satelit" ? " · offline © Google Earth" : ""}
         </div>
       )}
     </div>
