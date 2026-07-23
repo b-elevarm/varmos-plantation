@@ -1307,9 +1307,9 @@ function Sidebar(){
     <button onClick={()=>{logout();nav("login");}} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">
      <LogOut size={17}/>{!collapsed && "Keluar"}
     </button>
-    {!collapsed&&<div className="mt-2 pt-2.5 border-t border-gray-100 px-2.5 pb-1 flex items-center gap-2">
-     <span className="text-[9px] uppercase tracking-wider text-gray-400 whitespace-nowrap">Proprietary of</span>
-     <img src="/elevarm-color.png" alt="Elevarm" className="h-4" draggable={false}/>
+    {!collapsed&&<div className="mt-2 pt-3 border-t border-gray-100 px-2.5 pb-1.5">
+     <div className="text-[9px] uppercase tracking-wider text-gray-400">Proprietary of</div>
+     <img src="/elevarm-color.png" alt="Elevarm" className="h-8 mt-1.5" draggable={false}/>
     </div>}
    </div>
   </aside>);
