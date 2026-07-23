@@ -2368,9 +2368,9 @@ function MapPage(){
     </> : <AreaInsightPanel drill={drill} metric={metric} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} setHover={setHoverId} onSelect={handleSelect} onCollapse={()=>setInsightCollapsed(true)} plotUx={plotUx}/>}
    </div>
    {/* ===== Analytics section ===== */}
-   {/* Lebar analitik disamakan dengan lebar kartu peta: beri margin kanan
-       selebar panel insight (terbuka/tertutup) + gap, hanya di layar ≥lg. */}
-   <div ref={anaRef} className={"mt-4 scroll-mt-4 "+(insightCollapsed?"lg:mr-[48px]":"lg:mr-[372px] xl:mr-[392px]")}><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus}/></div>
+   {/* Analitik lebar penuh — mengisi juga ruang di bawah panel insight kanan
+       (kolom peta & insight kini sama tinggi, jadi baris berakhir rata). */}
+   <div ref={anaRef} className="mt-4 scroll-mt-4"><AreaDataViz drill={drill} goBlok={goBlok} goCluster={goCluster} onDrill={onDrill} comF={fCom} setComF={setFCom} setHover={setHoverId} onSelect={handleSelect} period={period} setPeriod={setPeriod} tab={anaTab} onTab={onAnaTab} plantFilter={plantFilter} onPlantFilter={setPlantFilter} alertFocus={alertFocus}/></div>
    {inspOpen&&drill.petak && <PlotInspectionDrawer petakId={drill.petak} onClose={()=>setInspOpen(false)}/>}
    {sel&&drill.level==="blok" && <BlockDrawer blockId={sel} onClose={()=>setSel(null)}/>}
    {layerOpen && <MapLayerDrawer layers={layers} setLayers={setLayers} onClose={()=>setLayerOpen(false)}/>}
