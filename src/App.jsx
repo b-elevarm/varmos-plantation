@@ -2158,6 +2158,8 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState(()=>sbMap&&sbMap.length===1?sbMap[0]:"Semua");
+ /* ganti akun via switcher (tanpa remount): fokus ulang ke blok penugasan FS baru */
+ useEffect(()=>{ if(sbMap&&sbMap.length===1){ setSel(sbMap[0]); setFBlock(sbMap[0]); } },[curUser&&curUser.id]);
  const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,embung:true,joglo:true,jalan:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
