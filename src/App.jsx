@@ -67,6 +67,7 @@ const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov
 const WIB_DATE_ISO=(d)=>{ try{ return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).format(d); }
  catch(e){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); } };
 const TODAY = WIB_DATE_ISO(new Date());
+const YMD_LOCAL=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); /* format lokal — toISOString bergeser -1 hari di WIB */
 const fmtN = (n)=> new Intl.NumberFormat("id-ID").format(Math.round(n));
 const fmtRp = (n)=> "Rp " + fmtN(n);
 const fmtRpC = (n)=> n>=1e9 ? "Rp " + (n/1e9).toFixed(2).replace(".",",") + " M" : n>=1e6 ? "Rp " + (n/1e6).toFixed(1).replace(".",",") + " jt" : fmtRp(n);
@@ -582,7 +583,7 @@ const IRRIGATION_SCHEDULE=[
    kegiatan) adalah DATA NYATA aplikasi.
    ============================================================ */
 const WX_LABELS={cerah:"Cerah",berawan:"Berawan",hujanRingan:"Hujan ringan",hujanSedang:"Hujan sedang",hujanLebat:"Hujan lebat"};
-const WX_ADD_DAYS=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const WX_ADD_DAYS=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return YMD_LOCAL(d); };
 const WX_DOW=["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 const wxDow=(iso)=>WX_DOW[new Date(iso+"T00:00:00").getDay()];
 /* Profil musim Jawa Barat (Purwakarta): indeks basah 0..1 per bulan (kemarau Jun–Sep rendah) */
@@ -4777,7 +4778,7 @@ function CreateWoPage(){
  const selArea=f.locs.reduce((a,pid)=>a+((HS_GEO.units[pid]||{}).areaHa||0),0);
  const selBlocks=[...new Set(f.locs.map(pid=>{const m=String(pid).match(/^B(\d+)C/);return m?"GH-B0"+m[1]:null;}).filter(Boolean))];
  const selPop=useMemo(()=>{ if(!hsTreePts) return null; const D=hsTreePts,set2=new Set(f.locs); let n=0; for(let i=0;i<D.n;i++){ if(D.pk[i]>=0&&set2.has(D.pkc[D.pk[i]])) n++; } return n; },[hsTreePts,f.locs]);
- const dueDate=(()=>{ const d=new Date(f.scheduled+"T00:00:00"); d.setDate(d.getDate()+Math.max(0,Number(f.days)-1)); return d.toISOString().slice(0,10); })();
+ const dueDate=(()=>{ const d=new Date(f.scheduled+"T00:00:00"); d.setDate(d.getDate()+Math.max(0,Number(f.days)-1)); return YMD_LOCAL(d); })();
  const laborCost=Number(f.team)*Number(f.days)*HOK_RATE;
  const matCost=f.materials.reduce((a,m)=>{ const inv=INIT_INV.find(i=>i.name===m.name); return a+(inv?inv.price*Number(m.qty||0):0); },0);
  const sops=SOPS.filter(s=>s.commodity===b.commodity||s.commodity==="umum");
@@ -7424,10 +7425,11 @@ const LB_COST_TREND=[{m:"Feb",v:118},{m:"Mar",v:132},{m:"Apr",v:145},{m:"Mei",v:
 
 /* ============ Absensi HOK via FINGERPRINT (tersimpan langsung dari mesin sidik jari ke database) ============
    Tiap blok punya 1 mesin fingerprint; scan masuk & pulang tercatat otomatis → nilai HOK dihitung. Read-only dari device. */
-const LB_TODAY="2026-07-20";
+const lbYmd=YMD_LOCAL;
+const LB_TODAY=(()=>{ const d=new Date(TODAY+"T00:00:00"); while(d.getDay()===0) d.setDate(d.getDate()-1); return lbYmd(d); })(); /* hari kerja terakhir (Minggu libur) */
 const LB_FP_DEVICE={"GH-B01":"FP-B01 · Fingerspot Revo","GH-B02":"FP-B02 · Fingerspot Revo","GH-B03":"FP-B03 · Solution X105","GH-B04":"FP-B04 · Fingerspot Revo-W"};
 const LB_ATT_DEF=[["Hadir penuh",1,0.80],["Setengah hari",0.5,0.07],["Lembur",1,0.03],["Izin",0,0.03],["Sakit",0,0.03],["Tidak hadir",0,0.04]];
-const lbWorkdays=(from,to)=>{ const days=[]; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00"); while(d<=end){ if(d.getDay()!==0) days.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1);} return days; };
+const lbWorkdays=(from,to)=>{ const days=[]; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00"); while(d<=end){ if(d.getDay()!==0) days.push(lbYmd(d)); d.setDate(d.getDate()+1);} return days; };
 const LB_ATT_DAYS=lbWorkdays("2026-07-01",LB_TODAY);
 const LB_ATTEND=(()=>{ const arr=[]; const active=LB_WORKERS.filter(w=>w.status==="Aktif");
  active.forEach(w=>{ LB_ATT_DAYS.forEach(date=>{ const r=lbRng(parseInt(w.id.slice(3))*100003 + parseInt(date.replace(/-/g,"")));
@@ -7526,9 +7528,9 @@ function LaborDashboard(){
     </Card>
    </div>
    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <Card title="Penugasan hari ini" pad={false} action={<Btn size="sm" variant="ghost" onClick={()=>nav("assign")}>Semua<ChevronRight size={13}/></Btn>}>
+    <Card title="Penugasan terkini" pad={false} action={<Btn size="sm" variant="ghost" onClick={()=>nav("assign")}>Semua<ChevronRight size={13}/></Btn>}>
      <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Penugasan","Pekerjaan","Lokasi","Regu","Pekerja","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{LB_ASSIGN.filter(a=>a.date==="2026-07-20").map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>
+      <tbody>{LB_ASSIGN.filter(a=>a.date===LB_ASSIGN.reduce((m,x)=>x.date>m?x.date:m,"")).map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>
     </Card>
     <Card title="Konflik & kehadiran bermasalah" pad={false}>
      <div className="divide-y divide-gray-100">
@@ -9107,7 +9109,7 @@ const fieldUid=(p)=>p+"-"+Date.now().toString(36).toUpperCase().slice(-5)+fieldS
 const fieldNowIso=()=>new Date().toISOString();
 const fieldFmtT=(iso)=>{ if(!iso) return "—"; try{ const d=new Date(iso); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }catch(e){ return "—"; } };
 const fieldFmtDT=(iso)=>{ if(!iso) return "—"; try{ const d=new Date(iso); return d.getDate()+" "+MONTHS[d.getMonth()]+" "+fieldFmtT(iso); }catch(e){ return "—"; } };
-const fieldAddDays=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const fieldAddDays=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return lbYmd(d); };
 const fieldKb=(b)=> b==null?"—" : b>=1048576 ? (b/1048576).toFixed(1).replace(".",",")+" MB" : Math.max(1,Math.round(b/1024))+" KB";
 const FieldOpChip=({v})=>{ const s=FIELD_OP_STYLE[v]||FIELD_OP_STYLE.draft; return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap" style={{background:s.bg,color:s.fg}}>{FIELD_OP_LABEL[v]||v}</span>; };
 
@@ -13907,7 +13909,7 @@ function IntegrationsPage(){
 export default function App(){
  const [role,setRole]=useState(null);
  const [route,setRoute]=useState({page:"login",params:{}});
- const [collapsed,setCollapsed]=useState(false);
+ const [collapsed,setCollapsed]=useState(()=> typeof window!=="undefined" ? window.innerWidth<768 : false); /* default ciut di layar sempit */
  const [wos,setWos]=useState(()=>AL_SEED_WOS.concat(INIT_WOS));
  const [decisions,setDecisions]=useState(DECISIONS); /* keputusan manajemen — status-flow ringan */
  const updateDecision=(i,patch)=>setDecisions(ds=>ds.map((d,x)=>x===i?{...d,...patch}:d));
@@ -13930,7 +13932,7 @@ export default function App(){
  const updateUser=(id,patch,logMsg)=>{ setUsers(xs=>xs.map(u=>u.id===id?{...u,...patch}:u)); if(logMsg) uLog(logMsg); };
  const [curUserId,setCurUserId]=useState(null);
  const curUser=users.find(u=>u.id===curUserId)||null;
- const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:"map",params:{}}); /* landing seragam: Peta Kebun */ updateUser(u.id,{lastLogin:"19 Jul 2026 14:05",status:"Aktif"}); uLog(u.name+" ("+u.role+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+u.role); };
+ const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:"map",params:{}}); /* landing seragam: Peta Kebun */ updateUser(u.id,{lastLogin:fmtD(TODAY)+" "+new Intl.DateTimeFormat("id-ID",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit"}).format(new Date()).replace(".",":"),status:"Aktif"}); uLog(u.name+" ("+u.role+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+u.role); };
  const logout=()=>{ if(curUser) uLog(curUser.name+" keluar dari sistem"); setCurUserId(null); setRole(null); };
  const updateHsAlert=(id,patch,logMsg)=>setHsAlerts(xs=>xs.map(a=>a.id===id?{...a,...patch,log:[...(a.log||[]),...(logMsg?[{d:"19 Jul 2026",t:logMsg}]:[])]}:a));
  const addHsInsp=(rec)=>setHsInsp(xs=>[rec,...xs]);
