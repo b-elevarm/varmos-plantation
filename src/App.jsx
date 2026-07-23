@@ -680,9 +680,10 @@ function wxCalendarFlag(iso,act){
    risiko penyakit, neraca air, kompas) bekerja pada array apa pun.
    ============================================================ */
 /* Lokasi kebun (Desa Gununghejo, Kec. Darangdan, Purwakarta). Koordinat = centroid sensus.
-   bmkgAdm4: kode wilayah tingkat IV BMKG — WAJIB dikonfirmasi di data.bmkg.go.id
-   (cari "Gununghejo Darangdan"); null = BMKG nonaktif sampai diisi. */
-const WX_SITE={ lat:-6.66507, lon:107.41834, name:"Kebun Gunung Hejo — Darangdan, Purwakarta", bmkgAdm4:null };
+   bmkgAdm4: kode wilayah tingkat IV (Kemendagri) Desa Gununghejo, Kec. Darangdan —
+   dikonfirmasi 23 Jul 2026 via api.bmkg.go.id (lokasi respons: desa Gununghejo,
+   lat -6.6658 lon 107.4204, ±100 m dari centroid sensus). null = BMKG nonaktif. */
+const WX_SITE={ lat:-6.66507, lon:107.41834, name:"Kebun Gunung Hejo — Darangdan, Purwakarta", bmkgAdm4:"32.14.06.2009" };
 const WX_OPENMETEO_ATTR="Open-Meteo · model ICON/GFS/ECMWF · CC BY 4.0";
 const WX_BMKG_ATTR="BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)";
 /* Peta kode cuaca WMO (Open-Meteo weather_code) → kategori internal */
@@ -743,8 +744,11 @@ async function wxFetchBMKG(adm4){
  const url="https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4="+encodeURIComponent(adm4);
  const res=await fetch(url); if(!res.ok) throw new Error("BMKG HTTP "+res.status);
  const json=await res.json();
- /* Struktur BMKG: {lokasi, cuaca:[[{datetime,t,hu,ws,wd,wd_deg,weather_desc,tp},...]]} per 3 jam. Ringkas ke harian. */
- const rows=(json&&json.cuaca)?json.cuaca.flat():[];
+ /* Struktur BMKG: slot 3-jam {datetime,t,hu,ws,wd,wd_deg,weather_desc,tp} dalam
+    data[0].cuaca:[[...]] (skema produksi, diverifikasi Jul 2026) — beberapa
+    dokumentasi lama memakai cuaca:[[...]] di akar; dukung keduanya. Ringkas ke harian. */
+ const grid=(json&&json.data&&json.data[0]&&json.data[0].cuaca)||(json&&json.cuaca)||[];
+ const rows=Array.isArray(grid)?grid.flat():[];
  const byDay={};
  rows.forEach(r=>{ const iso=(r.local_datetime||r.datetime||"").slice(0,10); if(!iso) return;
   (byDay[iso]=byDay[iso]||[]).push(r); });
@@ -758,20 +762,51 @@ async function wxFetchBMKG(adm4){
   return {iso,tmax,tmin,hum,wind,rainMm,windDeg:wdeg,source:"bmkg"}; });
  if(!days.length) throw new Error("BMKG: data kosong"); return {days,lokasi:json.lokasi||null};
 }
-/* Hook: kelola state prakiraan. Render pertama = simulasi (tak pernah kosong); useEffect ambil data live. */
+/* Normalisasi ringkasan harian BMKG → bentuk wxDay. Field yang tak disediakan BMKG
+   (rainProb, ET₀, indeks basah) diisi pola simulasi per-hari; nilai terukur BMKG
+   (suhu, RH, angin, curah hujan) dipertahankan. */
+function wxNormalizeBmkgDays(days){
+ return (days||[]).map(d=>{ const sim=wxDay(d.iso);
+  const rainMm=d.rainMm!=null?+(+d.rainMm).toFixed(1):sim.rainMm;
+  const windDeg=d.windDeg!=null?d.windDeg:sim.windDeg;
+  const cond=wxWmoToCond(null,rainMm);
+  return {...sim,tmax:d.tmax!=null?d.tmax:sim.tmax,tmin:d.tmin!=null?d.tmin:sim.tmin,
+   hum:d.hum!=null?d.hum:sim.hum,wind:d.wind!=null?d.wind:sim.wind,
+   windDeg,windDir:wxCompass(windDeg),rainMm,cond,condLabel:WX_LABELS[cond],
+   rains:rainMm>0,source:"live"};
+ });
+}
+/* Hook: kelola state prakiraan. Render pertama = simulasi (tak pernah kosong); useEffect ambil data live.
+   Open-Meteo = sumber utama; BMKG (adm4 desa) berjalan paralel sebagai validasi silang,
+   dan menjadi sumber prakiraan bila Open-Meteo gagal. */
 function useWxForecast(days){
  const n=days||7;
  const [live,setLive]=useState(null);
- const [status,setStatus]=useState("loading"); /* loading | live | simulasi */
+ const [status,setStatus]=useState("loading"); /* loading | live | bmkg | simulasi */
  const [updatedAt,setUpdatedAt]=useState(null);
+ const [bmkg,setBmkg]=useState(null); /* null=proses/nonaktif | {ok:true,days,lokasi} | {ok:false} */
  useEffect(()=>{ let cancelled=false; setStatus("loading");
+  const pBmkg=WX_SITE.bmkgAdm4
+   ?wxFetchBMKG(WX_SITE.bmkgAdm4).then(r=>({ok:true,days:r.days,lokasi:r.lokasi})).catch(()=>({ok:false}))
+   :Promise.resolve(null);
+  pBmkg.then(b=>{ if(!cancelled) setBmkg(b); });
   wxFetchOpenMeteo(WX_SITE.lat,WX_SITE.lon,n)
    .then(arr=>{ if(!cancelled){ setLive(arr); setStatus("live"); setUpdatedAt(new Date()); } })
-   .catch(()=>{ if(!cancelled){ setLive(null); setStatus("simulasi"); } });
+   .catch(()=>{ pBmkg.then(b=>{ if(cancelled) return;
+     if(b&&b.ok&&b.days&&b.days.length){ setLive(wxNormalizeBmkgDays(b.days)); setStatus("bmkg"); setUpdatedAt(new Date()); }
+     else { setLive(null); setStatus("simulasi"); } }); });
   return ()=>{ cancelled=true; };
  },[n]);
  const forecast=useMemo(()=>wxResolveForecast(TODAY,n,live),[live,n]);
- return {forecast,status,updatedAt,isLive:status==="live"};
+ /* Validasi silang: deviasi rata-rata Tmax BMKG vs prakiraan aktif pada hari yang beririsan. */
+ const bmkgCheck=useMemo(()=>{
+  if(!bmkg||!bmkg.ok||!bmkg.days||!bmkg.days.length) return null;
+  const by={}; bmkg.days.forEach(d=>{ if(d&&d.iso) by[d.iso]=d; });
+  const diffs=forecast.filter(f=>by[f.iso]&&by[f.iso].tmax!=null).map(f=>Math.abs(f.tmax-by[f.iso].tmax));
+  const dT=diffs.length?+(diffs.reduce((a,x)=>a+x,0)/diffs.length).toFixed(1):null;
+  return {n:diffs.length,dT,lokasi:bmkg.lokasi};
+ },[bmkg,forecast]);
+ return {forecast,status,updatedAt,isLive:status==="live"||status==="bmkg",bmkg,bmkgCheck};
 }
 
 
@@ -3088,7 +3123,7 @@ function WxDecisionCard({icon:Icon,title,level,levelColor,children,action}){
 function WeatherPage(){
  const {nav,role,toast}=useApp();
  const start=TODAY;
- const {forecast,status:wxStatus,updatedAt,isLive}=useWxForecast(7);
+ const {forecast,status:wxStatus,updatedAt,isLive,bmkgCheck}=useWxForecast(7);
  const today=forecast[0];
  const spray=useMemo(()=>wxSprayWindows(forecast),[forecast]);
  const disease=useMemo(()=>wxDiseaseRisk(forecast,BLOCKS),[forecast]);
@@ -3113,7 +3148,14 @@ function WeatherPage(){
     <div className="rounded-lg border border-green-300 bg-green-50 px-3.5 py-2.5 flex items-start gap-2.5">
      <CheckCircle2 size={18} className="text-green-600 shrink-0 mt-0.5"/>
      <div className="text-xs text-green-900">
-      <span className="font-bold">Data cuaca aktual — {WX_OPENMETEO_ATTR}.</span> Prakiraan untuk koordinat kebun ({WX_SITE.name}){updatedAt?(", diperbarui "+updatedAt.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})):""}. Sebagian hari di luar jangkauan API dilengkapi pola simulasi (ditandai per kartu). Tetap verifikasi untuk keputusan kritis.
+      <span className="font-bold">Data cuaca aktual — {WX_OPENMETEO_ATTR}.</span> Prakiraan untuk koordinat kebun ({WX_SITE.name}){updatedAt?(", diperbarui "+updatedAt.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})):""}. Sebagian hari di luar jangkauan API dilengkapi pola simulasi (ditandai per kartu).{bmkgCheck&&bmkgCheck.dT!=null?" Validasi silang BMKG Desa "+((bmkgCheck.lokasi&&bmkgCheck.lokasi.desa)||"Gununghejo")+": deviasi Tmax rata-rata ±"+String(bmkgCheck.dT).replace(".",",")+" °C pada "+bmkgCheck.n+" hari beririsan.":""} Tetap verifikasi untuk keputusan kritis.
+     </div>
+    </div>
+   ) : wxStatus==="bmkg" ? (
+    <div className="rounded-lg border border-green-300 bg-green-50 px-3.5 py-2.5 flex items-start gap-2.5">
+     <CheckCircle2 size={18} className="text-green-600 shrink-0 mt-0.5"/>
+     <div className="text-xs text-green-900">
+      <span className="font-bold">Data cuaca aktual — {WX_BMKG_ATTR}.</span> Open-Meteo tak terjangkau; prakiraan memakai data BMKG untuk Desa Gununghejo (adm4 {WX_SITE.bmkgAdm4}){updatedAt?(", diperbarui "+updatedAt.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})):""}. Hari di luar jangkauan BMKG dilengkapi pola simulasi (ditandai per kartu). Tetap verifikasi untuk keputusan kritis.
      </div>
     </div>
    ) : wxStatus==="loading" ? (
@@ -3224,7 +3266,7 @@ function WeatherPage(){
     </div>
    </div>
 
-   <div className="text-[11px] text-gray-400 flex items-start gap-1.5"><Info size={12} className="shrink-0 mt-0.5"/><span>Sumber data cuaca: <b>Open-Meteo</b> (model ICON/GFS/ECMWF, CC BY 4.0) untuk data aktual, dengan fallback pola simulasi deterministik (indeks basah bulanan Jawa Barat) saat offline — titik hijau/abu per kartu menandai sumbernya. Validasi lokal & peringatan dini dapat ditambahkan dari <b>{WX_BMKG_ATTR}</b> setelah kode wilayah desa dikonfigurasi. ET₀ = evapotranspirasi acuan. Logika penerjemahan cuaca→agronomi permanen; ambang keputusan dapat dikalibrasi. Tetap verifikasi untuk keputusan operasional kritis.</span></div>
+   <div className="text-[11px] text-gray-400 flex items-start gap-1.5"><Info size={12} className="shrink-0 mt-0.5"/><span>Sumber data cuaca: <b>Open-Meteo</b> (model ICON/GFS/ECMWF, CC BY 4.0) untuk data aktual, dengan fallback pola simulasi deterministik (indeks basah bulanan Jawa Barat) saat offline — titik hijau/abu per kartu menandai sumbernya. Validasi silang lokal dari <b>{WX_BMKG_ATTR}</b> — prakiraan Desa Gununghejo (adm4 {WX_SITE.bmkgAdm4}), otomatis menjadi sumber cadangan bila Open-Meteo tak terjangkau. ET₀ = evapotranspirasi acuan. Logika penerjemahan cuaca→agronomi permanen; ambang keputusan dapat dikalibrasi. Tetap verifikasi untuk keputusan operasional kritis.</span></div>
   </div>);
 }
 
