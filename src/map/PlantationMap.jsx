@@ -60,7 +60,7 @@ const PlantationMap = forwardRef(function PlantationMap(
   { height, basemap = "satelit", offlineImage = null, areas, context = null, trees = null,
     labels = [], showLabels = true, selectedId = null, fitKey = "", focusTarget = null,
     points = [], showPoints = true, roads = null, showRoads = true,
-    onAreaClick, onTreeClick },
+    fsContainer = null, onAreaClick, onTreeClick },
   ref
 ) {
   const boxRef = useRef(null);
@@ -108,6 +108,10 @@ const PlantationMap = forwardRef(function PlantationMap(
     mapRef.current = map;
     if (typeof window !== "undefined") window.__vzmap = map; // alat inspeksi (dev)
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+    /* Fullscreen atas wrapper luar (bukan hanya kanvas) agar chip toggle,
+       legenda, dan kompas angin ikut tampil saat layar penuh. */
+    if (fsContainer && fsContainer.current)
+      map.addControl(new maplibregl.FullscreenControl({ container: fsContainer.current }), "bottom-right");
     map.dragRotate.enable();
     map.touchZoomRotate.enable();
 
@@ -306,7 +310,7 @@ const PlantationMap = forwardRef(function PlantationMap(
     monitorDate === "none" ? " — pass tidak ditemukan (offline?)" :
     monitorDate ? " · pass " + monitorDate : " · mencari pass terbaru…";
   return (
-    <div style={{ position: "relative", width: "100%", height }}>
+    <div className="vz-map-root" style={{ position: "relative", width: "100%", height }}>
       <div ref={boxRef} style={{ width: "100%", height: "100%" }} />
       {attribution && (
         <div style={{ position: "absolute", bottom: 2, right: 2, zIndex: 5, font: "9px Inter,system-ui,sans-serif",

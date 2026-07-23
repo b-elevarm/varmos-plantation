@@ -13,3 +13,11 @@ body,
 body {
   min-width: 320px;
 }
+
+/* Peta layar penuh: wrapper jadi target fullscreen; peta mengisi seluruh layar. */
+.map-fs-wrap:fullscreen {
+  background: #111827;
+}
+.map-fs-wrap:fullscreen .vz-map-root {
+  height: 100vh !important;
+}

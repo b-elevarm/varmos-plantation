@@ -2084,7 +2084,7 @@ const MAP_INFRA=[
  {id:"EMB-B4B",cat:"embung",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094},
  {id:"JT-1",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 1",icon:"🛖",lat:-6.674324,lon:107.422211},
  {id:"JT-2",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 2",icon:"🛖",lat:-6.669329,lon:107.424068},
- {id:"JT-3",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 3",icon:"🛖",lat:-6.662256,lon:107.420850},
+ {id:"JT-3",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 3",icon:"🛖",lat:-6.661164,lon:107.418561},
  {id:"JT-4",cat:"joglo",type:"Joglo Tani",name:"Joglo Tani 4",icon:"🛖",lat:-6.657270,lon:107.413483},
 ];
 /* Marker embung membawa data status lapangan (RESERVOIRS) untuk popup hover peta:
@@ -2136,6 +2136,7 @@ function MapPage(){
  const onAnaTab=(v)=>{ setAnaTab(v); setAlertFocus(0); };
  const plotUx={ openInspect:()=>setInspOpen(true), openAlerts:()=>{ setAnaTab("alert"); setAlertFocus(Date.now()); scrollAna(); }, openDetail:scrollAna };
  const handleSelect=(id)=>{ setPinnedId(id); setCenterOn({id,n:Date.now()}); };
+ const mapFsRef=useRef(null); /* wrapper peta — target fullscreen (ikut membawa chip/legenda/kompas) */
  const [drill,setDrill]=useState(()=>{ /* restorasi deep link: route.params (antar-halaman) lalu ?block=&cluster=&plot= (URL) */
   const rp=(route&&route.params)||{};
   if(rp.block||rp.cluster||rp.plot){ const q="?"+["block","cluster","plot"].filter(k=>rp[k]).map(k=>k+"="+encodeURIComponent(rp[k])).join("&"); return mwParseQuery(q); }
@@ -2324,8 +2325,8 @@ function MapPage(){
        </div>}
     <div className="flex-1 min-w-0 w-full">
      <Card pad={false} className="overflow-hidden">
-      <div className="relative" style={layers.base!=="polos"?{background:"#3a4453"}:null}>
-       <PlantationMap height={MAP_H} basemap={layers.base}
+      <div ref={mapFsRef} className="relative map-fs-wrap" style={layers.base!=="polos"?{background:"#3a4453"}:null}>
+       <PlantationMap height={MAP_H} basemap={layers.base} fsContainer={mapFsRef}
         areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
         selectedId={(drill.level==="blok"?sel:drill.petak)||null}
         fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
