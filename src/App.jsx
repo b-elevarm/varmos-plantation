@@ -1858,8 +1858,8 @@ function EstateMapSvg({height=500,mode="kesehatan",layers={pohon:false,jalan:tru
     return <g pointerEvents="none">{cands.filter(c=>!c.isSelected && vis.has(c.id)).map(c=><HsPetakLabel key={c.id} cand={c} pxToSvg={pxToSvg}/>)}</g>;
    })() : null}
 
-   {/* ===== TITIK POHON di dalam petak fokus (posisi GPS sensus) ===== */}
-   {level==="petak"&&focusPetak ? (()=>{ const dotR=Math.max(0.07,Math.min(0.5,((interactive?view:baseVb)[2])*0.008));
+   {/* ===== TITIK POHON di dalam petak fokus (posisi GPS sensus) — mengikuti layer 'pohon' ===== */}
+   {level==="petak"&&focusPetak&&layers.pohon ? (()=>{ const dotR=Math.max(0.07,Math.min(0.5,((interactive?view:baseVb)[2])*0.008));
     const em=(treeEmph&&(treeEmph.status||treeEmph.com))?treeEmph:null;
     return petakTrees.map(t=>{ const match=!em||((!em.status||vzScStatus(t.sc)===em.status)&&(!em.com||t.c===em.com));
     return <circle key={t.i} cx={t.x} cy={t.y} r={match?dotR:dotR*0.7} fill={scColor(t.sc)} fillOpacity={match?1:0.14}
@@ -2065,7 +2065,12 @@ function MapKpiStrip({drill,agg}){
  const F=(v)=>v==null?"—":v;
  let items=[];
  if(drill.petak){ const a=agg.byPetak[drill.petak]||{n:0,healthy:0,attention:0,dead:0}; const u=HS_GEO.units[drill.petak];
-  items=[["Luas",fmtHa(u?u.areaHa:0)+" ha"],["Tanaman",fmtN(a.n)],["Sehat",pct(a)!=null?pct(a)+"%":"—"],["Perhatian",fmtN(a.attention||0)],["Mati",fmtN(a.dead||0)],["Komoditas",u&&u.commodity?comName(u.commodity):"—"]];
+  /* Komoditas terdaftar (atribut petak) bisa berbeda dari dominan aktual sensus
+     (tanam campur agroforestri) — tampilkan keduanya bila tidak sama. */
+  const reg=u&&u.commodity?comName(u.commodity):"—";
+  const domEntry=a.com?Object.entries(a.com).sort((x,y)=>y[1]-x[1])[0]:null;
+  const dom=domEntry&&domEntry[1]>0?comName(domEntry[0]):null;
+  items=[["Luas",fmtHa(u?u.areaHa:0)+" ha"],["Tanaman",fmtN(a.n)],["Sehat",pct(a)!=null?pct(a)+"%":"—"],["Perhatian",fmtN(a.attention||0)],["Mati",fmtN(a.dead||0)],["Komoditas",reg,dom&&dom!==reg?"dominan "+dom:null]];
  } else if(drill.level==="petak"&&drill.cluster){ const a=agg.byCluster[drill.cluster]||{n:0,healthy:0,attention:0,dead:0}; const u=HS_GEO.units[drill.cluster];
   items=[["Luas",fmtHa(u?u.areaHa:0)+" ha"],["Petak",HS_GEO.plots.filter(p=>p.parentId===drill.cluster).length],["Pohon",fmtN(a.n)],["Sehat",pct(a)!=null?pct(a)+"%":"—"],["Perhatian",fmtN(a.attention||0)],["Mati",fmtN(a.dead||0)]];
  } else if(drill.level==="cluster"&&drill.block){ const a=agg.byBlock[drill.block]||{n:0,healthy:0,attention:0,dead:0}; const u=HS_GEO.units[drill.block];
@@ -2075,8 +2080,9 @@ function MapKpiStrip({drill,agg}){
  }
  return (
   <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-3" role="group" aria-label="KPI area aktif">
-   {items.map(([l,v])=><div key={l} className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
-    <div className="text-[10px] text-gray-500">{l}</div><div className="text-sm font-bold text-gray-900 truncate">{F(v)}</div>
+   {items.map(([l,v,sub])=><div key={l} className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
+    <div className="text-[10px] text-gray-500">{l}</div><div className="text-sm font-bold text-gray-900 truncate" title={sub?F(v)+" — "+sub:undefined}>{F(v)}</div>
+    {sub&&<div className="text-[10px] text-amber-700 truncate" title={sub}>{sub}</div>}
    </div>)}
   </div>);
 }
@@ -2089,7 +2095,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({satelit:true,pohon:false,label:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({satelit:true,pohon:true,label:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2219,7 +2225,7 @@ function MapPage(){
    {/* freshness badge ringkas — jujur: citra baru, sensus lama */}
    <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 flex-wrap">
     <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500"/>Citra satelit sinkron 20 Jul 2026</span>
-    {censusBanner&&(()=>{ const days=Math.round((new Date("2026-07-20")-new Date("2025-12-27"))/864e5); return <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full pl-2 pr-1 py-0.5"><Info size={11} className="shrink-0"/>Sensus {days} hari lalu — perlu pembaruan<button onClick={()=>nav("census")} className="font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900">Lihat sensus</button><button onClick={()=>setCensusBanner(false)} title="Tutup pemberitahuan" aria-label="Tutup pemberitahuan sensus" className="p-0.5 rounded-full text-amber-400 hover:text-amber-700 hover:bg-amber-100"><X size={11}/></button></span>; })()}
+    {censusBanner&&(()=>{ const days=Math.round((new Date(TODAY)-new Date("2025-12-27"))/864e5); return <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full pl-2 pr-1 py-0.5"><Info size={11} className="shrink-0"/>Sensus {days} hari lalu — perlu pembaruan<button onClick={()=>nav("census")} className="font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900">Lihat sensus</button><button onClick={()=>setCensusBanner(false)} title="Tutup pemberitahuan" aria-label="Tutup pemberitahuan sensus" className="p-0.5 rounded-full text-amber-400 hover:text-amber-700 hover:bg-amber-100"><X size={11}/></button></span>; })()}
     {activeChips.length>0&&<span className="flex items-center gap-1.5 ml-1">{activeChips.map(([k,v,clr],i)=><span key={i} className="inline-flex items-center gap-1 bg-gray-100 rounded-full pl-2 pr-1 py-0.5">{v}<button type="button" onClick={clr} aria-label="Hapus filter ini" className="text-gray-400 hover:text-red-600"><X size={11}/></button></span>)}</span>}
    </div>
    {/* ===== KPI area aktif (level-aware, ikut filter) ===== */}
@@ -3839,7 +3845,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
     <Row label="Batas Estate / Blok / Cluster / Petak" note="mengikuti level" disabled control={<Chk on disabled/>}/>
    </Group>
    <Group title="Tanaman & Aset">
-    <Row label="Titik pohon" note="di level petak" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
+    <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
     {["Nursery","Embung","Toren","Jalan kebun","Jalur irigasi","Bangunan","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>
    <Group title="Remote Sensing">
