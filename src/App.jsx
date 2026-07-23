@@ -9370,7 +9370,11 @@ function useFieldEngine(deps){
 
  const effNet=()=>{ if(!browserOnline) return "offline"; return netMode; };
  const connState=syncing?"syncing":(effNet()==="offline"?"offline":effNet()==="weak"?"weak":(lastResult&&(lastResult.fail>0||lastResult.mediaFail>0)&&lastResult.ok>0?"partial":(lastResult&&lastResult.ok===0&&(lastResult.fail>0)?"error":"online")));
- const activePack=packs.find(p=>p.id===activePackId)||packs[0]||null;
+ /* pack di perangkat bisa milik akun lain (perangkat berbagi) — hanya pack dalam blok penugasan user yang boleh aktif */
+ const ubScope=scopeBlocks(deps.role,deps.curUser);
+ const packInScope=(p)=>!ubScope||(p.blockIds||[]).every(b=>ubScope.includes(b));
+ const usablePacks=packs.filter(packInScope);
+ const activePack=usablePacks.find(p=>p.id===activePackId)||usablePacks[0]||null;
  const pendingOps=queue.filter(o=>["draft","queued","failed","conflict","blocked","syncing"].includes(o.status));
  const pendingCount=pendingOps.length;
 
@@ -9751,7 +9755,7 @@ function useFieldEngine(deps){
 
  const staleOps=queue.filter(o=>["queued","failed"].includes(o.status)&&o.createdAt&&(Date.now()-new Date(o.createdAt).getTime())>12*3600*1000);
  return { ready, persistent, dbMode:fieldOfflineDb.mode, connState, netMode, browserOnline, effNet:effNet(), syncing, lastSync, lastResult,
-  packs, activePack, activePackId, setActivePack, attEvents, inspDrafts, cenDrafts, workEvents, media, queue, conflicts, device,
+  packs, activePack, activePackId, setActivePack, packInScope, attEvents, inspDrafts, cenDrafts, workEvents, media, queue, conflicts, device,
   storageInfo, swStatus, installable, promptInstall, battery, flags, pendingCount, pendingOps, staleOps, woLocalState,
   downloadFieldPack, updateFieldPack, removeFieldPack, saveAttendanceOffline, saveInspectionOffline, saveCensusOffline,
   saveWorkExecutionOffline, saveFieldMedia, queueFieldOperation, retryFieldOperation, retryFieldMedia, syncFieldOperations,
@@ -10393,7 +10397,7 @@ function FieldInspectionPage(){
     <div className="px-3.5 py-3 space-y-3">
      <div className="grid grid-cols-2 gap-2.5">
       <div><Lbl>Sumber</Lbl><Sel value={f.sourceType} onChange={e=>setF({...f,sourceType:e.target.value})} className="w-full min-h-11" options={["Temuan spontan","Assignment","Alert","Hybrid Sensing anomaly","Work Order","Data Quality issue"]}/></div>
-      <div><Lbl>Alert terkait</Lbl><Sel value={f.alertId} onChange={e=>setF({...f,alertId:e.target.value})} className="w-full min-h-11" options={[["","— tidak ada —"],...(((pack&&pack.data.alerts)||app.alerts.filter(x=>x.id.indexOf("ALT-")===0&&x.lifecycleStatus==="Open")).map(a=>[a.id,a.id+" • "+(a.stage||"")])),...app.hsAlerts.map(a=>[a.id,a.id])]}/></div>
+      <div><Lbl>Alert terkait</Lbl><Sel value={f.alertId} onChange={e=>setF({...f,alertId:e.target.value})} className="w-full min-h-11" options={[["","— tidak ada —"],...(((pack&&pack.data.alerts)||app.alerts.filter(x=>x.id.indexOf("ALT-")===0&&x.lifecycleStatus==="Open"&&(!pack||pack.blockIds.includes(x.blockId)))).map(a=>[a.id,a.id+" • "+(a.stage||"")])),...app.hsAlerts.filter(a=>!pack||!a.blockId||pack.blockIds.includes(a.blockId)).map(a=>[a.id,a.id])]}/></div>
       <div><Lbl>Land ID (petak)</Lbl><Sel value={f.plotId} onChange={e=>setF({...f,plotId:e.target.value})} className="w-full min-h-11" options={plots}/></div>
       <div><Lbl>Tree ID (opsional)</Lbl><Inp value={f.treeId} onChange={e=>setF({...f,treeId:e.target.value})} placeholder={f.plotId+"T12"}/></div>
       <div><Lbl>Severity</Lbl><Sel value={f.severity} onChange={e=>setF({...f,severity:e.target.value})} className="w-full min-h-11" options={FIELD_SEVERITIES}/></div>
@@ -10839,17 +10843,18 @@ function FieldDownloadsPage(){
     {F.packs.length===0&&<div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada paket terunduh.</div>}
     <div className="divide-y divide-gray-50">
      {F.packs.map(p=>(
-      <div key={p.id} className={"px-3.5 py-2.5 "+(F.activePackId===p.id?"bg-green-50/60":"")}>
+      <div key={p.id} className={"px-3.5 py-2.5 "+((F.activePack&&F.activePack.id===p.id)?"bg-green-50/60":"")}>
        <div className="flex items-center gap-2">
         <div className="min-w-0 flex-1">
-         <div className="text-[12px] font-bold text-gray-900 truncate">{p.id}{F.activePackId===p.id?" • aktif":""}</div>
+         <div className="text-[12px] font-bold text-gray-900 truncate">{p.id}{(F.activePack&&F.activePack.id===p.id)?" • aktif":""}</div>
          <div className="text-[10px] text-gray-500">{p.blockIds.map(b=>blockLabel(b)).join(", ")} • v{p.version} • {p.estimatedSizeMb} MB • {fieldPackExpired(p)?"KEDALUWARSA "+fmtD(p.expiresAt):"berlaku s.d. "+fmtD(p.expiresAt)}</div>
         </div>
         {fieldPackExpired(p)&&<span className="text-[9px] font-bold text-red-700 bg-red-50 rounded px-1.5 py-0.5">Expired</span>}
+        {!F.packInScope(p)&&<span className="text-[9px] font-bold text-amber-700 bg-amber-50 rounded px-1.5 py-0.5">Di luar penugasan Anda</span>}
        </div>
        <div className="mt-1.5 flex gap-1.5">
-        {F.activePackId!==p.id&&<button onClick={()=>F.setActivePack(p.id)} className="min-h-9 px-2.5 rounded-lg bg-green-600 text-white text-[11px] font-bold">Jadikan aktif</button>}
-        <button onClick={()=>F.updateFieldPack(p.id)} className="min-h-9 px-2.5 rounded-lg bg-white border border-gray-300 text-[11px] font-bold text-gray-700">Update (v{p.version+1})</button>
+        {!(F.activePack&&F.activePack.id===p.id)&&F.packInScope(p)&&<button onClick={()=>F.setActivePack(p.id)} className="min-h-9 px-2.5 rounded-lg bg-green-600 text-white text-[11px] font-bold">Jadikan aktif</button>}
+        {F.packInScope(p)&&<button onClick={()=>F.updateFieldPack(p.id)} className="min-h-9 px-2.5 rounded-lg bg-white border border-gray-300 text-[11px] font-bold text-gray-700">Update (v{p.version+1})</button>}
         <button onClick={()=>confirmAction("Hapus Field Pack?","Paket "+p.id+" akan dihapus dari perangkat. Draft & antrean sync TIDAK ikut terhapus.",()=>F.removeFieldPack(p.id))}
          className="min-h-9 px-2.5 rounded-lg bg-white border border-red-200 text-[11px] font-bold text-red-600 flex items-center gap-1"><Trash2 size={12}/>Hapus</button>
        </div>
