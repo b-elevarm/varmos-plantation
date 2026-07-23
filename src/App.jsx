@@ -2143,7 +2143,6 @@ function MapPage(){
   try{ if(typeof window!=="undefined"&&window.location&&window.location.search) return mwParseQuery(window.location.search); }catch(e){}
   return {level:"blok",block:null,cluster:null,petak:null}; });
  const [hierCollapsed,setHierCollapsed]=useState(()=> typeof window!=="undefined" ? window.innerWidth<1280 : true); /* panel hierarki: default terbuka di ≥xl */
- const [hierDrawer,setHierDrawer]=useState(false); /* drawer hierarki utk layar < xl */
  useEffect(()=>{ /* tulis pilihan area ke URL (share/refresh); gagal diam2 di sandbox artifact */
   try{ if(typeof window!=="undefined"&&window.history&&window.history.replaceState) window.history.replaceState(null,"",window.location.pathname+mwBuildQuery(drill)); }catch(e){}
  },[drill]);
@@ -2173,7 +2172,7 @@ function MapPage(){
   if(!a||!a.n) return null; const deadFrac=a.dead/a.n, attnFrac=(a.attention||0)/a.n;
   if(deadFrac>=0.1) return "kritis"; if(deadFrac>0||attnFrac>=0.25) return "waspada"; return "sehat"; }; },[agg]);
  /* Navigasi dari panel hierarki → drill peta + fit-bounds (satu-sumber state) */
- const hierNavigate=(u)=>{ setHierDrawer(false); if(!u||u.level==="estate"){ goBlok(); return; }
+ const hierNavigate=(u)=>{ if(!u||u.level==="estate"){ goBlok(); return; }
   if(u.level==="block"){ goCluster(u.id); setCenterOn({id:u.id,t:Date.now()}); return; }
   if(u.level==="cluster"){ onDrill("petak",u.parentId,u.id); setCenterOn({id:u.id,t:Date.now()}); return; }
   if(u.level==="plot"){ onDrill("petak",u.blockId,u.parentId); onDrill("petakSel",u.blockId,u.parentId,u.id); setCenterOn({id:u.id,t:Date.now()}); } };
@@ -2294,7 +2293,7 @@ function MapPage(){
        <div className="flex justify-between pt-1"><button onClick={()=>{setFBlock("Semua");setFCom("Semua");setFRisk("Semua");setSel(null);}} className="text-xs text-gray-500 hover:text-red-600">Reset semua</button><Btn size="sm" onClick={()=>setFilterOpen(false)}>Terapkan</Btn></div>
       </div>}
      </div>
-     <Btn variant="secondary" size="md" className="xl:hidden" onClick={()=>setHierDrawer(true)}><ListTree size={14}/>Hierarki</Btn>
+     <Btn variant="secondary" size="md" onClick={()=>setHierCollapsed(c=>!c)}><ListTree size={14}/>Hierarki</Btn>
      <Btn variant={layers.rs!=="none"?"primary":"secondary"} size="md" onClick={()=>setLayerOpen(true)}><Layers size={14}/>Layer{(layers.rs!=="none"||layers.pohon)?" •":""}</Btn>
      <Btn variant="secondary" size="md" onClick={()=>toast("Data peta disegarkan (simulasi)")}><RefreshCw size={14}/></Btn>
      <Btn variant="secondary" size="md" onClick={()=>toast("Peta & data area diekspor (simulasi)")}><Download size={14}/></Btn>
@@ -2311,18 +2310,7 @@ function MapPage(){
    <MapKpiStrip drill={drill} agg={agg}/>
    {/* ===== Workspace: Hierarki | Peta | Detail — panel kiri-kanan dapat diciutkan ===== */}
    <div className="flex flex-col lg:flex-row gap-3 items-stretch">
-    {/* Panel hierarki (≥xl; layar kecil pakai drawer dari toolbar) */}
-    {hierCollapsed
-     ? <button onClick={()=>setHierCollapsed(false)} title="Tampilkan hierarki lahan" aria-label="Tampilkan hierarki lahan" className="hidden xl:flex w-9 shrink-0 self-stretch items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm text-gray-500 hover:text-green-700 hover:border-green-600"><ChevronRight size={16}/></button>
-     : <div className="hidden xl:block w-[252px] shrink-0">
-        <Card pad={false} className="h-full">
-         <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-          <span className="text-sm font-semibold text-gray-800">Hierarki lahan</span>
-          <button onClick={()=>setHierCollapsed(true)} title="Ciutkan hierarki" aria-label="Ciutkan hierarki" className="text-gray-400 hover:text-green-700"><ChevronLeft size={15}/></button>
-         </div>
-         <div className="p-2.5"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn}/></div>
-        </Card>
-       </div>}
+    {/* Panel hierarki kini overlay di dalam peta (lihat di bawah) — ikut tampil saat fullscreen */}
     <div className="flex-1 min-w-0 w-full">
      <Card pad={false} className="overflow-hidden">
       <div ref={mapFsRef} className="relative map-fs-wrap" style={layers.base!=="polos"?{background:"#3a4453"}:null}>
@@ -2341,13 +2329,25 @@ function MapPage(){
           className={"pointer-events-auto px-2.5 py-1 rounded-full text-[11px] font-medium border shadow-sm backdrop-blur-[2px] transition-colors "+(layers[k]?"bg-green-600 text-white border-green-600":"bg-white/90 text-gray-500 border-gray-200 hover:border-green-500 hover:text-green-700")}>{l}</button>
         ))}
        </div>
+       {/* ===== Hierarki lahan — overlay di dalam peta (tersedia juga saat fullscreen) ===== */}
+       {hierCollapsed
+        ? <button type="button" onClick={()=>setHierCollapsed(false)} title="Tampilkan hierarki lahan"
+           className="absolute top-2 left-2 z-10 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/95 backdrop-blur-[2px] border border-gray-300 shadow-md text-gray-700 hover:border-green-600 hover:text-green-700">
+           <ListTree size={13}/>Hierarki</button>
+        : <div className="absolute top-2 left-2 bottom-14 z-10 w-[262px] max-w-[78%] flex flex-col rounded-lg border border-gray-300 bg-white/95 backdrop-blur-[2px] shadow-md overflow-hidden">
+           <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5"><ListTree size={14}/>Hierarki lahan</span>
+            <button type="button" onClick={()=>setHierCollapsed(true)} title="Ciutkan hierarki" aria-label="Ciutkan hierarki" className="text-gray-400 hover:text-gray-700"><X size={14}/></button>
+           </div>
+           <div className="p-2.5 overflow-y-auto flex-1"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact/></div>
+          </div>}
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
        {/* chip konteks area aktif — mengisi flank kiri-atas, selaras kompas kanan-atas */}
-       <div className="absolute top-2 left-2 hidden sm:block bg-white/95 backdrop-blur-[2px] border border-gray-300 rounded-lg shadow-md px-3 py-2 pointer-events-none max-w-[300px]">
+       {hierCollapsed&&<div className="absolute top-12 left-2 hidden sm:block bg-white/95 backdrop-blur-[2px] border border-gray-300 rounded-lg shadow-md px-3 py-2 pointer-events-none max-w-[300px]">
         <div className="text-sm font-bold text-gray-900 leading-tight truncate">{drill.petak&&petakUnit?("Petak "+(petakUnit.code||petakUnit.id)):drill.cluster&&clusterUnit?clusterUnit.name:drill.block&&blockUnit?blockLabel(drill.block):"Estate Gunung Hejo"}</div>
         <div className="text-xs text-gray-600 leading-tight truncate">{drill.petak&&petakUnit?(fmtHa(petakUnit.areaHa)+" ha · "+petakMainCom(drill.petak)):drill.cluster&&clusterUnit?(fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak"):drill.block&&blockUnit?(fmtHa(blockUnit.areaHa)+" ha · "+clustersInBlock+" Cluster · "+petakInBlock+" Petak"):(fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")}</div>
-       </div>
+       </div>}
       </div>
       {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.base!=="polos"&&<span className="shrink-0">{layers.base==="satelit"?"Imagery © Esri, Maxar, Earthstar Geographics":layers.base==="monitoring"?"HLS Sentinel-2 © NASA GIBS · ESA Copernicus":"© OpenStreetMap contributors"}</span>}</div>}
       {drill.petak&&petakUnit&&<div className="px-4 py-3 border-t border-gray-100 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm bg-green-50">
@@ -2370,9 +2370,6 @@ function MapPage(){
    {inspOpen&&drill.petak && <PlotInspectionDrawer petakId={drill.petak} onClose={()=>setInspOpen(false)}/>}
    {sel&&drill.level==="blok" && <BlockDrawer blockId={sel} onClose={()=>setSel(null)}/>}
    {layerOpen && <MapLayerDrawer layers={layers} setLayers={setLayers} onClose={()=>setLayerOpen(false)}/>}
-   <Drawer open={hierDrawer} onClose={()=>setHierDrawer(false)} title="Hierarki lahan" subtitle="Estate › Blok › Cluster › Petak — ketuk untuk navigasi peta">
-    <MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact/>
-   </Drawer>
   </div>);
 }
 
