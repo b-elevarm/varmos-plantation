@@ -1499,6 +1499,7 @@ function LoginPage(){
           </div>
          </button>)); }
         const u=users.find(x=>x.role===r&&x.status==="Aktif");
+        if(!u) return null; /* peran tanpa akun aktif tidak ditawarkan di akses cepat */
         return (
         <button key={r} onClick={()=>login(r)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
@@ -7040,7 +7041,6 @@ const INIT_USERS=[
  {id:"USR-014",name:"Indra",email:"indra@varmos.id",phone:"0812-1100-203",role:"Field Supervisor",blocks:["GH-B03"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 3"},
  {id:"USR-015",name:"Asep Ganjar",email:"asep.ganjar@varmos.id",phone:"0812-1100-204",role:"Field Supervisor",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 4"},
  {id:"USR-010",name:"Akun Warehouse Officer",email:"warehouse.officer@varmos.id",phone:"—",role:"Warehouse Officer",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
- {id:"USR-011",name:"Akun Seedling Officer",email:"seedling.officer@varmos.id",phone:"—",role:"Seedling Officer",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi — pembibitan"},
  {id:"USR-012",name:"Akun Finance",email:"finance@varmos.id",phone:"—",role:"Finance",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun berbasis posisi"},
 ];
 const INIT_USER_LOG=[];
