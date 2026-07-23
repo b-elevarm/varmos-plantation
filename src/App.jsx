@@ -52,6 +52,8 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend
 } from "recharts";
+import PlantationMap from "./map/PlantationMap.jsx";
+import { unitFeature, featureCollection, unitBounds } from "./map/geo.js";
 
 /* ============ Design tokens & helpers ============ */
 const C = { dark:"#166534", green:"#16A34A", light:"#DCFCE7", lime:"#84CC16", blue:"#2563EB", amber:"#F59E0B", red:"#DC2626", purple:"#7C3AED", text:"#111827", sub:"#4B5563", border:"#E5E7EB", bg:"#F9FAFB", card:"#FFFFFF" };
@@ -2086,6 +2088,12 @@ function MapKpiStrip({drill,agg}){
    </div>)}
   </div>);
 }
+/* Citra satelit tersemat (Google Earth, ter-georeferensi) sebagai lapisan cadangan
+   offline di bawah tile Esri pada peta MapLibre. */
+const MAP_OFFLINE_IMG={url:HS_BASEMAP_HI,coordinates:[
+ [HS_BASEMAP_BOUNDS.lonmin,HS_BASEMAP_BOUNDS.latmax],[HS_BASEMAP_BOUNDS.lonmax,HS_BASEMAP_BOUNDS.latmax],
+ [HS_BASEMAP_BOUNDS.lonmax,HS_BASEMAP_BOUNDS.latmin],[HS_BASEMAP_BOUNDS.lonmin,HS_BASEMAP_BOUNDS.latmin]]};
+const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc===4?"#EA580C":"#9CA3AF";
 function MapPage(){
  const {treesData,hsTreePts,nav,toast,role,route}=useApp();
  const [metric,setMetric]=useState("health");
@@ -2095,7 +2103,7 @@ function MapPage(){
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
- const [layers,setLayers]=useState({satelit:true,pohon:true,label:true,rs:"none",rsOpacity:0.6});
+ const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
  const [insightCollapsed,setInsightCollapsed]=useState(false);
@@ -2183,6 +2191,59 @@ function MapPage(){
     metricLabel:mapMetric(metric).label, metricVal:mapFmtVal(metric,val), statusLabel:VZ_LABEL[row.status], statusColor:VZ_COL[row.status], alerts:vzAlert(id), hasData:row.hasData }; };
  },[agg,drill.level,metric]);
  const rsColorFn = layers.rs==="none" ? null : (id)=>{ const v=layers.rs==="ndvi"?vzNdvi(id):layers.rs==="sm"?vzSM(id):vzBio(id); return mapMetricColor(layers.rs,v); };
+ /* ===== Data siap-pakai untuk PlantationMap (MapLibre) — warna & popup digambar di sini ===== */
+ const areasFC=useMemo(()=>{
+  const subUnits=drill.level==="blok"?HS_GEO.blocks
+   :drill.level==="cluster"?HS_GEO.clusters.filter(c=>c.parentId===drill.block)
+   :HS_GEO.plots.filter(p=>p.parentId===drill.cluster);
+  return featureCollection(subUnits.map(u=>{
+   const tip=tooltipFn?tooltipFn(u.id):null;
+   const fill=(rsColorFn&&rsColorFn(u.id))||(metricColorFn&&metricColorFn(u.id))||(u.commodity?vzComColor(u.commodity):null)||"#16A34A";
+   return unitFeature(u,{fill,
+    pTitle:tip?tip.name:(u.name||u.id),
+    pSub:tip?(tip.ha+" ha"+(tip.sub?" · "+tip.sub:"")):"",
+    pVal:tip&&tip.hasData?(tip.metricLabel+": "+tip.metricVal):""});
+  }));
+ },[drill.level,drill.block,drill.cluster,tooltipFn,metricColorFn,rsColorFn]);
+ const contextFC=useMemo(()=>{
+  const feats=[];
+  if(drill.level!=="blok"&&drill.block&&HS_GEO.units[drill.block]) feats.push(unitFeature(HS_GEO.units[drill.block],{}));
+  if(drill.level==="petak"&&drill.cluster&&HS_GEO.units[drill.cluster]) feats.push(unitFeature(HS_GEO.units[drill.cluster],{}));
+  return featureCollection(feats);
+ },[drill.level,drill.block,drill.cluster]);
+ const mapLabels=useMemo(()=>{
+  const units=drill.level==="blok"?HS_GEO.blocks
+   :drill.level==="cluster"?HS_GEO.clusters.filter(c=>c.parentId===drill.block)
+   :HS_GEO.plots.filter(p=>p.parentId===drill.cluster);
+  return units.map(u=>({id:u.id,lngLat:u.centroid,
+   text:drill.level==="blok"?blockLabel(u.id):u.name,
+   sub:drill.level==="petak"?null:String(u.areaHa).replace(".",",")+" ha"}));
+ },[drill.level,drill.block,drill.cluster]);
+ const treesFC=useMemo(()=>{
+  if(!drill.petak||!layers.pohon||!hsTreePts) return null;
+  const D=hsTreePts, feats=[];
+  const em=(plantFilter&&(plantFilter.status||plantFilter.com))?plantFilter:null;
+  if(D.pk&&D.pkc){
+   for(let i=0;i<D.n;i++){
+    if(D.pkc[D.pk[i]]!==drill.petak) continue;
+    const lon=D.lon0+D.lon[i]/1e6, lat=D.lat0+D.lat[i]/1e6;
+    const sc=D.sc[i], com=D.kom?D.kom[D.km[i]]:null;
+    const match=!em||((!em.status||vzScStatus(sc)===em.status)&&(!em.com||com===em.com));
+    feats.push({type:"Feature",geometry:{type:"Point",coordinates:[lon,lat]},
+     properties:{i,color:MAP_SC_COLOR(sc),op:match?1:0.15}});
+   }
+  }
+  return featureCollection(feats);
+ },[drill.petak,layers.pohon,hsTreePts,plantFilter]);
+ const focusTarget=useMemo(()=>{
+  if(!centerOn||!centerOn.id||!HS_GEO.units[centerOn.id]||!HS_GEO.units[centerOn.id].ll) return null;
+  return {bounds:unitBounds(HS_GEO.units[centerOn.id]),t:centerOn.t||centerOn.n||1};
+ },[centerOn]);
+ const onMapArea=(id)=>{
+  if(drill.level==="blok") goCluster(id);
+  else if(drill.level==="cluster") onDrill("petak",drill.block,id);
+  else onDrill("petakSel",drill.block,drill.cluster,id);
+ };
  const activeChips=[fBlock!=="Semua"&&["Blok",blockLabel(fBlock),()=>{setFBlock("Semua");setSel(null);}],fCom!=="Semua"&&["Komoditas",comName(fCom),()=>setFCom("Semua")],fRisk!=="Semua"&&["Status",fRisk,()=>setFRisk("Semua")]].filter(Boolean);
  const areaMeta = drill.level==="blok" ? ("Estate Gunung Hejo · "+fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")
    : drill.level==="petak"&&clusterUnit ? (clusterUnit.name+" · "+fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak · "+comName(clusterUnit.commodity))
@@ -2246,11 +2307,13 @@ function MapPage(){
        </div>}
     <div className="flex-1 min-w-0 w-full">
      <Card pad={false} className="overflow-hidden">
-      <div className="relative" style={layers.satelit?{background:"#3a4453"}:null}>
-       <EstateMapSvg height={MAP_H} mode="kesehatan" metricColor={metricColorFn} plotStatusFn={plotStatusFn} hoverId={hoverId||pinnedId} centerOn={centerOn} tooltipFn={tooltipFn} rsColorFn={rsColorFn} rsOpacity={layers.rsOpacity} treeEmph={plantFilter} layers={layers} zoom={zoom} selected={drill.level==="blok"?sel:drill.petak} filterCom={fCom} filterRisk={fRisk} treesData={treesData}
-        level={drill.level} focusBlock={drill.block} focusCluster={drill.cluster} focusPetak={drill.petak}
-        treePts={hsTreePts} onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}
-        onBlockClick={(id)=>{ goCluster(id); }} onDrill={onDrill} interactive={true}/>
+      <div className="relative" style={layers.base!=="polos"?{background:"#3a4453"}:null}>
+       <PlantationMap height={MAP_H} basemap={layers.base} offlineImage={MAP_OFFLINE_IMG}
+        areas={areasFC} context={contextFC} trees={treesFC} labels={mapLabels} showLabels={layers.label}
+        selectedId={(drill.level==="blok"?sel:drill.petak)||null}
+        fitKey={drill.level+"|"+(drill.block||"")+"|"+(drill.cluster||"")}
+        focusTarget={focusTarget} onAreaClick={onMapArea}
+        onTreeClick={(i)=>{ if(hsTreePts){ nav("tree",{treeId:hsTreeId(hsTreePts,i)}); } }}/>
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
        {/* chip konteks area aktif — mengisi flank kiri-atas, selaras kompas kanan-atas */}
@@ -2259,7 +2322,7 @@ function MapPage(){
         <div className="text-[10px] text-gray-500 leading-tight truncate">{drill.petak&&petakUnit?(fmtHa(petakUnit.areaHa)+" ha · "+petakMainCom(drill.petak)):drill.cluster&&clusterUnit?(fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak"):drill.block&&blockUnit?(fmtHa(blockUnit.areaHa)+" ha · "+clustersInBlock+" Cluster · "+petakInBlock+" Petak"):(fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")}</div>
        </div>
       </div>
-      {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.satelit&&<span className="shrink-0">{HS_SAT_ATTR}</span>}</div>}
+      {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.base!=="polos"&&<span className="shrink-0">{layers.base==="satelit"?("Imagery © Esri · cadangan offline "+HS_SAT_ATTR):"© OpenStreetMap contributors"}</span>}</div>}
       {drill.petak&&petakUnit&&<div className="px-4 py-3 border-t border-gray-100 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm bg-green-50">
        <span className="font-semibold text-green-800">Petak <span className="font-mono">{petakUnit.code||petakUnit.id}</span> <span className="text-xs text-gray-500 font-normal">{blockLabel(drill.block)} · Cluster {petakUnit.parentId?String(petakUnit.parentId).split("C").pop():"—"}</span></span>
        <span className="text-gray-600">Komoditas: <b>{petakMainCom(drill.petak)}</b></span>
@@ -3834,10 +3897,10 @@ function MapLayerDrawer({layers,setLayers,onClose}){
  return (
   <Drawer open onClose={onClose} title="Layer Peta" subtitle="Tampilan dasar, batas wilayah, aset, dan remote sensing" footer={<Btn onClick={onClose}>Selesai</Btn>}>
    <Group title="Peta Dasar">
-    <Row label="Satelit" control={<Rad name="base" on={layers.satelit===true} fn={()=>set("satelit",true)}/>}/>
-    <Row label="Tanpa citra (polos)" control={<Rad name="base" on={layers.satelit===false} fn={()=>set("satelit",false)}/>}/>
-    <Row label="Terrain" note="perlu tile" disabled control={<Rad name="base" on={false} disabled/>}/>
-    <Row label="Street map" note="perlu tile" disabled control={<Rad name="base" on={false} disabled/>}/>
+    <Row label="Satelit" note="tile Esri + cadangan offline tersemat" control={<Rad name="base" on={layers.base==="satelit"} fn={()=>set("base","satelit")}/>}/>
+    <Row label="Tanpa citra (polos)" control={<Rad name="base" on={layers.base==="polos"} fn={()=>set("base","polos")}/>}/>
+    <Row label="Terrain" note="fase 3 (3D)" disabled control={<Rad name="base" on={false} disabled/>}/>
+    <Row label="Street map" note="OpenStreetMap" control={<Rad name="base" on={layers.base==="jalan"} fn={()=>set("base","jalan")}/>}/>
     <Row label="Hybrid" note="perlu tile" disabled control={<Rad name="base" on={false} disabled/>}/>
    </Group>
    <Group title="Batas Wilayah">

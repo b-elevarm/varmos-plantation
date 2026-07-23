@@ -71,6 +71,9 @@ varmos-plantation/
 │   └── manifest.webmanifest
 ├── src/
 │   ├── App.jsx                # seluruh aplikasi (monolit prototype, ±13.9rb baris)
+│   ├── map/
+│   │   ├── PlantationMap.jsx  # peta MapLibre GL (Peta Kebun) — tile Esri/OSM + fallback offline
+│   │   └── geo.js             # konversi geometri KML → GeoJSON
 │   ├── main.jsx               # entry React
 │   └── index.css              # direktif Tailwind + tinggi viewport
 ├── backup/
