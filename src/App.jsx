@@ -2334,12 +2334,12 @@ function MapPage(){
         ? <button type="button" onClick={()=>setHierCollapsed(false)} title="Tampilkan hierarki lahan"
            className="absolute top-2 left-2 z-10 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/95 backdrop-blur-[2px] border border-gray-300 shadow-md text-gray-700 hover:border-green-600 hover:text-green-700">
            <ListTree size={13}/>Hierarki</button>
-        : <div className="absolute top-2 left-2 bottom-14 z-10 w-[262px] max-w-[78%] flex flex-col rounded-lg border border-gray-300 bg-white/95 backdrop-blur-[2px] shadow-md overflow-hidden">
+        : <div className="absolute top-2 left-2 z-10 w-[262px] max-w-[78%] max-h-[calc(100%-4rem)] flex flex-col rounded-lg border border-gray-300 bg-white/95 backdrop-blur-[2px] shadow-md overflow-hidden">
            <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between shrink-0">
             <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5"><ListTree size={14}/>Hierarki lahan</span>
             <button type="button" onClick={()=>setHierCollapsed(true)} title="Ciutkan hierarki" aria-label="Ciutkan hierarki" className="text-gray-400 hover:text-gray-700"><X size={14}/></button>
            </div>
-           <div className="p-2.5 overflow-y-auto flex-1"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact/></div>
+           <div className="p-2.5 overflow-y-auto flex-1 min-h-0"><MapHierarchyExplorer drill={drill} onNavigate={hierNavigate} onTree={hierTree} statusFn={areaStatusFn} compact/></div>
           </div>}
        <MapMetricLegend metric={metric} collapsed={!legendOpen} onToggle={()=>setLegendOpen(o=>!o)}/>
        <WindCompass day={wxFc[0]||wxDay(TODAY)} collapsed={!windOpen} onToggle={()=>setWindOpen(o=>!o)}/>
