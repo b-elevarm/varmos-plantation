@@ -47,7 +47,7 @@ Gunakan tombol **Akses cepat demo** di halaman login, atau login manual:
 Seluruh data adalah **data prototype tersemat** di `src/App.jsx` (in-memory, tersimpan selama sesi browser — refresh mengembalikan kondisi awal):
 
 - Geometri estate/blok/cluster/petak dari KML asli (koordinat nyata, jangan diubah).
-- Basemap satelit tersemat sebagai data URI Base64 (tidak butuh penyedia peta eksternal).
+- Basemap peta: tile Esri World Imagery / OpenStreetMap / Sentinel-2 (NASA GIBS) via MapLibre — butuh internet; citra tersemat lama sudah dihapus dari bundle.
 - Sampel registry 601 pohon dari Sensus Desember 2025 + agregat 19.801 pohon per blok.
 - Berkas penuh `registry-trees.json` / `census-dec2025.json` (19.801 record) **tidak disertakan**; loader langsung memakai fallback tersemat tanpa request (bebas 404). Aktifkan kembali `fetch()` pada loader di `src/App.jsx` bila deployment menyediakan berkasnya.
 - Beberapa dataset (mis. populasi per komoditas) sengaja bernilai 0 — "data kosong, siap data nyata".
