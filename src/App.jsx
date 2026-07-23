@@ -2348,7 +2348,7 @@ function MapPage(){
         <div className="text-xs text-gray-600 leading-tight truncate">{drill.petak&&petakUnit?(fmtHa(petakUnit.areaHa)+" ha · "+petakMainCom(drill.petak)):drill.cluster&&clusterUnit?(fmtHa(clusterUnit.areaHa)+" ha · "+petakInCluster+" Petak"):drill.block&&blockUnit?(fmtHa(blockUnit.areaHa)+" ha · "+clustersInBlock+" Cluster · "+petakInBlock+" Petak"):(fmtHa(HS_GEO.estate.areaHa)+" ha · 4 Blok · "+HS_GEO.clusters.length+" Cluster · "+HS_GEO.plots.length+" Petak")}</div>
        </div>
       </div>
-      {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.base!=="polos"&&<span className="shrink-0">{layers.base==="satelit"?("Imagery © Esri · cadangan offline "+HS_SAT_ATTR):"© OpenStreetMap contributors"}</span>}</div>}
+      {<div className="px-4 py-1.5 text-[10px] text-gray-400 border-t border-gray-50 flex items-center justify-between gap-2"><span className="truncate">Desa Gununghejo · Kec. Darangdan · Kab. Purwakarta</span>{layers.base!=="polos"&&<span className="shrink-0">{layers.base==="satelit"?("Imagery © Esri · cadangan offline "+HS_SAT_ATTR):layers.base==="monitoring"?"HLS Sentinel-2 © NASA GIBS · ESA Copernicus":"© OpenStreetMap contributors"}</span>}</div>}
       {drill.petak&&petakUnit&&<div className="px-4 py-3 border-t border-gray-100 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm bg-green-50">
        <span className="font-semibold text-green-800">Petak <span className="font-mono">{petakUnit.code||petakUnit.id}</span> <span className="text-xs text-gray-500 font-normal">{blockLabel(drill.block)} · Cluster {petakUnit.parentId?String(petakUnit.parentId).split("C").pop():"—"}</span></span>
        <span className="text-gray-600">Komoditas: <b>{petakMainCom(drill.petak)}</b></span>
@@ -3933,6 +3933,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
     <Row label="Tanpa citra (polos)" control={<Rad name="base" on={layers.base==="polos"} fn={()=>set("base","polos")}/>}/>
     <Row label="Terrain" note="fase 3 (3D)" disabled control={<Rad name="base" on={false} disabled/>}/>
     <Row label="Street map" note="OpenStreetMap" control={<Rad name="base" on={layers.base==="jalan"} fn={()=>set("base","jalan")}/>}/>
+    <Row label="Sentinel-2 monitoring" note="pass terbaru ±30 m · NASA GIBS (kesegaran, bukan detail)" control={<Rad name="base" on={layers.base==="monitoring"} fn={()=>set("base","monitoring")}/>}/>
     <Row label="Hybrid" note="perlu tile" disabled control={<Rad name="base" on={false} disabled/>}/>
    </Group>
    <Group title="Batas Wilayah">

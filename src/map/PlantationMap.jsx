@@ -24,7 +24,32 @@ const BASEMAPS = {
     attribution: "© OpenStreetMap contributors",
   },
   polos: { tiles: null, attribution: "" },
+  monitoring: { tiles: null, attribution: "HLS Sentinel-2 ±30 m © NASA GIBS · ESA Copernicus" },
 };
+
+/* Basemap monitoring: HLS S30 (Sentinel-2) via NASA GIBS — pass terbaru, tanpa API key.
+   GIBS meng-404-kan tanggal tanpa liputan granule, jadi tanggal pass terakhir untuk
+   lokasi kebun ditemukan dengan menguji satu tile z12 mundur per hari. */
+const GIBS_HLS = (date) =>
+  `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/HLS_S30_Nadir_BRDF_Adjusted_Reflectance/default/${date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png`;
+const tileXY = (lon, lat, z) => {
+  const n = 2 ** z;
+  const x = Math.floor(((lon + 180) / 360) * n);
+  const rad = (lat * Math.PI) / 180;
+  const y = Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n);
+  return [x, y];
+};
+async function findLatestHlsDate(lon, lat, maxDaysBack = 21) {
+  const [x, y] = tileXY(lon, lat, 12);
+  for (let i = 0; i < maxDaysBack; i++) {
+    const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+    try {
+      const res = await fetch(GIBS_HLS(d).replace("{z}/{y}/{x}", `12/${y}/${x}`), { method: "GET" });
+      if (res.ok) return d;
+    } catch (e) { /* offline → menyerah */ return null; }
+  }
+  return null;
+}
 
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -41,6 +66,8 @@ const PlantationMap = forwardRef(function PlantationMap(
   const boxRef = useRef(null);
   const mapRef = useRef(null);
   const [ready, setReady] = useState(false);
+  const [monitorDate, setMonitorDate] = useState(null); /* tanggal pass HLS terbaru | "none" */
+  const monitorProbe = useRef(false);
   const markersRef = useRef([]);
   const infraRef = useRef([]);
   const popupRef = useRef(null);
@@ -181,13 +208,29 @@ const PlantationMap = forwardRef(function PlantationMap(
     if (ready) mapRef.current.setFilter("areas-selected", ["==", ["get", "id"], selectedId || "__none__"]);
   }, [ready, selectedId]);
 
+  /* ---- pencarian tanggal pass HLS terbaru (sekali, saat monitoring pertama dipilih) ---- */
+  useEffect(() => {
+    if (basemap !== "monitoring" || monitorProbe.current) return;
+    monitorProbe.current = true;
+    const c = areas && areas.features[0] ? areas.features[0].geometry : null;
+    const ring = c ? (c.type === "MultiPolygon" ? c.coordinates[0][0] : c.coordinates[0]) : null;
+    const [lon, lat] = ring ? ring[0] : [107.4183, -6.665];
+    findLatestHlsDate(lon, lat).then((d) => setMonitorDate(d || "none"));
+  }, [basemap, areas]);
+
   /* ---- basemap (tanpa membuat ulang peta) ---- */
   useEffect(() => {
     if (!ready) return;
     const map = mapRef.current;
     const cfg = BASEMAPS[basemap] || BASEMAPS.satelit;
     if (!map.getLayer("base")) return;
-    if (!cfg.tiles) {
+    const showMonitor = basemap === "monitoring" && monitorDate && monitorDate !== "none";
+    if (showMonitor && !map.getSource("monitor")) {
+      map.addSource("monitor", { type: "raster", tiles: [GIBS_HLS(monitorDate)], tileSize: 256, maxzoom: 12 });
+      map.addLayer({ id: "monitor", type: "raster", source: "monitor" }, "areas-fill");
+    }
+    if (map.getLayer("monitor")) map.setLayoutProperty("monitor", "visibility", showMonitor ? "visible" : "none");
+    if (basemap === "monitoring" || !cfg.tiles) {
       map.setLayoutProperty("base", "visibility", "none");
       if (map.getLayer("offline")) map.setLayoutProperty("offline", "visibility", "none");
     } else {
@@ -197,7 +240,7 @@ const PlantationMap = forwardRef(function PlantationMap(
       const src = map.getSource("base");
       if (src && src.setTiles) src.setTiles(cfg.tiles);
     }
-  }, [ready, basemap]);
+  }, [ready, basemap, monitorDate]);
 
   /* ---- label chip (DOM marker, gaya chip SVG lama) ---- */
   useEffect(() => {
@@ -239,13 +282,16 @@ const PlantationMap = forwardRef(function PlantationMap(
   }, [ready, focusTarget]);
 
   const attribution = (BASEMAPS[basemap] || {}).attribution;
+  const monitorNote = basemap !== "monitoring" ? "" :
+    monitorDate === "none" ? " — pass tidak ditemukan (offline?)" :
+    monitorDate ? " · pass " + monitorDate : " · mencari pass terbaru…";
   return (
     <div style={{ position: "relative", width: "100%", height }}>
       <div ref={boxRef} style={{ width: "100%", height: "100%" }} />
       {attribution && (
         <div style={{ position: "absolute", bottom: 2, right: 2, zIndex: 5, font: "9px Inter,system-ui,sans-serif",
           color: "rgba(255,255,255,.92)", background: "rgba(0,0,0,.4)", padding: "1px 5px", borderRadius: 4 }}>
-          {attribution}{offlineImage && basemap === "satelit" ? " · offline © Google Earth" : ""}
+          {attribution}{monitorNote}{offlineImage && basemap === "satelit" ? " · offline © Google Earth" : ""}
         </div>
       )}
     </div>
