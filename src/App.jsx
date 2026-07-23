@@ -2060,9 +2060,9 @@ function MapKpiStrip({drill,agg}){
   </div>);
 }
 const MAP_SC_COLOR=(sc)=>sc===1?"#15803D":sc===2?"#65A30D":sc===3?"#F59E0B":sc===4?"#EA580C":"#9CA3AF";
-/* Titik infrastruktur kebun. Embung: koordinat NYATA dari KML lapangan
-   "Gunung Hejo Titik Embung" (arsip: data/gunung-hejo-titik-embung.kml).
-   Titik lain masih ESTIMASI (demo) — perbarui dari survei GPS. */
+/* Titik infrastruktur kebun: HANYA 9 embung dengan koordinat NYATA dari KML
+   lapangan "Gunung Hejo Titik Embung" (arsip: data/gunung-hejo-titik-embung.kml).
+   Titik lain (sumur bor, bale tani, dll.) menyusul setelah ada survei GPS. */
 const MAP_INFRA=[
  {id:"EMB-B1A",type:"Embung Besar",name:"Embung B1A",icon:"💧",lat:-6.676499,lon:107.422742,src:"kml"},
  {id:"EMB-B1B",type:"Embung Besar",name:"Embung B1B",icon:"💧",lat:-6.674057,lon:107.422158,src:"kml"},
@@ -2073,14 +2073,9 @@ const MAP_INFRA=[
  {id:"EMB-B3B",type:"Embung Besar",name:"Embung B3B",icon:"💧",lat:-6.661410,lon:107.417580,src:"kml"},
  {id:"EMB-B4A",type:"Embung Besar",name:"Embung B4A",icon:"💧",lat:-6.660431,lon:107.416103,src:"kml"},
  {id:"EMB-B4B",type:"Embung Besar",name:"Embung B4B",icon:"💧",lat:-6.662048,lon:107.414094,src:"kml"},
- {id:"SB-01",type:"Sumur Bor",name:"Sumur Bor SB-01",icon:"⛏️",lat:-6.6752,lon:107.4189},
- {id:"MA-01",type:"Mata Air",name:"Mata Air Gununghejo",icon:"⛲",lat:-6.6612,lon:107.4121},
- {id:"BT-01",type:"Bale Tani",name:"Bale Tani — Kantor Operasional Kebun",icon:"🏠",lat:-6.6768,lon:107.4166},
- {id:"GD-01",type:"Gudang",name:"Gudang Saprodi",icon:"📦",lat:-6.6773,lon:107.4172},
- {id:"GH-01",type:"Green House",name:"Green House Persemaian",icon:"🌱",lat:-6.6761,lon:107.4156},
 ];
 const MAP_INFRA_POINTS=MAP_INFRA.map(p=>({id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,
- title:p.name+" · "+p.type+(p.src==="kml"?" — titik KML lapangan":" — lokasi estimasi (demo)")}));
+ title:p.name+" · "+p.type+" — titik KML lapangan"}));
 /* Jalur jalan produksi — polyline ESTIMASI (demo): poros selatan–utara + dua cabang.
    Ganti dengan tracking GPS atau data OSM (Overpass) saat tersedia. */
 const MAP_ROADS={type:"FeatureCollection",features:[
@@ -2186,10 +2181,9 @@ function MapPage(){
    else if(kind==="cluster"){ sub=(nTan?nTan+" · ":"")+HS_GEO.plots.filter(p=>p.parentId===id).length+" Petak"; }
    else { sub=nTan||""; }
    const ce=Object.entries(row.com||{}).sort((a,b)=>b[1]-a[1]); const com=ce.length?comName(ce[0][0]):(u.commodity?comName(u.commodity):"—");
-   /* Daftar komoditas aktual (sensus) dengan pangsa — untuk tooltip peta */
-   const comTotal=ce.reduce((a,x)=>a+x[1],0);
+   /* Daftar komoditas aktual (sensus) dengan jumlah pohon — untuk tooltip peta */
    const comList=ce.length
-    ? ce.slice(0,4).map(([cid,cn])=>comName(cid)+(comTotal&&ce.length>1?" ("+Math.round(100*cn/comTotal)+"%)":"")).join(", ")+(ce.length>4?" +"+(ce.length-4)+" lagi":"")
+    ? ce.slice(0,4).map(([cid,cn])=>comName(cid)+" ("+fmtN(cn)+")").join(", ")+(ce.length>4?" +"+(ce.length-4)+" lagi":"")
     : (u.commodity?comName(u.commodity):null);
    /* Kesehatan tanaman ditampilkan sebagai persen di tooltip */
    const metricVal=(metric==="health"&&row.hasData&&val!=null)?Math.round(val)+"%":mapFmtVal(metric,val);
@@ -3926,7 +3920,7 @@ function MapLayerDrawer({layers,setLayers,onClose}){
    </Group>
    <Group title="Tanaman & Aset">
     <Row label="Titik pohon" note="GPS sensus di level petak; sebaran perkiraan di level blok" control={<Chk on={layers.pohon} fn={()=>set("pohon",!layers.pohon)}/>}/>
-    <Row label="Infrastruktur kebun" note="9 embung (titik KML) · sumur bor, mata air, bale tani, gudang, green house (estimasi)" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
+    <Row label="Titik embung" note="9 titik dari KML lapangan" control={<Chk on={layers.infra} fn={()=>set("infra",!layers.infra)}/>}/>
     <Row label="Jalan produksi" note="jalur estimasi (demo)" control={<Chk on={layers.jalan} fn={()=>set("jalan",!layers.jalan)}/>}/>
     {["Jalur irigasi","Sensor","Pos keamanan"].map(l=><Row key={l} label={l} note="perlu data lokasi" disabled control={<Chk on={false} disabled/>}/>)}
    </Group>
