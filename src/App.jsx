@@ -932,6 +932,15 @@ const ROLES={
  "Finance":{def:"budget",hide:["verification","wo-new","admin","users","census","planting","plan-weekly","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Anggaran, realisasi, dan varian biaya"},
 };
 const ROLE_ICONS={"Super Admin":Settings,"Direksi":User,"Mitra Lahan":Users,"Estate Manager":Gauge,"Agronomy Head":FlaskConical,"Field Supervisor":ClipboardList,"Warehouse Officer":Warehouse,"Seedling Officer":Sprout,"Finance":Wallet};
+/* Scope blok Field Supervisor: FS hanya melihat antrean kerja & data operasional blok penugasannya.
+   null = tanpa pembatasan (peran lain). Fallback: cocokkan nama akun ke FS_BY_BLOCK bila blocks[] kosong. */
+const scopeBlocks=(role,curUser)=>{
+ if(role!=="Field Supervisor") return null;
+ const own=(curUser&&curUser.blocks&&curUser.blocks.length)?curUser.blocks:Object.keys(FS_BY_BLOCK).filter(b=>curUser&&FS_BY_BLOCK[b]===curUser.name);
+ return own.length?own:Object.keys(FS_BY_BLOCK);
+};
+const inScope=(sb,block)=>!sb||!block||sb.includes(block);
+const FS_USER_BY_BLOCK={"GH-B01":"USR-009","GH-B02":"USR-013","GH-B03":"USR-014","GH-B04":"USR-015"};
 const can=(role,act)=>{
  if(act==="verify") return ["Super Admin","Estate Manager","Agronomy Head"].includes(role);
  if(act==="createWo") return ["Super Admin","Estate Manager","Agronomy Head","Field Supervisor","Seedling Officer"].includes(role);
@@ -2140,14 +2149,15 @@ const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
 });
 /* Jalur jalan produksi: FARM_ROADS (src/map/roads.js) — 45 jalur dari KML lapangan. */
 function MapPage(){
- const {treesData,hsTreePts,nav,toast,role,route}=useApp();
+ const {treesData,hsTreePts,nav,toast,role,route,curUser}=useApp();
+ const sbMap=scopeBlocks(role,curUser); /* soft scope FS: buka langsung di blok penugasan, estate tetap bisa dilihat */
  const [metric,setMetric]=useState("health");
  const [period,setPeriod]=useState("30 hari terakhir");
  const [zoom,setZoom]=useState(1);
- const [sel,setSel]=useState(null);
+ const [sel,setSel]=useState(()=>sbMap&&sbMap.length===1?sbMap[0]:null);
  const [fCom,setFCom]=useState("Semua");
  const [fRisk,setFRisk]=useState("Semua");
- const [fBlock,setFBlock]=useState("Semua");
+ const [fBlock,setFBlock]=useState(()=>sbMap&&sbMap.length===1?sbMap[0]:"Semua");
  const [layers,setLayers]=useState({base:"satelit",pohon:true,label:true,embung:true,joglo:true,jalan:true,rs:"none",rsOpacity:0.6});
  const [layerOpen,setLayerOpen]=useState(false);
  const [filterOpen,setFilterOpen]=useState(false);
@@ -4212,8 +4222,10 @@ function vzBlockCommandAll(agg,criticalAlerts){
  });
 }
 /* Antrean prioritas terpadu: alert kritis, WO terlambat, verifikasi, embung, alat, keputusan due. */
-function ccBuildQueue({alerts,wos,counts,decisions}){
+function ccBuildQueue({alerts,wos,counts,decisions,scope}){
+ /* scope: array blok (Field Supervisor) — antrean hanya blok penugasan; item estate/manajemen ikut disembunyikan */
  const items=[];
+ if(scope){ alerts=alerts.filter(a=>inScope(scope,a.blockId||a.block)); wos=wos.filter(w=>inScope(scope,w.block)); }
  alerts.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai").forEach(a=>items.push({
   sev:3,badge:"Kritis",cat:"Alert",issue:a.title,area:blockLabel(a.block)||"Estate",
   pic:a.ownerName||"Belum ada owner",due:(typeof alertIsOverdue==="function"&&alertIsOverdue(a))?"SLA terlewat":"SLA berjalan",
@@ -4221,18 +4233,19 @@ function ccBuildQueue({alerts,wos,counts,decisions}){
  wos.filter(w=>w.status==="Terlambat"||(w.due&&w.due<TODAY&&!["Selesai","Dibatalkan","Ditolak"].includes(w.status))).forEach(w=>items.push({
   sev:3,badge:"Terlambat",cat:"Work Order",issue:w.title,area:blockLabel(w.block),pic:w.supervisor||"—",
   due:w.due?("tenggat "+fmtD(w.due)):"—",act:["Buka WO","wo",{woId:w.id}]}));
- if(counts.verif>0) items.push({sev:2,badge:"Menunggu",cat:"Verifikasi",issue:fmtN(counts.verif)+" pengajuan menunggu verifikasi",
+ const verifN=scope?wos.filter(w=>["Diajukan","Menunggu Verifikasi"].includes(w.status)).length:counts.verif;
+ if(verifN>0) items.push({sev:2,badge:"Menunggu",cat:"Verifikasi",issue:fmtN(verifN)+" pengajuan menunggu verifikasi",
   area:"Estate",pic:"Estate Manager",due:"hari ini",act:["Verifikasi","verification",{}]});
- RESERVOIRS.filter(r=>r.status==="Kritis"||r.status==="Bocor").forEach(r=>items.push({
+ RESERVOIRS.filter(r=>(r.status==="Kritis"||r.status==="Bocor")&&inScope(scope,"GH-B0"+r.id[1])).forEach(r=>items.push({
   sev:r.status==="Kritis"?3:2,badge:r.status,cat:"Air / Embung",
   issue:r.name+(r.status==="Bocor"?" bocor — perlu perbaikan":" level "+r.level+"% (kritis)"),
   area:"Blok "+r.id[1],pic:FS_BY_BLOCK["GH-B0"+r.id[1]]||"Estate Manager",due:"—",act:["Manajemen Air","water",{}]}));
- INIT_INV.filter(i=>invStatus(i)==="Kritis").forEach(i=>items.push({
+ if(!scope) INIT_INV.filter(i=>invStatus(i)==="Kritis").forEach(i=>items.push({
   sev:2,badge:"Stok kritis",cat:"Material",issue:i.name+" — stok bebas "+fmtN(Math.max(0,i.onHand-i.reserved))+" "+i.unit+" di bawah minimum",
   area:"Gudang",pic:"Warehouse Officer",due:"—",act:["Inventori","inventory",{}]}));
- PUMPS.filter(pp=>pp.status==="Gangguan").forEach(pp=>items.push({
+ if(!scope) PUMPS.filter(pp=>pp.status==="Gangguan").forEach(pp=>items.push({
   sev:2,badge:"Gangguan",cat:"Alat",issue:"Pompa "+pp.id+" ("+pp.zone+") gangguan",area:pp.zone,pic:"Teknisi Irigasi",due:"—",act:["Manajemen Air","water",{}]}));
- (decisions||[]).filter(d=>d.status!=="Selesai"&&d.due&&d.due<=WX_ADD_DAYS(TODAY,3)).forEach(d=>items.push({
+ if(!scope) (decisions||[]).filter(d=>d.status!=="Selesai"&&d.due&&d.due<=WX_ADD_DAYS(TODAY,3)).forEach(d=>items.push({
   sev:d.due<TODAY?3:2,badge:d.due<TODAY?"Lewat tenggat":"Segera",cat:"Keputusan",issue:d.t,area:"Manajemen",pic:d.pic,due:fmtD(d.due),act:null}));
  return items.sort((a,b)=>b.sev-a.sev);
 }
@@ -4264,13 +4277,14 @@ const CC_ROLE_CFG={
 };
 const CC_SEV_BADGE={3:"Kritis",2:"Sedang"};
 function CommandCenterPage(){
- const {alerts,wos,counts,nav,role,dateRange,hsTreePts,toast,decisions,updateDecision}=useApp();
+ const {alerts,wos,counts,nav,role,dateRange,hsTreePts,toast,decisions,updateDecision,curUser}=useApp();
  const cfg=CC_ROLE_CFG[role]||CC_ROLE_CFG["Super Admin"];
+ const sb=scopeBlocks(role,curUser); /* FS: antrean & aksi dibatasi blok penugasan; KPI estate tetap sebagai konteks */
  const criticalAlerts=useMemo(()=>alerts.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai"),[alerts]);
  const agg=useMemo(()=>hsTreePts?vzAggregate(hsTreePts,"Semua"):null,[hsTreePts]);
  const blocks=useMemo(()=>vzBlockCommandAll(agg,criticalAlerts),[agg,criticalAlerts]);
  const estate=useMemo(()=>vzEstateExec(blocks),[blocks]);
- const queueAll=useMemo(()=>ccBuildQueue({alerts,wos,counts,decisions}),[alerts,wos,counts,decisions]);
+ const queueAll=useMemo(()=>ccBuildQueue({alerts,wos,counts,decisions,scope:sb}),[alerts,wos,counts,decisions,sb]);
  const [selBlock,setSelBlock]=useState(null);
  const [drawerBlock,setDrawerBlock]=useState(null);
  const [qExpand,setQExpand]=useState(false);
@@ -4287,8 +4301,8 @@ function CommandCenterPage(){
  /* Tersambung ke data modul: Tenaga Kerja (HOK), Inventori (stok), Keuangan (BUDGET_TREND) */
  /* HOK: pakai hari kerja terakhir pada data kehadiran (LB_TODAY bisa jatuh di hari libur) */
  const lbLastWd=LB_ATT_DAYS.length?LB_ATT_DAYS[LB_ATT_DAYS.length-1]:LB_TODAY;
- const hokToday=Math.round(lbAttStat(lbAttOn(lbLastWd)).hok);
- const laborActive=lbAgg(LB_WORKERS).active.length;
+ const hokToday=Math.round(lbAttStat(lbAttOn(lbLastWd).filter(a=>inScope(sb,a.block))).hok);
+ const laborActive=lbAgg(LB_WORKERS.filter(w=>inScope(sb,w.block))).active.length;
  const matKritis=INIT_INV.filter(i=>invStatus(i)==="Kritis").length;
  const budPlan=BUDGET_TREND.reduce((a,m)=>a+(m.anggaran||0),0);
  const budAct=BUDGET_TREND.reduce((a,m)=>a+(m.aktual||0),0);
@@ -4297,7 +4311,7 @@ function CommandCenterPage(){
  const finFull=["Direksi","Finance","Estate Manager","Super Admin"].includes(role);
  const finHighlight=role==="Mitra Lahan"; /* keputusan produk: Mitra hanya highlight, tanpa detail/drill */
  const canDecide=["Direksi","Estate Manager","Super Admin"].includes(role);
- const todayWos=wos.filter(w=>["Berjalan"].includes(w.status)||(w.scheduled===TODAY&&w.status==="Terjadwal"));
+ const todayWos=wos.filter(w=>(["Berjalan"].includes(w.status)||(w.scheduled===TODAY&&w.status==="Terjadwal"))&&inScope(sb,w.block));
  const censusDays=Math.round((new Date(TODAY)-new Date("2025-12-27"))/864e5);
  const primaryCta=
   can(role,"createWo")?<Btn onClick={()=>nav("wo-new")}><Plus size={14}/>Buat Work Order</Btn>
@@ -4656,7 +4670,9 @@ const woOverdue=(w)=> w.status==="Terlambat" || (w.due && w.due<TODAY && !["Sele
 const PRIORITIES=["Rendah","Sedang","Tinggi","Kritis"];
 
 function WorkOrdersPage(){
- const {wos,nav,role,route}=useApp();
+ const {wos:wosAll,nav,role,route,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const wos=useMemo(()=>wosAll.filter(w=>inScope(sb,w.block)),[wosAll,sb]);
  const [view,setView]=useState("Tabel");
  const [fSt,setFSt]=useState("Semua"),[fPr,setFPr]=useState("Semua"),[fAct,setFAct]=useState("Semua"),[fBlk,setFBlk]=useState("Semua"),[fSup,setFSup]=useState("Semua");
  const [onlyOverdue,setOnlyOverdue]=useState(!!route.params.overdue);
@@ -4668,7 +4684,7 @@ function WorkOrdersPage(){
  const byDate={}; list.forEach(w=>{ (byDate[w.scheduled]=byDate[w.scheduled]||[]).push(w); });
  return (
   <div>
-   <PageHeader title="Work Order" subtitle={list.length+" dari "+wos.length+" work order ditampilkan"}
+   <PageHeader title="Work Order" subtitle={list.length+" dari "+wos.length+" work order ditampilkan"+(sb?" • blok penugasan Anda: "+sb.map(blockLabel).join(", "):"")}
     actions={<><DqModuleBadge domains={["Work Order"]}/>{can(role,"createWo")&&<Btn onClick={()=>nav("wo-new")}><Plus size={15}/>Buat Work Order</Btn>}</>}/>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
     <Kpi label="WO aktif" value={active.length} icon={ClipboardList} tone="blue"/>
@@ -4682,7 +4698,7 @@ function WorkOrdersPage(){
      <Sel aria-label="Filter status" value={fSt} onChange={e=>setFSt(e.target.value)} options={["Semua","Draft","Terjadwal","Berjalan","Diajukan","Menunggu Verifikasi","Rework","Terlambat","Selesai","Dibatalkan","Ditolak"]}/>
      <Sel aria-label="Filter prioritas" value={fPr} onChange={e=>setFPr(e.target.value)} options={["Semua",...PRIORITIES]}/>
      <Sel aria-label="Filter aktivitas" value={fAct} onChange={e=>setFAct(e.target.value)} options={["Semua",...ACTIVITIES]}/>
-     <Sel aria-label="Filter blok" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+     <Sel aria-label="Filter blok" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
      <Sel aria-label="Filter supervisor" value={fSup} onChange={e=>setFSup(e.target.value)} options={["Semua",...SUPERVISORS]}/>
      <label className="flex items-center gap-1.5 text-sm text-gray-600 ml-1"><input type="checkbox" checked={onlyOverdue} onChange={e=>setOnlyOverdue(e.target.checked)} className="accent-green-600"/>Hanya terlambat</label>
      <div className="ml-auto flex gap-1">
@@ -4750,13 +4766,14 @@ const CkBox=({state,onClick,sm})=>{ const s=sm?14:16, ic=sm?9:11;
   {state==="all"?<Check size={ic}/>:state==="some"?<span className="bg-green-600 rounded-sm" style={{width:ic-2,height:2}}/>:null}
  </button>); };
 function CreateWoPage(){
- const {route,nav,role,wos,addWo,toast,hsTreePts}=useApp();
+ const {route,nav,role,wos,addWo,toast,hsTreePts,curUser}=useApp();
+ const sbWo=scopeBlocks(role,curUser);
  const pre=route.params.prefill||{};
  const [step,setStep]=useState(0);
  const [exp,setExp]=useState({});
  const [f,setF]=useState({
   activity:pre.activity||"Pemupukan", title:pre.title||"", priority:pre.activity==="Penyiraman"?"Tinggi":"Sedang",
-  block:pre.block||"GH-B01",
+  block:pre.block||(sbWo&&sbWo[0])||"GH-B01",
   locs:pre.block?HS_GEO.clusters.filter(c=>c.parentId===pre.block).flatMap(c=>HS_GEO.plots.filter(p=>p.parentId===c.id).map(p=>p.id)):[],
   targetTrees:"", scheduled:"2026-07-21", days:2,
   supervisor:"", team:8, materials:[], sop:pre.sop||"", note:pre.note||"",
@@ -4836,7 +4853,7 @@ function CreateWoPage(){
       {f.locs.length>0 && <button onClick={()=>set("locs",[])} className="text-xs text-gray-500 hover:text-red-600">Kosongkan pilihan</button>}
      </div>
      <div className="border border-gray-200 rounded-md max-h-72 overflow-y-auto divide-y divide-gray-100">
-      {HS_GEO.blocks.map(bl=>{ const bIds=petakIdsInBlock(bl.id); const bst=triState(bIds); const bopen=exp[bl.id];
+      {HS_GEO.blocks.filter(bl=>inScope(sbWo,bl.id)).map(bl=>{ const bIds=petakIdsInBlock(bl.id); const bst=triState(bIds); const bopen=exp[bl.id];
        return (<div key={bl.id}>
         <div className="flex items-center gap-2 px-3 py-2">
          <button type="button" onClick={()=>setExp(e=>({...e,[bl.id]:!e[bl.id]}))} className="text-gray-400 shrink-0" aria-label="Perluas"><ChevronRight size={15} className={"transition-transform "+(bopen?"rotate-90":"")}/></button>
@@ -5049,7 +5066,8 @@ function WoDetailPage(){
 /* ============ Verifikasi, kesehatan tanaman, detail kasus ============ */
 function VerificationPage(){
  const {wos,updateWo,role,toast,confirmAction,nav,alerts,alertLoop,curUser}=useApp();
- const queue=wos.filter(w=>["Diajukan","Menunggu Verifikasi"].includes(w.status));
+ const sb=scopeBlocks(role,curUser);
+ const queue=wos.filter(w=>["Diajukan","Menunggu Verifikasi"].includes(w.status)&&inScope(sb,w.block));
  const [selId,setSelId]=useState(null);
  const [reworkNote,setReworkNote]=useState("");
  const sel=queue.find(w=>w.id===selId);
@@ -6950,7 +6968,10 @@ const INIT_USERS=[
  {id:"USR-006",name:"PEAK 92",email:"peak92@mitralahan.id",phone:"—",role:"Mitra Lahan",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Pemilik lahan (landowner)"},
  {id:"USR-007",name:"Akun Estate Manager",email:"estate.manager@varmos.id",phone:"—",role:"Estate Manager",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
  {id:"USR-008",name:"Akun Agronomy Head",email:"agronomy.head@varmos.id",phone:"—",role:"Agronomy Head",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
- {id:"USR-009",name:"Akun Field Supervisor",email:"field.supervisor@varmos.id",phone:"—",role:"Field Supervisor",blocks:["GH-B02","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
+ {id:"USR-009",name:"Yudha Kubil",email:"yudha.kubil@varmos.id",phone:"0812-1100-201",role:"Field Supervisor",blocks:["GH-B01"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 1"},
+ {id:"USR-013",name:"Saktian",email:"saktian@varmos.id",phone:"0812-1100-202",role:"Field Supervisor",blocks:["GH-B02"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 2"},
+ {id:"USR-014",name:"Indra",email:"indra@varmos.id",phone:"0812-1100-203",role:"Field Supervisor",blocks:["GH-B03"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 3"},
+ {id:"USR-015",name:"Asep Ganjar",email:"asep.ganjar@varmos.id",phone:"0812-1100-204",role:"Field Supervisor",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 4"},
  {id:"USR-010",name:"Akun Warehouse Officer",email:"warehouse.officer@varmos.id",phone:"—",role:"Warehouse Officer",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
  {id:"USR-011",name:"Akun Seedling Officer",email:"seedling.officer@varmos.id",phone:"—",role:"Seedling Officer",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi — pembibitan"},
  {id:"USR-012",name:"Akun Finance",email:"finance@varmos.id",phone:"—",role:"Finance",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun berbasis posisi"},
@@ -7156,8 +7177,9 @@ function cenBlockSummaryFor(blockId){ return CEN_DATA.byBlock[blockId]||null; }
 const CEN_KOM_ID={Kelengkeng:"lengkeng",Alpukat:"alpukat",Durian:"durian",Manggis:"manggis",Mangga:"mangga",Petai:"petai",Sawo:"sawo",Nangka:"nangka",Jeruk:"jeruk",Rambutan:"rambutan"};
 
 function CenEntryModal({open,onClose}){
- const {addCenEntry,toast}=useApp();
- const [f,setF]=useState({block:"GH-B01",treeId:"",cond:"Cukup Sehat",h:"",w:"",note:""});
+ const {addCenEntry,toast,role,curUser}=useApp();
+ const sbCen=scopeBlocks(role,curUser);
+ const [f,setF]=useState({block:(sbCen&&sbCen[0])||"GH-B01",treeId:"",cond:"Cukup Sehat",h:"",w:"",note:""});
  useEffect(()=>{ if(open) setF(v=>({...v,treeId:"",h:"",w:"",note:""})); },[open]);
  const submit=()=>{
   if(!f.treeId) return;
@@ -7169,7 +7191,7 @@ function CenEntryModal({open,onClose}){
   <Modal open={open} onClose={onClose} title="Input / Koreksi Hasil Sensus" footer={<><Btn variant="secondary" onClick={onClose}>Batal</Btn><Btn onClick={submit} disabled={!f.treeId}><Check size={14}/>Simpan</Btn></>}>
    <div className="space-y-3 text-sm">
     <div className="grid grid-cols-2 gap-3">
-     <label className="block"><span className="text-xs text-gray-500">Blok</span><Sel value={f.block} onChange={v=>setF({...f,block:v})} options={Object.keys(CEN_DATA.byBlock)}/></label>
+     <label className="block"><span className="text-xs text-gray-500">Blok</span><Sel value={f.block} onChange={v=>setF({...f,block:v})} options={Object.keys(CEN_DATA.byBlock).filter(b=>inScope(sbCen,b))}/></label>
      <label className="block"><span className="text-xs text-gray-500">ID Record / Tanaman</span><Inp value={f.treeId} onChange={e=>setF({...f,treeId:e.target.value})} placeholder="GH-SENSUS-00001"/></label>
      <label className="block"><span className="text-xs text-gray-500">Status</span><Sel value={f.cond} onChange={v=>setF({...f,cond:v})} options={CEN_COND.map(c=>c[0])}/></label>
      <label className="block"><span className="text-xs text-gray-500">Tinggi (cm)</span><Inp type="number" value={f.h} onChange={e=>setF({...f,h:e.target.value})} placeholder="cth: 120"/></label>
@@ -7463,11 +7485,13 @@ function lbAgg(workers){
 }
 
 function LaborDashboard(){
- const {nav}=useApp(); const {workers}=useApp();
+ const {nav,role,curUser}=useApp(); const {workers:workersAll}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const workers=useMemo(()=>workersAll.filter(w=>inScope(sb,w.block)),[workersAll,sb]);
  const [fGroup,setFGroup]=useState("Semua"), [fMandor,setFMandor]=useState("Semua"), [fBlock,setFBlock]=useState("Semua");
  const ws=workers.filter(w=>(fGroup==="Semua"||w.group===fGroup)&&(fMandor==="Semua"||w.mandor===fMandor)&&(fBlock==="Semua"||w.block===fBlock));
  const A=lbAgg(ws);
- const hokToday=lbAttStat(lbAttOn(LB_TODAY)).hok;
+ const hokToday=lbAttStat(lbAttOn(LB_TODAY).filter(a=>inScope(sb,a.block))).hok;
  const estCost=Math.round(A.hokMonth*80000);
  const byGroup=LB_GROUPS.map(g=>({name:g.name.replace("Regu HOK ",""),v:ws.filter(w=>w.group===g.id).length}));
  const byType=[["Reguler",ws.filter(w=>w.type==="HOK Reguler").length],["Musiman",ws.filter(w=>w.type==="HOK Musiman").length],["Borongan",ws.filter(w=>w.type==="Borongan").length],["Spesialis",ws.filter(w=>w.type==="Tenaga Spesialis").length]].map(([name,v])=>({name,v}));
@@ -7478,8 +7502,8 @@ function LaborDashboard(){
     actions={<Btn onClick={()=>nav("workers")}><Users size={15}/>Database Pekerja</Btn>}/>
    <div className="flex flex-wrap gap-2 mb-4">
     <Sel aria-label="Filter kelompok" value={fGroup} onChange={e=>setFGroup(e.target.value)} options={[["Semua","Semua kelompok"],...LB_GROUPS.map(g=>[g.id,g.name])]}/>
-    <Sel aria-label="Filter Field Supervisor" value={fMandor} onChange={e=>setFMandor(e.target.value)} options={[["Semua","Semua Field Supervisor"],...LB_FS.map(m=>[m.id,m.name])]}/>
-    <Sel aria-label="Filter blok" value={fBlock} onChange={e=>setFBlock(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+    <Sel aria-label="Filter Field Supervisor" value={fMandor} onChange={e=>setFMandor(e.target.value)} options={[["Semua","Semua Field Supervisor"],...LB_FS.filter(m=>inScope(sb,m.block)).map(m=>[m.id,m.name])]}/>
+    <Sel aria-label="Filter blok" value={fBlock} onChange={e=>setFBlock(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
     <Sel aria-label="Periode" defaultValue="Juli 2026" options={["Juli 2026","Kuartal berjalan","2026"]}/>
    </div>
    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 mb-4">
@@ -7492,13 +7516,13 @@ function LaborDashboard(){
     <Kpi label="HOK bulan berjalan" value={fmtN(A.hokMonth)} icon={CalendarDays} tone="blue"/>
     <Kpi label="Rata-rata produktivitas" value={A.avgProd+"%"} icon={TrendingUp} tone={A.avgProd>=90?"green":"amber"}/>
     <Kpi label="Estimasi biaya TK (bln)" value={fmtRpC(estCost)} icon={Wallet} tone="purple"/>
-    <Kpi label="Belum diverifikasi" value={fmtN(LB_ASSIGN.filter(a=>a.status==="Menunggu verifikasi").length)} icon={Eye} tone="amber" onClick={()=>nav("assign")}/>
+    <Kpi label="Belum diverifikasi" value={fmtN(LB_ASSIGN.filter(a=>a.status==="Menunggu verifikasi"&&inScope(sb,a.block)).length)} icon={Eye} tone="amber" onClick={()=>nav("assign")}/>
     <Kpi label="Dokumen lengkap" value={fmtN(A.docOk)} sub={fmtPct((100*A.docOk/Math.max(1,ws.length)).toFixed(0))} icon={FileText} tone="gray"/>
     <Kpi label="Konflik penugasan" value={fmtN(LB_CONFLICTS.length)} icon={AlertTriangle} tone="red" onClick={()=>nav("assign")}/>
    </div>
    <Card title="Struktur HOK per blok — Field Supervisor & tim khusus" pad={false} className="mb-4">
     <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Blok","Field Supervisor","HOK dedicated","Aktif","Tersedia hari ini","Ketua Regu"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-     <tbody>{BLOCKS.map(b=>{ const bw=workers.filter(w=>w.block===b.id); const lead=bw.find(w=>w.role==="Ketua Regu"); return (
+     <tbody>{BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>{ const bw=workers.filter(w=>w.block===b.id); const lead=bw.find(w=>w.role==="Ketua Regu"); return (
       <tr key={b.id} className={T.tr} onClick={()=>{setFBlock(b.id);}}>
        <td className={T.td+" font-semibold"}>{b.name}</td>
        <td className={T.td}>{lbFsName(lbFsOfBlock(b.id).id)}</td>
@@ -7507,7 +7531,7 @@ function LaborDashboard(){
        <td className={T.td+" text-right"}>{bw.filter(w=>w.avail==="Tersedia").length}</td>
        <td className={T.td}>{lead?lead.name:"—"}</td>
       </tr>); })}
-      <tr className="bg-gray-50 font-semibold"><td className={T.td}>Total</td><td className={T.td}>4 Field Supervisor</td><td className={T.td+" text-right"}>{Object.values(LB_BLOCK_HOK).reduce((a,b)=>a+b,0)}</td><td className={T.td+" text-right"}>{workers.filter(w=>w.status==="Aktif").length}</td><td className={T.td+" text-right"}>{workers.filter(w=>w.avail==="Tersedia").length}</td><td className={T.td}></td></tr>
+      <tr className="bg-gray-50 font-semibold"><td className={T.td}>Total</td><td className={T.td}>{(sb?sb.length:4)+" Field Supervisor"}</td><td className={T.td+" text-right"}>{Object.entries(LB_BLOCK_HOK).filter(([b])=>inScope(sb,b)).reduce((a,[,v])=>a+v,0)}</td><td className={T.td+" text-right"}>{workers.filter(w=>w.status==="Aktif").length}</td><td className={T.td+" text-right"}>{workers.filter(w=>w.avail==="Tersedia").length}</td><td className={T.td}></td></tr>
      </tbody></table></div>
    </Card>
    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
@@ -7530,7 +7554,7 @@ function LaborDashboard(){
    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <Card title="Penugasan terkini" pad={false} action={<Btn size="sm" variant="ghost" onClick={()=>nav("assign")}>Semua<ChevronRight size={13}/></Btn>}>
      <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Penugasan","Pekerjaan","Lokasi","Regu","Pekerja","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{LB_ASSIGN.filter(a=>a.date===LB_ASSIGN.reduce((m,x)=>x.date>m?x.date:m,"")).map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>
+      <tbody>{LB_ASSIGN.filter(a=>a.date===LB_ASSIGN.reduce((m,x)=>x.date>m?x.date:m,"")&&inScope(sb,a.block)).map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>
     </Card>
     <Card title="Konflik & kehadiran bermasalah" pad={false}>
      <div className="divide-y divide-gray-100">
@@ -7543,7 +7567,9 @@ function LaborDashboard(){
 }
 
 function WorkerDatabasePage(){
- const {nav,workers,toast,role}=useApp();
+ const {nav,workers:workersAll,toast,role,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const workers=useMemo(()=>workersAll.filter(w=>inScope(sb,w.block)),[workersAll,sb]);
  const [q,setQ]=useState(""), [fGroup,setFGroup]=useState("Semua"), [fStatus,setFStatus]=useState("Semua"), [fType,setFType]=useState("Semua"), [fAvail,setFAvail]=useState("Semua"), [fDoc,setFDoc]=useState("Semua");
  const [sort,setSort]=useState({k:"id",dir:1}), [page,setPage]=useState(1), [sel,setSel]=useState([]), [add,setAdd]=useState(false);
  const per=12;
@@ -7665,10 +7691,11 @@ function WorkerProfilePage(){
 }
 
 function AssignmentAttendancePage(){
- const {nav,toast,role}=useApp();
+ const {nav,toast,role,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
  const [tab,setTab]=useState("assign");
  const [attDate,setAttDate]=useState(LB_TODAY), [attBlock,setAttBlock]=useState("Semua"), [attStatus,setAttStatus]=useState("Semua");
- const attAll=lbAttOn(attDate);
+ const attAll=lbAttOn(attDate).filter(a=>inScope(sb,a.block));
  const att=attAll.filter(a=>(attBlock==="Semua"||a.block===attBlock)&&(attStatus==="Semua"||a.st===attStatus));
  const AS=lbAttStat(attAll);
  const exportAtt=()=>{ try{ const head=["ID","Tanggal","Pekerja","Blok","Field_Supervisor","Masuk","Pulang","Status","HOK","Lembur_jam","Sumber","Perangkat","Verifikasi"]; const body=att.map(a=>[a.id,a.date,a.name,blockLabel(a.block),lbFsName(a.fs),a.in,a.out,a.st,a.hok,a.ot,a.src,a.device,a.verif].join(",")); const blob=new Blob(["\ufeff"+[head.join(","),...body].join("\n")],{type:"text/csv;charset=utf-8"}); const u=URL.createObjectURL(blob); const x=document.createElement("a"); x.href=u; x.download="absensi-fingerprint-"+attDate+".csv"; document.body.appendChild(x); x.click(); x.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500);}catch(e){} };
@@ -7682,7 +7709,7 @@ function AssignmentAttendancePage(){
    {tab==="assign"?<>
     {LB_CONFLICTS.length>0&&<div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><div className="text-sm font-semibold text-amber-900 flex items-center gap-1.5 mb-1"><AlertTriangle size={15}/>Validasi penugasan — {LB_CONFLICTS.length} isu terdeteksi</div>{LB_CONFLICTS.map((c,i)=>(<div key={i} className="text-xs text-amber-800 flex items-center gap-2 py-0.5"><LbBadge v={c.sev==="Konflik"?"Ditolak":"Menunggu verifikasi"}/>{c.name} — {c.issue} <button onClick={()=>toast("Override dicatat dengan alasan (simulasi)")} className="underline ml-1">Override</button></div>))}</div>}
     <Card pad={false}><div className="overflow-x-auto"><table className={T.table}><thead><tr>{["ID","Tanggal","Work Order","Pekerjaan","Lokasi","Regu","Field Supervisor","Pekerja","Target","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-     <tbody>{LB_ASSIGN.map(a=>(<tr key={a.id} className={T.tr} onClick={()=>nav("wo",{woId:a.wo})}><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{fmtD(a.date)}</td><td className={T.td}>{a.wo}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{lbMandorName(a.mandor)}</td><td className={T.td+" text-right"}>{a.workers}</td><td className={T.td}>{a.target}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div></Card>
+     <tbody>{LB_ASSIGN.filter(a=>inScope(sb,a.block)).map(a=>(<tr key={a.id} className={T.tr} onClick={()=>nav("wo",{woId:a.wo})}><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{fmtD(a.date)}</td><td className={T.td}>{a.wo}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{lbMandorName(a.mandor)}</td><td className={T.td+" text-right"}>{a.workers}</td><td className={T.td}>{a.target}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div></Card>
    </>:<>
     <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 flex items-start gap-2.5">
      <Fingerprint size={18} className="text-blue-700 mt-0.5 shrink-0"/>
@@ -7699,7 +7726,7 @@ function AssignmentAttendancePage(){
     <Card pad={false}>
      <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-gray-100">
       <Inp type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} className="!w-auto"/>
-      <Sel value={attBlock} onChange={e=>setAttBlock(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+      <Sel value={attBlock} onChange={e=>setAttBlock(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
       <Sel value={attStatus} onChange={e=>setAttStatus(e.target.value)} options={[["Semua","Semua status"],"Hadir penuh","Setengah hari","Lembur","Izin","Sakit","Tidak hadir"]}/>
       <div className="ml-auto flex items-center gap-2"><span className="text-xs text-gray-400">{att.length} baris</span><Btn size="sm" variant="secondary" onClick={exportAtt}><Download size={13}/>CSV</Btn></div>
      </div>
@@ -7849,7 +7876,7 @@ const DQ_INIT_ISSUES=[
    evidence:[{name:"foto-gateway-b1.jpg",by:"Yudha Kubil",at:"2026-07-18T15:40:00+07:00",status:"Terunggah"}], resolution:null },
  { id:"DQ-2026-005", title:"Selisih 94 pohon antara Peta Kebun dan sensus di Blok 2", domain:"Data Spasial", dimension:"consistency", severity:"High", status:"Ditugaskan",
    estateId:"GH", blockId:"GH-B02", clusterId:null, plotId:null, affectedRecords:94, sourceId:"SRC-KML-001", ruleId:"DQ-GEO-001",
-   detectedAt:"2026-07-17T16:40:00+07:00", dueAt:"2026-07-20T16:40:00+07:00", ownerId:"USR-009", ownerName:"Akun Field Supervisor", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-17T16:40:00+07:00", dueAt:"2026-07-20T16:40:00+07:00", ownerId:"USR-013", ownerName:"Saktian", assignedBy:"Akun Estate Manager", sensitive:false,
    modules:["Peta Kebun","Sensus","Command Center"],
    impact:"Populasi per blok pada dashboard eksekutif berbeda dengan peta; angka survival rate bias.",
    recommendation:"Rekonsiliasi titik peta dengan record sensus; tandai pohon yang ditanam setelah sensus Desember 2025.",
@@ -8011,7 +8038,7 @@ const DQ_INIT_AUDIT=[
  { id:"AUD-DQ-1008", issueId:"DQ-2026-012", action:"Issue ditugaskan", userId:"USR-001", userName:"Administrator Sistem", role:"Super Admin", at:"2026-07-18T14:10:00+07:00", reason:"Perlu konfirmasi lintas blok", before:{ownerId:null}, after:{ownerId:"USR-007",status:"Dalam Pemeriksaan"} },
  { id:"AUD-DQ-1007", issueId:"DQ-2026-002", action:"Bukti diunggah — duplikat-b1c2.xlsx", userId:"USR-008", userName:"Akun Agronomy Head", role:"Agronomy Head", at:"2026-07-18T16:05:00+07:00", reason:null, before:null, after:null },
  { id:"AUD-DQ-1006", issueId:"DQ-2026-002", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-18T15:30:00+07:00", reason:"Verifikasi duplikat memerlukan review agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
- { id:"AUD-DQ-1005", issueId:"DQ-2026-005", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-17T17:00:00+07:00", reason:"Verifikasi lapangan diperlukan", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-009",status:"Ditugaskan"} },
+ { id:"AUD-DQ-1005", issueId:"DQ-2026-005", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-17T17:00:00+07:00", reason:"Verifikasi lapangan diperlukan", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-013",status:"Ditugaskan"} },
  { id:"AUD-DQ-1004", issueId:"DQ-2026-015", action:"Issue ditutup — False Positive", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-17T16:00:00+07:00", reason:"Reprocessing histori penyedia, bukan observasi baru", before:{status:"Menunggu Verifikasi"}, after:{status:"False Positive"} },
  { id:"AUD-DQ-1003", issueId:"DQ-2026-014", action:"Resolution diajukan — Gunakan data baru", userId:"USR-010", userName:"Akun Warehouse Officer", role:"Warehouse Officer", at:"2026-07-17T11:05:00+07:00", reason:"Satuan distandarkan mengikuti master SOP material versi 2", before:{status:"Dalam Pemeriksaan"}, after:{status:"Menunggu Verifikasi"} },
  { id:"AUD-DQ-1002", issueId:"DQ-2026-006", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-16T11:00:00+07:00", reason:"Konflik komoditas perlu keputusan agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
@@ -8083,7 +8110,7 @@ function dqFormatIssueLocation(i){ const parts=[]; if(i.blockId) parts.push(bloc
 function dqRoleScope(role,curUser){
  if(["Super Admin","Estate Manager","Direksi"].includes(role)) return {all:true};
  if(role==="Agronomy Head") return {domains:["Sensus Tanaman","Hybrid Sensing","Data Spasial"]};
- if(role==="Field Supervisor"){ const own=(curUser&&curUser.blocks&&curUser.blocks.length)?curUser.blocks:Object.keys(FS_BY_BLOCK).filter(b=>curUser&&FS_BY_BLOCK[b]===curUser.name); return {blocks:own.length?own:["GH-B04"]}; }
+ if(role==="Field Supervisor") return {blocks:scopeBlocks(role,curUser)};
  if(role==="Warehouse Officer") return {domains:["Inventori"]};
  if(role==="Finance") return {domains:["Keuangan"]};
  return {none:true};
@@ -11136,7 +11163,7 @@ const AL_INIT_ALERTS=[
   source:{type:"Sensor Tanah",sourceId:"SNS-B4-07",ruleId:"ALR-SM-001",detectedValue:16,threshold:22,unit:"%",confidence:92,coverage:100,observedAt:alIso(AL_D1,22,0),freshness:"11 jam lalu"},
   blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P7", impactTreeCount:38, impactAreaHa:0.47,
   detectedAt:alIso(AL_D1,22,10), acknowledgedAt:alIso(AL_D1,22,40), triagedAt:alIso(AL_TODAY,7,5),
-  ownerId:"USR-009", ownerName:"Akun Field Supervisor", ownerRole:"Field Supervisor",
+  ownerId:"USR-015", ownerName:"Asep Ganjar", ownerRole:"Field Supervisor",
   inspectionIds:["INS-2026-0067"],
   triage:{result:"Perlu Inspeksi",impactLevel:"Sedang",suspectedCause:"Emitter irigasi tersumbat",urgency:"Tinggi",by:"Akun Agronomy Head",at:alIso(AL_TODAY,7,5)},
   impact:"Zona akar mengering; risiko gugur bunga pada 38 pohon.",
@@ -11144,7 +11171,7 @@ const AL_INIT_ALERTS=[
   timeline:[alTl(alIso(AL_D1,22,10),"Alert dibuat dari Sensor Tanah SNS-B4-07",{by:"Sistem"}),
    alTl(alIso(AL_D1,22,40),"Alert diakui",{by:"Akun Agronomy Head"}),
    alTl(alIso(AL_TODAY,7,5),"Triage: Perlu Inspeksi — dugaan emitter tersumbat",{by:"Akun Agronomy Head"}),
-   alTl(alIso(AL_TODAY,7,10),"Inspeksi INS-2026-0067 dijadwalkan untuk Akun Field Supervisor (tersedia offline di PWA)",{by:"Akun Agronomy Head"})] }),
+   alTl(alIso(AL_TODAY,7,10),"Inspeksi INS-2026-0067 dijadwalkan untuk Asep Ganjar (tersedia offline di PWA)",{by:"Akun Agronomy Head"})] }),
  alMk({ id:"ALT-2026-0043", title:"Serangan penggerek batang terkonfirmasi di B2C1P4", severity:"Tinggi", stage:AL_S.CONFIRMED,
   description:"Surveilans OPT menemukan 12 pohon dengan lubang gerek aktif; inspeksi mengonfirmasi serangan.",
   category:"Kesehatan Tanaman", type:"OPT Outbreak",
@@ -11159,31 +11186,31 @@ const AL_INIT_ALERTS=[
   timeline:[alTl(alIso(AL_D0,9,30),"Alert dibuat dari Surveilans OPT",{by:"Sistem"}),
    alTl(alIso(AL_D0,10,0),"Alert diakui",{by:"Akun Agronomy Head"}),
    alTl(alIso(AL_D0,11,0),"Triage: Perlu Inspeksi",{by:"Akun Agronomy Head"}),
-   alTl(alIso(AL_D1,10,42),"Inspeksi INS-2026-0063 selesai — serangan terkonfirmasi (Confirmed)",{by:"Akun Field Supervisor",device:"DEVICE-FS04-01"})] }),
+   alTl(alIso(AL_D1,10,42),"Inspeksi INS-2026-0063 selesai — serangan terkonfirmasi (Confirmed)",{by:"Saktian",device:"DEVICE-FS02-01"})] }),
  alMk({ id:"ALT-2026-0044", title:"Stres air area barat Petak B4C2P8 (eksekusi berjalan)", severity:"Tinggi", stage:AL_S.IN_EXECUTION,
   description:"Kombinasi NDVI & soil moisture mengonfirmasi stres air; perbaikan irigasi sedang dieksekusi.",
   category:"Manajemen Air", type:"Water Stress",
   source:{type:"Hybrid Sensing",sourceId:"OBS-SAT-20260718-B4C2P8",ruleId:"ALR-NDVI-003",detectedValue:0.47,threshold:0.55,unit:"index",confidence:88,coverage:96,observedAt:alIso("2026-07-18",6,0),freshness:"3 hari lalu"},
   blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P8", impactTreeCount:44, impactAreaHa:0.52,
   detectedAt:alIso("2026-07-18",6,20), acknowledgedAt:alIso("2026-07-18",6,50), triagedAt:alIso("2026-07-18",8,0),
-  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Akun Field Supervisor",
+  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Asep Ganjar",
   inspectionIds:["INS-2026-0060"], actionPlanIds:["CAP-2026-0018"], workOrderIds:["WO-2026-0131"], assignmentIds:["ASN-2026-0084"],
   triage:{result:"Perlu Inspeksi",impactLevel:"Tinggi",suspectedCause:"Emitter tersumbat pada sub-main barat",urgency:"Tinggi",by:"Akun Agronomy Head",at:alIso("2026-07-18",8,0)},
   impact:"44 pohon; potensi kehilangan hasil bila kelembapan tidak pulih.",
   rec:"Selesaikan WO-2026-0131 lalu ajukan verifikasi dengan bukti lengkap.",
   timeline:[alTl(alIso("2026-07-18",6,20),"Alert dibuat oleh Hybrid Sensing",{by:"Sistem"}),
    alTl(alIso("2026-07-18",6,50),"Alert diakui",{by:"Akun Agronomy Head"}),
-   alTl(alIso("2026-07-18",10,42),"Inspeksi INS-2026-0060 selesai — stres air terkonfirmasi",{by:"Akun Field Supervisor"}),
+   alTl(alIso("2026-07-18",10,42),"Inspeksi INS-2026-0060 selesai — stres air terkonfirmasi",{by:"Asep Ganjar"}),
    alTl(alIso("2026-07-18",11,10),"Action Plan CAP-2026-0018 disetujui",{by:"Akun Estate Manager"}),
    alTl(alIso("2026-07-18",11,35),"Work Order WO-2026-0131 diterbitkan dari action plan",{by:"Akun Estate Manager"}),
-   alTl(alIso("2026-07-18",13,0),"Regu HOK ditugaskan (ASN-2026-0084) — 6 pekerja",{by:"Akun Field Supervisor"})] }),
+   alTl(alIso("2026-07-18",13,0),"Regu HOK ditugaskan (ASN-2026-0084) — 6 pekerja",{by:"Asep Ganjar"})] }),
  alMk({ id:"ALT-2026-0045", title:"Pompa irigasi P-02 tekanan rendah (menunggu verifikasi)", severity:"Sedang", stage:AL_S.PENDING_VERIFICATION,
   description:"Perbaikan seal pompa selesai di lapangan; bukti telah dikirim via PWA dan menunggu verifikasi.",
   category:"Manajemen Air", type:"Asset Fault",
   source:{type:"Sensor Tanah",sourceId:"SNS-PMP-02",ruleId:"ALR-AST-004",detectedValue:1.1,threshold:1.8,unit:"bar",confidence:95,coverage:100,observedAt:alIso("2026-07-17",7,0),freshness:"4 hari lalu"},
   blockId:"GH-B03", clusterId:"B3C1", plotId:"B3C1P2",
   detectedAt:alIso("2026-07-17",7,10), acknowledgedAt:alIso("2026-07-17",7,30), triagedAt:alIso("2026-07-17",8,0),
-  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Akun Field Supervisor",
+  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Indra",
   workOrderIds:["WO-2026-0138"], evidenceIds:["EVD-2026-0104","EVD-2026-0105"],
   triage:{result:"Terkonfirmasi Tanpa Inspeksi",impactLevel:"Sedang",suspectedCause:"Seal pompa aus (diagnosis deterministik)",urgency:"Sedang",by:"Akun Estate Manager",at:alIso("2026-07-17",8,0)},
   impact:"Debit irigasi Blok 3 turun 35% selama pompa bermasalah.",
@@ -11191,8 +11218,8 @@ const AL_INIT_ALERTS=[
   timeline:[alTl(alIso("2026-07-17",7,10),"Alert dibuat dari telemetry pompa",{by:"Sistem"}),
    alTl(alIso("2026-07-17",8,0),"Triage: Terkonfirmasi tanpa inspeksi (diagnosis deterministik — perbaikan teknis)",{by:"Akun Estate Manager"}),
    alTl(alIso("2026-07-17",8,15),"Work Order WO-2026-0138 diterbitkan",{by:"Akun Estate Manager"}),
-   alTl(alIso(AL_D1,15,20),"Bukti tindakan dikirim melalui Offline Field PWA (2 foto, geotag)",{by:"Akun Field Supervisor",device:"DEVICE-FS03-02"}),
-   alTl(alIso(AL_D1,15,25),"Work Order diajukan — Menunggu Verifikasi",{by:"Akun Field Supervisor"})] }),
+   alTl(alIso(AL_D1,15,20),"Bukti tindakan dikirim melalui Offline Field PWA (2 foto, geotag)",{by:"Indra",device:"DEVICE-FS03-02"}),
+   alTl(alIso(AL_D1,15,25),"Work Order diajukan — Menunggu Verifikasi",{by:"Indra"})] }),
  alMk({ id:"ALT-2026-0046", title:"Kekurangan kelembapan zona akar B1C2P3 (monitoring)", severity:"Sedang", stage:AL_S.EFFECTIVENESS_MONITORING,
   description:"Perbaikan irigasi telah diverifikasi; efektivitas sedang dimonitor (target soil moisture ≥ 28%).",
   category:"Kesehatan Tanaman", type:"Soil Moisture Low",
@@ -11243,36 +11270,36 @@ const AL_INIT_ALERTS=[
   impact:"Tidak ada dampak lapangan.",
   rec:"Rule sensing perlu penyesuaian ambang coverage.",
   timeline:[alTl(alIso("2026-07-16",6,15),"Alert dibuat oleh pipeline satelit (confidence rendah 41%)",{by:"Sistem"}),
-   alTl(alIso("2026-07-16",14,30),"Inspeksi INS-2026-0055: Not Confirmed",{by:"Akun Field Supervisor"}),
+   alTl(alIso("2026-07-16",14,30),"Inspeksi INS-2026-0055: Not Confirmed",{by:"Saktian"}),
    alTl(alIso("2026-07-17",9,0),"Ditandai False Positive & ditutup — preventive: penyesuaian ambang coverage rule",{by:"Akun Agronomy Head"})] }),
 ];
 /* Inspeksi (entitas terpisah, alertId wajib) */
 const AL_INIT_INSPECTIONS=[
  { id:"INS-2026-0067", alertId:"ALT-2026-0041", type:"Verifikasi Soil Moisture Rendah", status:"Terjadwal",
-   estateId:"GH", blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P7", treeIds:[], assignedTo:"USR-009", assignedName:"Akun Field Supervisor",
+   estateId:"GH", blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P7", treeIds:[], assignedTo:"USR-015", assignedName:"Asep Ganjar",
    scheduledAt:alIso(AL_TODAY,10,0), dueAt:alIso(AL_TODAY,14,0), checklist:["Cek emitter jalur barat","Ukur kelembapan 3 titik","Foto kondisi tanah","Cek tekanan sub-main"],
    result:null, resultDetail:null, evidenceIds:[], offlineAvailable:true, createdFrom:{type:"alert",id:"ALT-2026-0041"}, createdAt:alIso(AL_TODAY,7,10) },
  { id:"INS-2026-0063", alertId:"ALT-2026-0043", type:"Konfirmasi Serangan OPT", status:"Selesai",
-   estateId:"GH", blockId:"GH-B02", clusterId:"B2C1", plotId:"B2C1P4", assignedTo:"USR-009", assignedName:"Akun Field Supervisor",
+   estateId:"GH", blockId:"GH-B02", clusterId:"B2C1", plotId:"B2C1P4", assignedTo:"USR-013", assignedName:"Saktian",
    scheduledAt:alIso(AL_D1,9,0), dueAt:alIso(AL_D1,13,0), completedAt:alIso(AL_D1,10,42), checklist:["Identifikasi lubang gerek","Hitung pohon terdampak","Sampling larva","Foto close-up"],
    result:"Confirmed", resultDetail:{condition:"Lubang gerek aktif + serbuk kayu segar",diagnosis:"Penggerek batang (Batocera sp.)",confidence:97,affectedTrees:12,affectedAreaHa:0.15,actualSeverity:"Tinggi",gpsAccuracy:9,checklistDone:4,recommendation:"Injeksi insektisida sistemik + sanitasi cabang",needWo:true,needHealthCase:true},
    evidenceIds:["EVD-2026-0098"], offlineAvailable:true, createdFrom:{type:"alert",id:"ALT-2026-0043"}, createdAt:alIso(AL_D0,11,10) },
  { id:"INS-2026-0060", alertId:"ALT-2026-0044", type:"Verifikasi Anomali NDVI", status:"Selesai",
-   estateId:"GH", blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P8", assignedTo:"USR-009", assignedName:"Akun Field Supervisor",
+   estateId:"GH", blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P8", assignedTo:"USR-015", assignedName:"Asep Ganjar",
    scheduledAt:alIso("2026-07-18",9,0), dueAt:alIso("2026-07-18",14,0), completedAt:alIso("2026-07-18",10,42),
    checklist:["Cek visual kanopi","Ukur kelembapan","Cek emitter","Foto kondisi"],
    result:"Confirmed", resultDetail:{condition:"Daun layu sebagian; tanah kering",diagnosis:"Stres air",confidence:91,affectedTrees:44,actualSeverity:"Tinggi",checklistDone:4,recommendation:"Perbaiki irigasi + penyiraman korektif",needWo:true},
    evidenceIds:[], offlineAvailable:true, createdFrom:{type:"alert",id:"ALT-2026-0044"}, createdAt:alIso("2026-07-18",8,10) },
  { id:"INS-2026-0058", alertId:"ALT-2026-0046", type:"Verifikasi Soil Moisture", status:"Selesai", estateId:"GH", blockId:"GH-B01", plotId:"B1C2P3",
-   assignedTo:"USR-009", assignedName:"Akun Field Supervisor", scheduledAt:alIso("2026-07-15",10,0), completedAt:alIso("2026-07-15",11,30),
+   assignedTo:"USR-009", assignedName:"Yudha Kubil", scheduledAt:alIso("2026-07-15",10,0), completedAt:alIso("2026-07-15",11,30),
    result:"Confirmed", resultDetail:{diagnosis:"Emitter tersumbat",confidence:90,affectedTrees:26,checklistDone:4}, evidenceIds:[], offlineAvailable:true,
    createdFrom:{type:"alert",id:"ALT-2026-0046"}, createdAt:alIso("2026-07-15",8,10) },
  { id:"INS-2026-0055", alertId:"ALT-2026-0048", type:"Verifikasi Anomali Satelit", status:"Selesai", estateId:"GH", blockId:"GH-B02", plotId:"B2C3P1",
-   assignedTo:"USR-009", assignedName:"Akun Field Supervisor", scheduledAt:alIso("2026-07-16",13,0), completedAt:alIso("2026-07-16",14,30),
+   assignedTo:"USR-013", assignedName:"Saktian", scheduledAt:alIso("2026-07-16",13,0), completedAt:alIso("2026-07-16",14,30),
    result:"Not Confirmed", resultDetail:{condition:"Vegetasi normal, tidak ada gejala",confidence:96,checklistDone:4,recommendation:"Tandai false positive; evaluasi rule"}, evidenceIds:[], offlineAvailable:true,
    createdFrom:{type:"alert",id:"ALT-2026-0048"}, createdAt:alIso("2026-07-16",9,0) },
  { id:"INS-2026-0052", alertId:"ALT-2026-0047", type:"Inspeksi Genangan", status:"Selesai", estateId:"GH", blockId:"GH-B03", plotId:"B3C2P5",
-   assignedTo:"USR-009", assignedName:"Akun Field Supervisor", scheduledAt:alIso("2026-07-12",9,0), completedAt:alIso("2026-07-12",10,0),
+   assignedTo:"USR-014", assignedName:"Indra", scheduledAt:alIso("2026-07-12",9,0), completedAt:alIso("2026-07-12",10,0),
    result:"Confirmed", resultDetail:{diagnosis:"Saluran drainase tersumbat",confidence:99,affectedTrees:18,checklistDone:4}, evidenceIds:[], offlineAvailable:true,
    createdFrom:{type:"alert",id:"ALT-2026-0047"}, createdAt:alIso("2026-07-12",8,0) },
 ];
@@ -11296,21 +11323,21 @@ const AL_INIT_PLANS=[
 /* Evidence */
 const AL_INIT_EVIDENCE=[
  { id:"EVD-2026-0098", alertId:"ALT-2026-0043", inspectionId:"INS-2026-0063", workOrderId:null, type:"Foto close-up", fileName:"B2C1P4-gerek-01.jpg",
-   capturedAt:alIso(AL_D1,10,30), capturedBy:"Akun Field Supervisor", geolocation:{lat:-6.6571,lon:107.4123,accuracy:9}, deviceId:"DEVICE-FS02-01", syncStatus:"Synced", verificationStatus:"Diterima" },
+   capturedAt:alIso(AL_D1,10,30), capturedBy:"Saktian", geolocation:{lat:-6.6571,lon:107.4123,accuracy:9}, deviceId:"DEVICE-FS02-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0106", alertId:"ALT-2026-0046", inspectionId:null, workOrderId:"WO-2026-0126", type:"Foto sebelum", fileName:"B1C2P3-before.jpg",
    capturedAt:alIso("2026-07-17",8,10), capturedBy:"FS-01", geolocation:{lat:-6.6512,lon:107.4101,accuracy:8}, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0107", alertId:"ALT-2026-0046", inspectionId:null, workOrderId:"WO-2026-0126", type:"Foto sesudah", fileName:"B1C2P3-after.jpg",
    capturedAt:alIso("2026-07-17",9,20), capturedBy:"FS-01", geolocation:{lat:-6.6512,lon:107.4101,accuracy:9}, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0108", alertId:"ALT-2026-0046", inspectionId:"INS-2026-0058", workOrderId:null, type:"Foto kondisi", fileName:"B1C2P3-kondisi.jpg",
-   capturedAt:alIso("2026-07-15",11,0), capturedBy:"Akun Field Supervisor", geolocation:{lat:-6.6512,lon:107.4101,accuracy:10}, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
+   capturedAt:alIso("2026-07-15",11,0), capturedBy:"Yudha Kubil", geolocation:{lat:-6.6512,lon:107.4101,accuracy:10}, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0109", alertId:"ALT-2026-0046", inspectionId:null, workOrderId:"WO-2026-0126", type:"Checklist", fileName:"cek-sop-air-004.json",
    capturedAt:alIso("2026-07-17",9,25), capturedBy:"FS-01", geolocation:null, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0110", alertId:"ALT-2026-0046", inspectionId:null, workOrderId:"WO-2026-0126", type:"GPS", fileName:"track-wo-0126.gpx",
    capturedAt:alIso("2026-07-17",9,26), capturedBy:"FS-01", geolocation:{lat:-6.6512,lon:107.4101,accuracy:6}, deviceId:"DEVICE-FS01-01", syncStatus:"Synced", verificationStatus:"Diterima" },
  { id:"EVD-2026-0104", alertId:"ALT-2026-0045", inspectionId:null, workOrderId:"WO-2026-0138", type:"Foto kerusakan", fileName:"PMP02-before-01.jpg",
-   capturedAt:alIso(AL_D1,14,55), capturedBy:"Akun Field Supervisor", geolocation:{lat:-6.6559,lon:107.4188,accuracy:11}, deviceId:"DEVICE-FS03-02", syncStatus:"Synced", verificationStatus:"Pending" },
+   capturedAt:alIso(AL_D1,14,55), capturedBy:"Indra", geolocation:{lat:-6.6559,lon:107.4188,accuracy:11}, deviceId:"DEVICE-FS03-02", syncStatus:"Synced", verificationStatus:"Pending" },
  { id:"EVD-2026-0105", alertId:"ALT-2026-0045", inspectionId:null, workOrderId:"WO-2026-0138", type:"Foto perbaikan", fileName:"PMP02-after-01.jpg",
-   capturedAt:alIso(AL_D1,15,10), capturedBy:"Akun Field Supervisor", geolocation:{lat:-6.6559,lon:107.4188,accuracy:12}, deviceId:"DEVICE-FS03-02", syncStatus:"Synced", verificationStatus:"Pending" },
+   capturedAt:alIso(AL_D1,15,10), capturedBy:"Indra", geolocation:{lat:-6.6559,lon:107.4188,accuracy:12}, deviceId:"DEVICE-FS03-02", syncStatus:"Synced", verificationStatus:"Pending" },
 ];
 /* Verifikasi tercatat */
 const AL_INIT_VERIFS=[
@@ -11319,21 +11346,21 @@ const AL_INIT_VERIFS=[
 ];
 /* HOK assignment (entitas ASN — terhubung ke alert & WO; roster tetap modul existing) */
 const AL_INIT_ASSIGNMENTS=[
- { id:"ASN-2026-0084", alertId:"ALT-2026-0044", workOrderId:"WO-2026-0131", supervisorId:"USR-009", supervisorName:"Akun Field Supervisor",
+ { id:"ASN-2026-0084", alertId:"ALT-2026-0044", workOrderId:"WO-2026-0131", supervisorId:"USR-015", supervisorName:"Asep Ganjar",
    workerIds:["TK-1002","TK-1005","TK-1008","TK-1011","TK-1014","TK-1019"], plannedWorkers:6, plannedHok:6, actualHok:null,
    scheduledAt:"2026-07-22", attendanceStatus:"Belum Dicatat", createdAt:alIso("2026-07-18",13,0) },
 ];
 /* WO seed yang tertaut alert (masuk dataset wos existing — bukan dataset terpisah) */
 const AL_SEED_WOS=[
  mkWo({ id:"WO-2026-0131", title:"Perbaikan irigasi & penyiraman korektif B4C2P8", activity:"Perbaikan irigasi", block:"GH-B04", petak:"B4C2P8",
-  status:"Berjalan", priority:"Tinggi", scheduled:"2026-07-22", due:"2026-07-22", supervisor:"Akun Field Supervisor", team:6, targetTrees:44, progress:35, sop:"SOP-AIR-004",
+  status:"Berjalan", priority:"Tinggi", scheduled:"2026-07-22", due:"2026-07-22", supervisor:"Asep Ganjar", team:6, targetTrees:44, progress:35, sop:"SOP-AIR-004",
   alertId:"ALT-2026-0044", inspectionId:"INS-2026-0060", actionPlanId:"CAP-2026-0018",
   requiredEvidence:["Foto sebelum","Foto proses","Foto sesudah","GPS","Checklist SOP"],
   successCriteria:[{metric:"soilMoisture",operator:">=",target:28,unit:"%"}], monitoringWindowDays:7,
   materials:[{id:"MAT-EMT",name:"Emitter 8 L/j",unit:"pcs",qty:60},{id:"MAT-PIPA",name:"Selang PE 16mm",unit:"m",qty:40}],
   note:"Dibuat dari Action Plan CAP-2026-0018 (alert ALT-2026-0044)" }),
  mkWo({ id:"WO-2026-0138", title:"Perbaikan seal pompa irigasi P-02", activity:"Perbaikan irigasi", block:"GH-B03", petak:"B3C1P2",
-  status:"Menunggu Verifikasi", priority:"Sedang", scheduled:AL_D1, due:AL_D1, submitted:AL_D1, supervisor:"Akun Field Supervisor", team:2, targetTrees:0, progress:100, sop:"SOP-AIR-006",
+  status:"Menunggu Verifikasi", priority:"Sedang", scheduled:AL_D1, due:AL_D1, submitted:AL_D1, supervisor:"Indra", team:2, targetTrees:0, progress:100, sop:"SOP-AIR-006",
   alertId:"ALT-2026-0045", requiredEvidence:["Foto kerusakan","Foto perbaikan","GPS"], monitoringWindowDays:3,
   successCriteria:[{metric:"tekanan",operator:">=",target:1.8,unit:"bar"}], evidence:[{t:"Foto kerusakan"},{t:"Foto perbaikan"}], gps:"-6.6559, 107.4188",
   note:"Dibuat langsung dari triage (diagnosis deterministik — pengecualian action plan). Bukti via PWA Lapangan." }),
@@ -11432,7 +11459,7 @@ function useAlertLoop(deps){
   const p=alertCanRolePerform(d.role,"createInspection",a,d.curUser); if(!p.ok){ d.toast(p.reason,"warn"); return null; }
   const rec={ id:nid("ins","INS"), alertId, type:(payload&&payload.type)||("Verifikasi "+(a?a.type:"Alert")), status:"Terjadwal",
    estateId:"GH", blockId:a?a.blockId:null, clusterId:a?a.clusterId:null, plotId:(payload&&payload.plotId)||(a?a.plotId:null), treeIds:a?a.treeIds:[],
-   assignedTo:(payload&&payload.assignedTo)||"USR-009", assignedName:(payload&&payload.assignedName)||"Akun Field Supervisor",
+   assignedTo:(payload&&payload.assignedTo)||(a&&FS_USER_BY_BLOCK[a.blockId])||"USR-009", assignedName:(payload&&payload.assignedName)||(a&&FS_BY_BLOCK[a.blockId])||"Field Supervisor",
    scheduledAt:(payload&&payload.scheduledAt)||AL_NOW, dueAt:(payload&&payload.dueAt)||(a&&a.sla?a.sla.inspectionDueAt:alAddHours(AL_NOW,8)),
    checklist:(payload&&payload.checklist)||["Verifikasi kondisi di lokasi","Ukur metrik terkait","Dokumentasi foto geotag","Identifikasi penyebab"],
    suspectedIssue:a&&a.triage?a.triage.suspectedCause:null, observedMetric:a&&a.source?{value:a.source.detectedValue,threshold:a.source.threshold,unit:a.source.unit}:null,
@@ -11490,7 +11517,7 @@ function useAlertLoop(deps){
   const wo=mkWo({ id, title:woPayload.title||((cap?cap.objective:"Tindakan korektif")+" — "+alertId),
    activity:woPayload.activity||"Perbaikan irigasi", block:a?a.blockId:"GH-B04", petak:a?a.plotId:null,
    status:"Terjadwal", priority:a&&a.severity==="Kritis"?"Kritis":a&&a.severity==="Tinggi"?"Tinggi":"Sedang",
-   scheduled:woPayload.scheduled||AL_TODAY, due:woPayload.due||AL_TODAY, supervisor:woPayload.supervisor||"Akun Field Supervisor",
+   scheduled:woPayload.scheduled||AL_TODAY, due:woPayload.due||AL_TODAY, supervisor:woPayload.supervisor||(a&&FS_BY_BLOCK[a.blockId])||"Field Supervisor",
    team:woPayload.team||6, targetTrees:(cap&&cap.targetTreeCount)||a&&a.impactTreeCount||0, sop:(cap&&cap.sopId)||woPayload.sopId||"",
    alertId, inspectionId:(cap&&cap.inspectionId)||(a&&a.inspectionIds&&a.inspectionIds[0])||null, actionPlanId:cap?cap.id:null,
    requiredEvidence:woPayload.requiredEvidence||["Foto sebelum","Foto proses","Foto sesudah","GPS","Checklist SOP"],
@@ -11783,7 +11810,9 @@ function AlertVerificationContext({wo}){
 
 /* ================= Pusat Alert (redesign) ================= */
 function AlertsPage(){
- const app=useApp(); const {alerts,nav,route,role,toast,users,wos}=app; const L=app.alertLoop;
+ const app=useApp(); const {alerts:alertsAll,nav,route,role,toast,users,wos,curUser}=app; const L=app.alertLoop;
+ const sbA=scopeBlocks(role,curUser);
+ const alerts=useMemo(()=>alertsAll.filter(a=>inScope(sbA,a.blockId||a.block)),[alertsAll,sbA]);
  useEffect(()=>{ if(route.params.focus) nav("alert",{alertId:route.params.focus}); },[route.params.focus]); // deep link lama
  const [view,setView]=useState("Inbox");
  const [q,setQ]=useState(""); const [fSev,setFSev]=useState("Semua"); const [fStage,setFStage]=useState(route.params.stage||"Semua");
@@ -11935,7 +11964,7 @@ function AlertsPage(){
       <Sel value={fStage} onChange={e=>setFStage(e.target.value)} options={["Semua",...AL_STAGE_LIST]}/>
       <Sel value={fSla} onChange={e=>setFSla(e.target.value)} options={[["Semua","SLA: Semua"],["ok","Dalam SLA"],["near","Mendekati"],["overdue","Terlambat"],["escalated","Escalated"],["paused","Ditahan"]]}/>
       <Sel value={fSrc} onChange={e=>setFSrc(e.target.value)} options={srcOpts}/>
-      <Sel value={fBlock} onChange={e=>setFBlock(e.target.value)} options={["Semua",...BLOCKS.map(b=>b.id)]}/>
+      <Sel value={fBlock} onChange={e=>setFBlock(e.target.value)} options={["Semua",...BLOCKS.filter(b=>inScope(sbA,b.id)).map(b=>b.id)]}/>
      </div>
      {selIds.length>0&&<div className="flex flex-wrap items-center gap-2 bg-green-50 border border-green-200 rounded-md px-3 py-1.5">
       <span className="text-xs font-semibold text-green-900">{selIds.length} terpilih</span>
@@ -11981,7 +12010,7 @@ function AlertsPage(){
    </>)}
    <Modal open={bulkAssignOpen} onClose={()=>setBulkAssignOpen(false)} title={"Assign Owner — "+selIds.length+" alert"}
     footer={<><Btn variant="secondary" onClick={()=>setBulkAssignOpen(false)}>Batal</Btn><Btn onClick={()=>{selIds.forEach(id=>L.assignAlert(id,{ownerName:bulkOwner,ownerRole:bulkOwner.includes("Agronomy")?"Agronomy Head":bulkOwner.includes("Estate")?"Estate Manager":"Field Supervisor"}));setBulkAssignOpen(false);setSelIds([]);}}>Tugaskan</Btn></>}>
-    <Lbl>Owner</Lbl><Sel value={bulkOwner} onChange={e=>setBulkOwner(e.target.value)} options={["Akun Agronomy Head","Akun Estate Manager","Akun Field Supervisor",...SUPERVISORS]} className="w-full"/>
+    <Lbl>Owner</Lbl><Sel value={bulkOwner} onChange={e=>setBulkOwner(e.target.value)} options={["Akun Agronomy Head","Akun Estate Manager",...SUPERVISORS]} className="w-full"/>
    </Modal>
   </div>);
 }
@@ -12016,8 +12045,8 @@ function AlertDetailPage(){
     if(a.stage===AL_S.INSPECTION_COMPLETED){ const last=ins.find(i=>i.result); openM("inspFollowup",{insId:last&&last.id,result:last&&last.result}); }
     else openM("inspComplete",{insId:t&&t.id,result:"Confirmed"}); break; }
    case "cap": openM("cap",{diagnosis:(ins[0]&&ins[0].resultDetail&&ins[0].resultDetail.diagnosis)||"",objective:"",actions:"",sopId:"SOP-AIR-004",metric:"soilMoisture",operator:">=",target:28,unit:"%",window:7}); break;
-   case "wo": openM("wo",{activity:"Perbaikan irigasi",supervisor:"Akun Field Supervisor"}); break;
-   case "hok": openM("asn",{workOrderId:(lwos[0]&&lwos[0].id)||"",supervisorName:"Akun Field Supervisor",plannedWorkers:6,workerIds:LB_WORKERS.filter(w=>w.status==="Aktif").slice(0,6).map(w=>w.id)}); break;
+   case "wo": openM("wo",{activity:"Perbaikan irigasi",supervisor:FS_BY_BLOCK[a.blockId]||"Field Supervisor"}); break;
+   case "hok": openM("asn",{workOrderId:(lwos[0]&&lwos[0].id)||"",supervisorName:FS_BY_BLOCK[a.blockId]||"Field Supervisor",plannedWorkers:6,workerIds:LB_WORKERS.filter(w=>w.status==="Aktif").slice(0,6).map(w=>w.id)}); break;
    case "verify": nav("verification"); break;
    case "obs": openM("obs",{value:"",source:"Sensor Tanah"}); break;
    case "close": openM("close",{outcome:a.disposition||"Masalah Terselesaikan",summary:"",rootCause:"",corrective:"",preventive:""}); break;
@@ -12122,7 +12151,7 @@ function AlertDetailPage(){
       {tab==="Inspeksi"&&<div className="space-y-2.5">
        <div className="flex items-center justify-between">
         <div className="text-xs text-gray-500">Inspeksi adalah entitas terpisah — bukan Work Order korektif. Tersedia offline di PWA Lapangan.</div>
-        {alertCanRolePerform(role,"createInspection",a,curUser).ok&&<Btn size="sm" variant="secondary" onClick={()=>openM("insNew",{assignedName:"Akun Field Supervisor"})}><Plus size={13}/>Buat Inspeksi</Btn>}
+        {alertCanRolePerform(role,"createInspection",a,curUser).ok&&<Btn size="sm" variant="secondary" onClick={()=>openM("insNew",{assignedName:FS_BY_BLOCK[a.blockId]||"Field Supervisor"})}><Plus size={13}/>Buat Inspeksi</Btn>}
        </div>
        {ins.length===0&&<EmptyState t="Belum ada inspeksi" d="Buat inspeksi dari hasil triage untuk mengonfirmasi kondisi."/>}
        {ins.map(i=>(
@@ -12156,14 +12185,14 @@ function AlertDetailPage(){
          <KeyVal k="Monitoring window" v={c.monitoringWindowDays+" hari"}/>
          <div className="mt-2 flex gap-1.5">
           {c.status!=="Disetujui"&&alertCanRolePerform(role,"approveActionPlan",a,curUser).ok&&<Btn size="sm" onClick={()=>L.approveAlertActionPlan(c.id)}>Setujui</Btn>}
-          {c.status==="Disetujui"&&alertCanRolePerform(role,"createAlertWo",a,curUser).ok&&<Btn size="sm" variant="secondary" onClick={()=>openM("wo",{actionPlanId:c.id,activity:"Perbaikan irigasi",supervisor:"Akun Field Supervisor"})}><ClipboardList size={13}/>Buat Work Order</Btn>}
+          {c.status==="Disetujui"&&alertCanRolePerform(role,"createAlertWo",a,curUser).ok&&<Btn size="sm" variant="secondary" onClick={()=>openM("wo",{actionPlanId:c.id,activity:"Perbaikan irigasi",supervisor:FS_BY_BLOCK[a.blockId]||"Field Supervisor"})}><ClipboardList size={13}/>Buat Work Order</Btn>}
          </div>
         </div>))}
       </div>}
       {tab==="Work Order"&&<div className="space-y-2.5">
        <div className="flex items-center justify-between">
         <div className="text-xs text-gray-500">Alert dapat memiliki lebih dari satu Work Order ({(a.workOrderIds||[]).length} tertaut). WO dibuat dari action plan — kecuali diagnosis deterministik.</div>
-        {alertCanRolePerform(role,"createAlertWo",a,curUser).ok&&[AL_S.ACTION_PLANNED,AL_S.IN_EXECUTION,AL_S.CONFIRMED].includes(a.stage)&&<Btn size="sm" variant="secondary" onClick={()=>openM("wo",{activity:"Perbaikan irigasi",supervisor:"Akun Field Supervisor"})}><Plus size={13}/>Work Order</Btn>}
+        {alertCanRolePerform(role,"createAlertWo",a,curUser).ok&&[AL_S.ACTION_PLANNED,AL_S.IN_EXECUTION,AL_S.CONFIRMED].includes(a.stage)&&<Btn size="sm" variant="secondary" onClick={()=>openM("wo",{activity:"Perbaikan irigasi",supervisor:FS_BY_BLOCK[a.blockId]||"Field Supervisor"})}><Plus size={13}/>Work Order</Btn>}
        </div>
        {lwos.length===0&&<EmptyState t="Belum ada Work Order" d="WO dibuat setelah action plan disetujui."/>}
        {lwos.map(w=>(
@@ -12183,7 +12212,7 @@ function AlertDetailPage(){
       {tab==="HOK & Material"&&<div className="space-y-2.5">
        <div className="flex items-center justify-between">
         <div className="text-xs text-gray-500">Penugasan HOK memakai modul Penugasan & Kehadiran existing — HOK aktual tidak dibayarkan sebelum WO diverifikasi.</div>
-        {lwos.length>0&&<Btn size="sm" variant="secondary" onClick={()=>openM("asn",{workOrderId:lwos[0].id,supervisorName:"Akun Field Supervisor",plannedWorkers:6,workerIds:LB_WORKERS.filter(w=>w.status==="Aktif").slice(0,6).map(w=>w.id)})}><Users size={13}/>Atur Tim & HOK</Btn>}
+        {lwos.length>0&&<Btn size="sm" variant="secondary" onClick={()=>openM("asn",{workOrderId:lwos[0].id,supervisorName:FS_BY_BLOCK[a.blockId]||"Field Supervisor",plannedWorkers:6,workerIds:LB_WORKERS.filter(w=>w.status==="Aktif").slice(0,6).map(w=>w.id)})}><Users size={13}/>Atur Tim & HOK</Btn>}
        </div>
        {asns.length===0&&<EmptyState t="Belum ada penugasan HOK" d="Tetapkan regu setelah Work Order diterbitkan."/>}
        {asns.map(x=>(
@@ -12281,7 +12310,7 @@ function AlertDetailPage(){
    </div>
    {/* ======= MODALS ======= */}
    <Modal open={m==="triage"} onClose={()=>setM(null)} title={"Triage Workspace — "+a.id}
-    footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.triageAlert(a.id,{result:f.result,impactLevel:f.impactLevel||"Sedang",affectedCount:f.affectedCount,suspectedCause:f.suspectedCause,urgency:f.urgency||"Sedang",interimAction:f.interimAction,reason:f.reason,primaryAlertId:f.primaryAlertId,escalate:!!f.escalate});setM(null); if(f.result==="Perlu Inspeksi") openM("insNew",{assignedName:"Akun Field Supervisor"});}}>Simpan Triage</Btn></>}>
+    footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.triageAlert(a.id,{result:f.result,impactLevel:f.impactLevel||"Sedang",affectedCount:f.affectedCount,suspectedCause:f.suspectedCause,urgency:f.urgency||"Sedang",interimAction:f.interimAction,reason:f.reason,primaryAlertId:f.primaryAlertId,escalate:!!f.escalate});setM(null); if(f.result==="Perlu Inspeksi") openM("insNew",{assignedName:FS_BY_BLOCK[a.blockId]||"Field Supervisor"});}}>Simpan Triage</Btn></>}>
     <div className="space-y-3">
      <div><Lbl>Hasil triage</Lbl><Sel value={f.result||"Perlu Inspeksi"} onChange={e=>setF({...f,result:e.target.value})} className="w-full" options={["Perlu Inspeksi","Terkonfirmasi Tanpa Inspeksi","False Positive","Duplikat","Risiko Diterima","Tidak Dapat Ditindaklanjuti"]}/></div>
      <div className="grid grid-cols-2 gap-2.5">
@@ -12302,7 +12331,7 @@ function AlertDetailPage(){
     <div className="space-y-3">
      <div className="bg-gray-50 rounded p-2.5 text-xs text-gray-700">Prefill otomatis: alert {a.id} • {a.source&&a.source.type} • {blockLabel(a.blockId||"")} {a.clusterId||""} {a.plotId||""} • severity {a.severity} • metrik {a.source&&a.source.detectedValue!=null?a.source.detectedValue+" (ambang "+a.source.threshold+")":"—"} • dugaan: {(a.triage&&a.triage.suspectedCause)||"—"}</div>
      <div className="grid grid-cols-2 gap-2.5">
-      <div><Lbl>Petugas</Lbl><Sel value={f.assignedName||"Akun Field Supervisor"} onChange={e=>setF({...f,assignedName:e.target.value})} className="w-full" options={["Akun Field Supervisor",...SUPERVISORS]}/></div>
+      <div><Lbl>Petugas</Lbl><Sel value={f.assignedName||FS_BY_BLOCK[a.blockId]||"Field Supervisor"} onChange={e=>setF({...f,assignedName:e.target.value})} className="w-full" options={SUPERVISORS}/></div>
       <div><Lbl>Land ID</Lbl><Inp value={f.plotId??(a.plotId||"")} onChange={e=>setF({...f,plotId:e.target.value})}/></div>
      </div>
      <div className="text-[11px] text-green-800 bg-green-50 rounded p-2 flex items-center gap-1.5"><Smartphone size={13}/>Inspeksi ini otomatis tersedia offline pada PWA Lapangan (Field Pack blok terkait) dengan checklist yang disarankan.</div>
@@ -12357,7 +12386,7 @@ function AlertDetailPage(){
      <div className="bg-gray-50 rounded p-2.5 text-xs text-gray-700">Prefill: alert {a.id} • inspeksi {(a.inspectionIds||[])[0]||"—"} • plan {(f.actionPlanId)||((caps.find(c=>c.status==="Disetujui")||{}).id)||"— (deterministik)"} • prioritas dari severity {a.severity} • lokasi {a.plotId||blockLabel(a.blockId||"")} • bukti wajib + success criteria + monitoring window ikut tertaut.</div>
      <div className="grid grid-cols-2 gap-2.5">
       <div><Lbl>Aktivitas</Lbl><Sel value={f.activity||"Perbaikan irigasi"} onChange={e=>setF({...f,activity:e.target.value})} className="w-full" options={ACTIVITIES}/></div>
-      <div><Lbl>Supervisor</Lbl><Sel value={f.supervisor||"Akun Field Supervisor"} onChange={e=>setF({...f,supervisor:e.target.value})} className="w-full" options={["Akun Field Supervisor",...SUPERVISORS]}/></div>
+      <div><Lbl>Supervisor</Lbl><Sel value={f.supervisor||FS_BY_BLOCK[a.blockId]||"Field Supervisor"} onChange={e=>setF({...f,supervisor:e.target.value})} className="w-full" options={SUPERVISORS}/></div>
      </div>
     </div>
    </Modal>
@@ -12366,7 +12395,7 @@ function AlertDetailPage(){
     <div className="space-y-2.5">
      <div className="grid grid-cols-2 gap-2.5">
       <div><Lbl>Work Order</Lbl><Sel value={f.workOrderId||""} onChange={e=>setF({...f,workOrderId:e.target.value})} className="w-full" options={lwos.map(w=>w.id)}/></div>
-      <div><Lbl>Supervisor (wajib)</Lbl><Sel value={f.supervisorName||"Akun Field Supervisor"} onChange={e=>setF({...f,supervisorName:e.target.value})} className="w-full" options={["Akun Field Supervisor",...SUPERVISORS]}/></div>
+      <div><Lbl>Supervisor (wajib)</Lbl><Sel value={f.supervisorName||FS_BY_BLOCK[a.blockId]||"Field Supervisor"} onChange={e=>setF({...f,supervisorName:e.target.value})} className="w-full" options={SUPERVISORS}/></div>
       <div><Lbl>Rencana pekerja / HOK</Lbl><Inp inputMode="numeric" value={f.plannedWorkers||6} onChange={e=>setF({...f,plannedWorkers:e.target.value})}/></div>
      </div>
      <div><Lbl>Pekerja ({(f.workerIds||[]).length} dipilih) — nonaktif terkunci, konflik jadwal diberi tanda</Lbl>
@@ -12434,7 +12463,7 @@ function AlertDetailPage(){
    </Modal>
    <Modal open={m==="assign"} onClose={()=>setM(null)} title={"Tetapkan Owner — "+a.id}
     footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.assignAlert(a.id,{ownerName:f.owner,ownerRole:f.owner&&f.owner.includes("Agronomy")?"Agronomy Head":f.owner&&f.owner.includes("Estate")?"Estate Manager":"Field Supervisor"});setM(null);}}>Tugaskan</Btn></>}>
-    <Lbl>Owner</Lbl><Sel value={f.owner||"Akun Agronomy Head"} onChange={e=>setF({...f,owner:e.target.value})} className="w-full" options={["Akun Agronomy Head","Akun Estate Manager","Akun Field Supervisor",...SUPERVISORS]}/>
+    <Lbl>Owner</Lbl><Sel value={f.owner||"Akun Agronomy Head"} onChange={e=>setF({...f,owner:e.target.value})} className="w-full" options={["Akun Agronomy Head","Akun Estate Manager",...SUPERVISORS]}/>
    </Modal>
    <Modal open={m==="pause"} onClose={()=>setM(null)} title={"Tahan SLA — "+a.id}
     footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.pauseAlertSla(a.id,{reason:f.reason,until:f.until});setM(null);}}>Tahan SLA</Btn></>}>
@@ -14028,16 +14057,20 @@ export default function App(){
  const [narrow,setNarrow]=useState(()=>typeof window!=="undefined"&&window.innerWidth<1024);
  useEffect(()=>{ const h=()=>setNarrow(window.innerWidth<1024); window.addEventListener("resize",h); return ()=>window.removeEventListener("resize",h); },[]);
 
- const counts=useMemo(()=>({
-  wo: wos.filter(w=>!["Selesai","Dibatalkan","Ditolak"].includes(w.status)).length,
-  verif: wos.filter(w=>["Diajukan","Menunggu Verifikasi"].includes(w.status)).length,
-  alerts: alerts.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai").length,
-  overdue: wos.filter(w=>w.status==="Terlambat"||(w.due&&w.due<TODAY&&!["Selesai","Dibatalkan","Ditolak"].includes(w.status))).length,
+ const counts=useMemo(()=>{
+  const sbc=scopeBlocks(role,curUser); /* badge sidebar FS mengikuti blok penugasan */
+  const wosS=sbc?wos.filter(w=>inScope(sbc,w.block)):wos;
+  const alertsS=sbc?alerts.filter(a=>inScope(sbc,a.blockId||a.block)):alerts;
+  return {
+  wo: wosS.filter(w=>!["Selesai","Dibatalkan","Ditolak"].includes(w.status)).length,
+  verif: wosS.filter(w=>["Diajukan","Menunggu Verifikasi"].includes(w.status)).length,
+  alerts: alertsS.filter(a=>a.severity==="Kritis"&&a.status!=="Selesai").length,
+  overdue: wosS.filter(w=>w.status==="Terlambat"||(w.due&&w.due<TODAY&&!["Selesai","Dibatalkan","Ditolak"].includes(w.status))).length,
   hs: hsAlerts.filter(a=>!["Selesai","False Positive"].includes(a.status)&&["Kritis","Tinggi"].includes(a.severity)).length,
   dq: dqDerived.badgeCount,
   field: field.pendingCount,
   ai: aiRecs.filter(r=>r.status==="Baru").length,
- }),[wos,alerts,hsAlerts,dqDerived,field.pendingCount,aiRecs]);
+ };},[wos,alerts,hsAlerts,dqDerived,field.pendingCount,aiRecs,role,curUser]);
 
  useEffect(()=>{
   const h=(e)=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); setPaletteOpen(o=>!o); } if(e.key==="Escape") setPaletteOpen(false); };
