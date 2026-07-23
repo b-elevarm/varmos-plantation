@@ -4440,7 +4440,9 @@ function CommandCenterPage(){
 
 /* ============ Registri Pohon ============ */
 function TreeRegistryPage(){
- const {treesData,nav,toast}=useApp();
+ const {treesData:treesAll,nav,toast,role,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const treesData=useMemo(()=>sb?treesAll.filter(t=>inScope(sb,t.block)):treesAll,[treesAll,sb&&sb.join(",")]);
  const [q,setQ]=useState("");
  const [fCom,setFCom]=useState("Semua");
  const [fBlock,setFBlock]=useState("Semua");
@@ -4487,7 +4489,7 @@ function TreeRegistryPage(){
       <input value={q} onChange={e=>{setQ(e.target.value);setPage(1);}} placeholder="Cari ID/petak (mis. B4C3P2 atau B4C3P2T5)…" className="border border-gray-300 rounded-md pl-8 pr-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-green-600"/>
      </div>
      <Sel aria-label="Filter komoditas" value={fCom} onChange={e=>{setFCom(e.target.value);setPage(1);}} options={[["Semua","Semua komoditas"],...COMMODITIES.map(c=>[c.id,c.name])]}/>
-     <Sel aria-label="Filter blok" value={fBlock} onChange={e=>{setFBlock(e.target.value);setFCluster("Semua");setFPetak("Semua");setPage(1);}} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+     <Sel aria-label="Filter blok" value={fBlock} onChange={e=>{setFBlock(e.target.value);setFCluster("Semua");setFPetak("Semua");setPage(1);}} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
      <Sel aria-label="Filter cluster" value={fCluster} disabled={fBlock==="Semua"} title={fBlock==="Semua"?"Pilih blok dulu":""} onChange={e=>{setFCluster(e.target.value);setFPetak("Semua");setPage(1);}} options={[["Semua","Semua cluster"],...(fBlock==="Semua"?[]:HS_GEO.clusters.filter(c=>c.parentId===fBlock).map(c=>[c.id,c.name]))]} className={fBlock==="Semua"?"opacity-60":""}/>
      <Sel aria-label="Filter petak" value={fPetak} disabled={fCluster==="Semua"} title={fCluster==="Semua"?"Pilih cluster dulu":""} onChange={e=>{setFPetak(e.target.value);setPage(1);}} options={[["Semua","Semua petak"],...(fCluster==="Semua"?[]:HS_GEO.plots.filter(p=>p.parentId===fCluster).map(p=>[p.id,"P"+String(p.id).split("P").pop()]))]} className={fCluster==="Semua"?"opacity-60":""}/>
      <Sel aria-label="Filter status" value={fStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}} options={["Semua","Sehat","Pemantauan","Sakit","Mati"]}/>
@@ -5363,14 +5365,17 @@ function CaseDetailPage(){
 /* ============ Pusat alert, kalender, SOP, sumber daya, keuangan, laporan, admin ============ */
 /* AlertsPage legacy digantikan oleh Closed-Loop AlertsPage (AL section) */
 function CalendarPage(){
- const {nav,role,toast,planActs,wos,aiRecs}=useApp();
+ const {nav,role,toast,planActs,wos:wosAll,aiRecs,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const calEvents=sb?CAL_EVENTS.filter(e=>inScope(sb,e.block)):CAL_EVENTS;
+ const wos=sb?wosAll.filter(w=>inScope(sb,w.block)):wosAll;
  const [view,setView]=useState("Bulan");
  const [fAct,setFAct]=useState("Semua"),[fBlk,setFBlk]=useState("Semua");
  /* integrasi Klimatologi (dua arah): flag cuaca per kegiatan */
  const wxFlagFor=(e)=>wxCalendarFlag(e.d,e.act);
- const weekWxRisk=CAL_EVENTS.filter(e=>e.d>=TODAY&&e.d<=WX_ADD_DAYS(TODAY,6)).map(e=>({e,wx:wxCalendarFlag(e.d,e.act)})).filter(x=>x.wx.flags.length>0);
+ const weekWxRisk=calEvents.filter(e=>e.d>=TODAY&&e.d<=WX_ADD_DAYS(TODAY,6)).map(e=>({e,wx:wxCalendarFlag(e.d,e.act)})).filter(x=>x.wx.flags.length>0);
  const [selEv,setSelEv]=useState(null);
- const evs=CAL_EVENTS.filter(e=>(fAct==="Semua"||e.act===fAct)&&(fBlk==="Semua"||e.block===fBlk));
+ const evs=calEvents.filter(e=>(fAct==="Semua"||e.act===fAct)&&(fBlk==="Semua"||e.block===fBlk));
  const [histM,setHistM]=useState(planYm(TODAY));
  const histMonths=useMemo(()=>planHistMonths(wos),[wos]);
  const histIdx=histMonths.indexOf(histM);
@@ -5391,7 +5396,7 @@ function CalendarPage(){
    {!["Rencana H2","Linimasa"].includes(view)&&<div className="flex flex-wrap items-center gap-2 mb-4">
     <Filter size={15} className="text-gray-400"/>
     <Sel aria-label="Filter aktivitas kalender" value={fAct} onChange={e=>setFAct(e.target.value)} options={["Semua",...ACTIVITIES]}/>
-    <Sel aria-label="Filter blok kalender" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+    <Sel aria-label="Filter blok kalender" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
     <div className="ml-auto flex items-center gap-3 text-xs text-gray-500">
      {[["#DC2626","Terlambat"],["#16A34A","Berjalan"],["#2563EB","Terjadwal"],["#9CA3AF","Selesai"]].map(([c,l])=><span key={l} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{background:c}}/>{l}</span>)}
     </div>
@@ -5432,7 +5437,7 @@ function CalendarPage(){
        </button>))}
      </div>}
    </Card>}
-   {view==="Rencana H2"&&<PlanCalendarSection acts={planActs} onOpen={(id)=>nav("plan-annual",{focus:id})}/>}
+   {view==="Rencana H2"&&<PlanCalendarSection acts={sb?planActs.filter(a=>inScope(sb,a.block)):planActs} onOpen={(id)=>nav("plan-annual",{focus:id})}/>}
    {view==="Linimasa"&&<PlanHistoryTimeline wos={wos}/>}
    <Drawer open={!!ev} onClose={()=>setSelEv(null)} title={ev?ev.title:""} subtitle={ev?fmtD(ev.d)+" • "+blockLabel(ev.block):""}
     footer={ev&&<>
@@ -5743,19 +5748,20 @@ function BudgetPage(){
 }
 
 function PlantingPage(){
- const {nav,role}=useApp();
- const cen=REG_CENSUS.byBlock;
- const totalTrees=REG_CENSUS.total;
+ const {nav,role,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const cen=sb?Object.fromEntries(Object.entries(REG_CENSUS.byBlock).filter(([id])=>inScope(sb,id))):REG_CENSUS.byBlock;
+ const totalTrees=sb?Object.values(cen).reduce((a,b)=>a+b.active+b.dead,0):REG_CENSUS.total;
  const activeTrees=Object.values(cen).reduce((a,b)=>a+b.active,0);
  const deadTrees=Object.values(cen).reduce((a,b)=>a+b.dead,0);
- const survival=+(100*activeTrees/totalTrees).toFixed(1);
- const target=28000;
+ const survival=totalTrees?+(100*activeTrees/totalTrees).toFixed(1):0;
+ const target=sb?Math.round(28000*totalTrees/Math.max(1,REG_CENSUS.total)):28000; /* target proporsional populasi blok */
  const need=deadTrees; // pohon mati yang perlu disulam
  const priBlocks=Object.entries(cen).sort((a,b)=>b[1].dead-a[1].dead).slice(0,2).map(([id])=>blockLabel(id)).join(" & ");
  return (
   <div>
    <PageHeader title="Progres Penanaman" subtitle="Realisasi tanam kumulatif & program penyulaman (basis Sensus Des 2025)."
-    actions={can(role,"createWo")&&<Btn onClick={()=>nav("wo-new",{prefill:{activity:"Penyulaman",block:"GH-B02",title:"Penyulaman pohon mati"}})}><Plus size={15}/>Buat WO Penyulaman</Btn>}/>
+    actions={can(role,"createWo")&&<Btn onClick={()=>nav("wo-new",{prefill:{activity:"Penyulaman",block:(sb&&sb[0])||"GH-B02",title:"Penyulaman pohon mati"}})}><Plus size={15}/>Buat WO Penyulaman</Btn>}/>
    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
     <Kpi label="Target populasi" value={fmtN(target)} icon={Trees} tone="blue"/>
     <Kpi label="Tertanam hidup" value={fmtN(activeTrees)} icon={Sprout} tone="green" sub={fmtPct((activeTrees/target*100).toFixed(1))+" dari target"}/>
@@ -5773,7 +5779,7 @@ function PlantingPage(){
     <Card title="Batch penanaman & sulam" className="lg:col-span-2" pad={false}>
      <div className="overflow-x-auto"><table className={T.table}>
       <thead><tr>{["Batch","Komoditas","Blok","Jumlah","Tanggal","Sumber Bibit","Status","Survival"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{BATCHES.map(b=>(
+      <tbody>{BATCHES.filter(b=>inScope(sb,b.block)).map(b=>(
        <tr key={b.id} className="hover:bg-green-50">
         <td className={T.td+" font-semibold text-gray-900"}>{b.name}</td>
         <td className={T.td}>{comName(b.commodity)}</td>
@@ -5828,16 +5834,22 @@ function ReportsPage(){
 }
 
 function HarvestPage(){
- const {toast}=useApp();
+ const {toast,role,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
+ const hist=HARVEST_HISTORY.filter(h=>inScope(sb,h.block));
+ const julKg=hist.filter(h=>h.date.startsWith("2026-07")).reduce((a,h)=>a+h.qty,0);
+ const julLabel=hist.filter(h=>h.date.startsWith("2026-07")).reduce((m,h)=>{m[h.commodity]=(m[h.commodity]||0)+h.qty;return m;},{});
  return (
   <div>
-   <PageHeader title="Panen" subtitle="Proyeksi produksi & realisasi panen perdana."
+   <PageHeader title="Panen" subtitle={"Proyeksi produksi & realisasi panen perdana."+(sb?" • blok penugasan Anda: "+sb.map(blockLabel).join(", "):"")}
     actions={<Btn variant="secondary" onClick={()=>toast("Rekap panen diekspor (simulasi)")}><Download size={14}/>Ekspor</Btn>}/>
    <div className="mb-4 text-sm text-blue-900 bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2"><Info size={16} className="shrink-0 mt-0.5"/>Mayoritas populasi masih fase TBM (tanaman belum menghasilkan). Panen komersial saat ini terbatas pada lengkeng dan alpukat tanam awal 2023.</div>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-    <Kpi label="Volume panen Juli" value="730 kg" icon={Wheat} tone="green" sub="lengkeng 730 kg"/>
+    {sb
+     ?<Kpi label="Volume panen Juli" value={fmtN(julKg)+" kg"} icon={Wheat} tone="green" sub={Object.entries(julLabel).map(([c,v])=>comName(c)+" "+fmtN(v)+" kg").join(" · ")||"belum ada panen blok ini"}/>
+     :<Kpi label="Volume panen Juli" value="730 kg" icon={Wheat} tone="green" sub="lengkeng 730 kg"/>}
     <Kpi label="Grade A rata-rata" value="59%" icon={CheckCircle2} tone="amber" sub="target 65%"/>
-    <Kpi label="Pendapatan MTD" value={fmtRpC(21900000)} icon={Wallet} tone="green"/>
+    {!sb&&<Kpi label="Pendapatan MTD" value={fmtRpC(21900000)} icon={Wallet} tone="green"/>}
     <Kpi label="Komoditas produktif" value="2 / 7" icon={Trees} tone="blue"/>
    </div>
    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -5849,8 +5861,8 @@ function HarvestPage(){
     </Card>
     <Card title="Riwayat panen terakhir" pad={false}>
      <table className={T.table}><thead><tr>{["Tanggal","Blok","Komoditas","Volume","Grading","Pembeli"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{HARVEST_HISTORY.map((h,i)=>(
-       <tr key={i}><td className={T.td}>{fmtD(h.date)}</td><td className={T.td}>{h.block}</td><td className={T.td}>{comName(h.commodity)}</td><td className={T.td+" font-semibold"}>{fmtN(h.qty)} kg</td><td className={T.td}>{h.grade}</td><td className={T.td}>{h.buyer}</td></tr>))}
+      <tbody>{hist.map((h,i)=>(
+       <tr key={i}><td className={T.td}>{fmtD(h.date)}</td><td className={T.td}>{blockLabel(h.block)}</td><td className={T.td}>{comName(h.commodity)}</td><td className={T.td+" font-semibold"}>{fmtN(h.qty)} kg</td><td className={T.td}>{h.grade}</td><td className={T.td}>{h.buyer}</td></tr>))}
       </tbody></table>
     </Card>
    </div>
@@ -7160,6 +7172,17 @@ const CEN_CODE={1:"Sangat Sehat",2:"Cukup Sehat",3:"Sakit Ringan",4:"Sakit Berat
 const cenCondColor=(c)=>(CEN_COND.find(x=>x[0]===c)||[,"#6B7280"])[1];
 const CenChip=({v})=><span className="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 whitespace-nowrap" style={{background:cenCondColor(v)+"1A",color:cenCondColor(v)}}><span className="w-1.5 h-1.5 rounded-full" style={{background:cenCondColor(v)}}/>{v}</span>;
 const cenBlockName=(bid)=>({"GH-B01":"Blok 1","GH-B02":"Blok 2","GH-B03":"Blok 3","GH-B04":"Blok 4"}[bid]||bid);
+/* Agregasi ulang CEN_DATA untuk scope blok FS (byBlock + blockDetail.coms tersedia per blok) */
+const cenScoped=(sb)=>{
+ if(!sb) return CEN_DATA;
+ const blocks=sb.filter(b=>CEN_DATA.byBlock[b]);
+ const byBlock={}; const byStatus={}; const byCommodity={}; let total=0,photos=0,hSum=0;
+ blocks.forEach(b=>{ const d=CEN_DATA.byBlock[b]; byBlock[b]=d; total+=d.total; photos+=d.photos; hSum+=d.avgH_cm*d.total;
+  Object.entries(d.byStatus).forEach(([k,v])=>byStatus[k]=(byStatus[k]||0)+v);
+  const det=CEN_DATA.blockDetail[b]; if(det) Object.entries(det.coms).forEach(([k,v])=>byCommodity[k]=(byCommodity[k]||0)+v); });
+ const byComH={}; Object.keys(byCommodity).forEach(k=>{ if(CEN_DATA.byComH[k]!=null) byComH[k]=CEN_DATA.byComH[k]; });
+ return {...CEN_DATA,total,byStatus,byBlock,byCommodity,byComH,avgH_cm:total?+(hSum/total).toFixed(1):0,photos};
+};
 const cenHealthy=(bs)=>(bs["Sangat Sehat"]||0)+(bs["Cukup Sehat"]||0);
 const cenSick=(bs)=>(bs["Sakit Ringan"]||0)+(bs["Sakit Berat"]||0);
 const fmtCm=(cm)=>cm==null?"—":cm>=100?(cm/100).toFixed(cm%100===0?0:1).replace(".",",")+" m":Math.round(cm)+" cm";
@@ -7261,10 +7284,11 @@ function CenBlockDrawer({bid,onClose}){
 }
 
 function CensusPage(){
- const {role,cenEntries,toast,nav}=useApp();
+ const {role,cenEntries,toast,nav,curUser}=useApp();
+ const sb=scopeBlocks(role,curUser);
  const [entryM,setEntryM]=useState(false); const [blockD,setBlockD]=useState(null);
  const canInput=["Super Admin","Estate Manager","Agronomy Head","Field Supervisor","Seedling Officer"].includes(role);
- const D=CEN_DATA;
+ const D=useMemo(()=>cenScoped(sb),[sb&&sb.join(",")]);
  const healthy=cenHealthy(D.byStatus), sick=cenSick(D.byStatus), dead=D.byStatus["Mati"]||0;
  const healthyPct=Math.round(100*healthy/D.total);
  const condData=CEN_COND.map(([c])=>({name:c,v:D.byStatus[c]||0}));
@@ -12729,7 +12753,9 @@ const planFmtRange=(a)=>fmtD(a.start).slice(0,6)+"–"+fmtD(a.end).slice(0,6)+" 
 
 /* ---- Halaman: Dashboard Perencanaan ---- */
 function PlanDashboardPage(){
- const {nav,planActs,planLog}=useApp();
+ const {nav,planActs:planActsAll,planLog,role,curUser}=useApp();
+ const sbPl=scopeBlocks(role,curUser);
+ const planActs=sbPl?planActsAll.filter(a=>inScope(sbPl,a.block)):planActsAll;
  const ready=useMemo(()=>planActs.map(a=>({a,r:planReadiness(a)})),[planActs]);
  const totCost=planActs.reduce((s,a)=>s+planCost(a),0);
  const totCap=PLAN_MONTH_IDX.reduce((s,m)=>s+PLAN_CAPS[m],0);
@@ -12815,7 +12841,9 @@ function PlanDashboardPage(){
 }
 /* ---- Halaman: Rencana Tahunan (Gantt-lite Agu–Des) ---- */
 function PlanAnnualPage(){
- const {nav,route,role,toast,planActs,updatePlanAct,addPlanAct,addPlanActs,planAudit,aiRecs}=useApp();
+ const {nav,route,role,toast,planActs:planActsAll,updatePlanAct,addPlanAct,addPlanActs,planAudit,aiRecs,curUser}=useApp();
+ const sbPl=scopeBlocks(role,curUser);
+ const planActs=sbPl?planActsAll.filter(a=>inScope(sbPl,a.block)):planActsAll;
  const [fM,setFM]=useState("Semua"),[fBlk,setFBlk]=useState("Semua"),[fAct,setFAct]=useState("Semua"),[fSrc,setFSrc]=useState("Semua");
  const [sel,setSel]=useState(null);
  const [genOpen,setGenOpen]=useState(false);
@@ -12853,7 +12881,7 @@ function PlanAnnualPage(){
    <div className="flex flex-wrap items-center gap-2 mb-4">
     <Filter size={15} className="text-gray-400"/>
     <Sel aria-label="Filter bulan rencana" value={fM} onChange={e=>setFM(e.target.value)} options={["Semua",...PLAN_MONTH_IDX.map(m=>MONTHS[m])]}/>
-    <Sel aria-label="Filter blok rencana" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.map(b=>[b.id,b.name])]}/>
+    <Sel aria-label="Filter blok rencana" value={fBlk} onChange={e=>setFBlk(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sbPl,b.id)).map(b=>[b.id,b.name])]}/>
     <Sel aria-label="Filter aktivitas rencana" value={fAct} onChange={e=>setFAct(e.target.value)} options={["Semua",...actTypes]}/>
     <Sel aria-label="Filter sumber rencana" value={fSrc} onChange={e=>setFSrc(e.target.value)} options={[["Semua","Semua sumber"],["Kurasi","Kurasi"],["Generator SOP","Generator SOP"],["Manual","Manual"]]}/>
     <div className="ml-auto flex items-center gap-3 text-xs text-gray-500">
@@ -12960,7 +12988,7 @@ function PlanAnnualPage(){
      <div className="sm:col-span-2"><Lbl>Nama aktivitas</Lbl><Inp value={fm.name} onChange={e=>setFm({...fm,name:e.target.value})} placeholder="mis. Pemasangan mulsa organik lorong tanam"/></div>
      <div className="sm:col-span-2"><Lbl>SOP acuan</Lbl><Sel className="w-full" value={fm.sop} onChange={e=>setFm({...fm,sop:e.target.value})} options={[["","Tanpa SOP (perlu disusun — akan ditandai)"],...SOPS.map(s=>[s.id,s.id+" — "+s.name+(s.approved?"":" (draf)")])]}/></div>
      <div><Lbl>Jenis aktivitas</Lbl><Sel className="w-full" value={fm.act} onChange={e=>setFm({...fm,act:e.target.value})} options={ACTIVITIES}/></div>
-     <div><Lbl>Blok</Lbl><Sel className="w-full" value={fm.block} onChange={e=>setFm({...fm,block:e.target.value})} options={BLOCKS.map(b=>[b.id,b.name])}/></div>
+     <div><Lbl>Blok</Lbl><Sel className="w-full" value={fm.block} onChange={e=>setFm({...fm,block:e.target.value})} options={BLOCKS.filter(b=>inScope(sbPl,b.id)).map(b=>[b.id,b.name])}/></div>
      <div><Lbl>Komoditas</Lbl><Sel className="w-full" value={fm.commodity} onChange={e=>setFm({...fm,commodity:e.target.value})} options={[...COMMODITIES.map(c=>[c.id,c.name]),["umum","Umum (semua komoditas)"]]}/></div>
      <div><Lbl>Prioritas</Lbl><Sel className="w-full" value={fm.priority} onChange={e=>setFm({...fm,priority:e.target.value})} options={["Rendah","Sedang","Tinggi"]}/></div>
      <div><Lbl>Tanggal mulai</Lbl><Inp type="date" min="2026-08-01" max="2026-12-31" value={fm.start} onChange={e=>setFm({...fm,start:e.target.value})}/></div>
@@ -12975,7 +13003,9 @@ function PlanAnnualPage(){
 }
 /* ---- Halaman: Rencana Mingguan & Paket Kerja ---- */
 function PlanWeeklyPage(){
- const {nav,role,toast,planPkgs,updatePlanPkg,addWo,planAudit}=useApp();
+ const {nav,role,toast,planPkgs:planPkgsAll,updatePlanPkg,addWo,planAudit,curUser}=useApp();
+ const sbPl=scopeBlocks(role,curUser);
+ const planPkgs=sbPl?planPkgsAll.filter(pk=>inScope(sbPl,pk.block)):planPkgsAll;
  const released=planPkgs.filter(p=>p.status==="WO Terbit").length;
  const toggle=(p,idx)=>{ const cl=p.checklist.map((c,i)=>i===idx?{...c,done:!c.done}:c); updatePlanPkg(p.id,{checklist:cl}); };
  const genWo=(p)=>{
@@ -13032,7 +13062,9 @@ function PlanWeeklyPage(){
 
 /* ---- Halaman: Sumber Daya & Kesiapan ---- */
 function PlanResourcesPage(){
- const {nav,role,toast,planActs,intOutbound,addIntOutbound}=useApp();
+ const {nav,role,toast,planActs:planActsAll,intOutbound,addIntOutbound,curUser}=useApp();
+ const sbPl=scopeBlocks(role,curUser);
+ const planActs=sbPl?planActsAll.filter(a=>inScope(sbPl,a.block)):planActsAll;
  const [tab,setTab]=useState("Material");
  const mats=useMemo(()=>planAggMaterials(planActs),[planActs]);
  const poTotal=mats.reduce((s,m)=>s+m.cost,0);
