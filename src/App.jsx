@@ -56,7 +56,14 @@ import {
 /* ============ Design tokens & helpers ============ */
 const C = { dark:"#166534", green:"#16A34A", light:"#DCFCE7", lime:"#84CC16", blue:"#2563EB", amber:"#F59E0B", red:"#DC2626", purple:"#7C3AED", text:"#111827", sub:"#4B5563", border:"#E5E7EB", bg:"#F9FAFB", card:"#FFFFFF" };
 const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-const TODAY = "2026-07-19";
+/* Jam aplikasi: tanggal riil zona WIB, dihitung sekali saat muat.
+   Sebelumnya dibekukan pada anchor data demo "2026-07-19" — seluruh data seed
+   dirancang koheren di sekitar tanggal itu. Dengan jam riil, umur/selisih hari
+   (antrian, SLA, kesegaran sensus) mencerminkan waktu nyata dan data seed akan
+   menua secara alami. */
+const WIB_DATE_ISO=(d)=>{ try{ return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).format(d); }
+ catch(e){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); } };
+const TODAY = WIB_DATE_ISO(new Date());
 const fmtN = (n)=> new Intl.NumberFormat("id-ID").format(Math.round(n));
 const fmtRp = (n)=> "Rp " + fmtN(n);
 const fmtRpC = (n)=> n>=1e9 ? "Rp " + (n/1e9).toFixed(2).replace(".",",") + " M" : n>=1e6 ? "Rp " + (n/1e6).toFixed(1).replace(".",",") + " jt" : fmtRp(n);
@@ -5088,7 +5095,7 @@ function CalendarPage(){
  const evItems=evs.filter(e=>planYm(e.d)===histM).map(e=>({kind:"ev",...e}));
  const gridItems=[...evItems,...woItems.filter(w=>!evItems.some(e=>e.d===w.d&&e.title===w.title))];
  const histMilestones=PLAN_HIST_MILESTONES[histM]||[];
- const week=evs.filter(e=>e.d>="2026-07-13"&&e.d<="2026-07-19").sort((a,b)=>a.d<b.d?-1:1);
+ const week=evs.filter(e=>e.d>=WX_ADD_DAYS(TODAY,-6)&&e.d<=TODAY).sort((a,b)=>a.d<b.d?-1:1);
  const evColor=(e)=> e.status==="Terlambat"?"#DC2626":e.status==="Berjalan"?"#16A34A":e.status==="Selesai"?"#9CA3AF":"#2563EB";
  const ev=selEv?CAL_EVENTS.find(x=>x.id===selEv):null;
  const sop=ev?SOPS.find(s=>s.id===ev.sop):null;
@@ -6432,7 +6439,7 @@ function HsVerificationPage(){
  const rows=[...hsInsp].sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||b.id.localeCompare(a.id));
  const setRes=(patch)=>updateHsInsp(sel,patch);
  const finish=(result,diag)=>{
-  updateHsInsp(sel,{result,diagnosisCategory:diag||i.diagnosisCategory,completedDate:"2026-07-19",status:"Selesai",checklist:i.checklist.map(c=>({...c,done:true}))});
+  updateHsInsp(sel,{result,diagnosisCategory:diag||i.diagnosisCategory,completedDate:TODAY,status:"Selesai",checklist:i.checklist.map(c=>({...c,done:true}))});
   if(i.sourceAlertId){
    if(result==="False Positive") updateHsAlert(i.sourceAlertId,{status:"False Positive"},"Inspeksi "+i.id+": false positive");
    else updateHsAlert(i.sourceAlertId,{status:"Selesai"},"Diverifikasi via "+i.id+": "+result);
@@ -7170,7 +7177,7 @@ const LB_ATTEND=(()=>{ const arr=[]; const active=LB_WORKERS.filter(w=>w.status=
    const ot=st==="Lembur"?(1+Math.floor(r()*2)):0;
    arr.push({ id:"ATT-"+w.id.slice(3)+"-"+date.replace(/-/g,""), worker:w.id, name:w.name, block:w.block, fs:w.fs, group:w.group, date,
      in: present?("06:"+String(inM).padStart(2,"0")):"—", out: present?(String(outH).padStart(2,"0")+":"+String(outM).padStart(2,"0")):"—",
-     st, hok, ot, src:"Fingerprint", device:LB_FP_DEVICE[w.block], verif: date>="2026-07-19"?"Menunggu verifikasi":"Terverifikasi" });
+     st, hok, ot, src:"Fingerprint", device:LB_FP_DEVICE[w.block], verif: date>=TODAY?"Menunggu verifikasi":"Terverifikasi" });
  }); });
  return arr;
 })();
@@ -7515,7 +7522,8 @@ function HokRatePage(){
    Prototype UI: seluruh data di bawah adalah demo (mock) yang
    selaras dengan data Gunung Hejo dan siap diganti API produksi.
    ============================================================ */
-const DQ_NOW="2026-07-19T09:41:00+07:00";
+/* Jam modul Data Quality: waktu riil dalam ISO WIB (+07:00), sekali saat muat. */
+const DQ_NOW=(()=>{ const wib=new Date(Date.now()+7*3600000).toISOString(); return wib.slice(0,19)+"+07:00"; })();
 const DQ_NOW_MS=new Date(DQ_NOW).getTime();
 const dqMs=(iso)=>new Date(iso).getTime();
 const dqHoursSince=(iso)=>(DQ_NOW_MS-dqMs(iso))/3600000;
@@ -7669,7 +7677,7 @@ const DQ_INIT_ISSUES=[
 /* Issue yang "ditemukan" saat Jalankan Validasi (idempoten — tidak diduplikasi) */
 const DQ_VALIDATION_FOUND={ id:"DQ-2026-016", title:"2 duplicate Land ID terdeteksi pada import geometri terbaru", domain:"Data Spasial", dimension:"uniqueness", severity:"High", status:"Baru",
  estateId:"GH", blockId:"GH-B03", clusterId:null, plotId:null, affectedRecords:2, sourceId:"SRC-KML-001", ruleId:"DQ-GEO-002",
- detectedAt:DQ_NOW, dueAt:"2026-07-22T09:41:00+07:00", ownerId:null, ownerName:null, assignedBy:null, sensitive:true,
+ detectedAt:DQ_NOW, dueAt:(new Date(new Date(DQ_NOW).getTime()+72*3600000+7*3600000).toISOString().slice(0,19)+"+07:00"), ownerId:null, ownerName:null, assignedBy:null, sensitive:true,
  modules:["Peta Kebun","Data Spasial"],
  impact:"Dua petak memakai Land ID yang sama; agregasi luas dan populasi per petak menjadi ganda.",
  recommendation:"Terbitkan Land ID baru untuk salah satu petak dan perbarui referensi lintas modul.",
