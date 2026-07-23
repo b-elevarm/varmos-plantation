@@ -2086,8 +2086,7 @@ const MAP_INFRA_POINTS=MAP_INFRA.map(p=>{
  const r=RESERVOIRS.find(x=>"EMB-"+x.id===p.id);
  return {id:p.id,lngLat:[p.lon,p.lat],icon:p.icon,name:p.name,
   sub:r?(r.op+(r.cap!=null?" · Volume "+fmtN(r.cap)+" m³":"")):p.type,
-  note:(r&&r.note)||null,
-  srcLabel:"Titik KML lapangan"};
+  note:(r&&r.note)||null};
 });
 /* Jalur jalan produksi: menunggu data GPS tracking lapangan — layer peta
    (roads) di PlantationMap siap dipakai kembali begitu datanya tersedia. */
