@@ -425,6 +425,8 @@ const BLOCKS = HS_GEO.blocks.map(b=>{
   ...OPS_OVERLAY[b.id], supervisor:FS_BY_BLOCK[b.id]||"—" };
 });
 const blockLabel = (id)=>{ const b=BLOCKS.find(x=>x.id===id); return b ? b.name : "Blok "+id; };
+/* Label Land ID: blok tampil "Blok N" (bukan GH-B0N); cluster/petak tetap kode lapangan (B4C2P8) */
+const landLabel=(id)=>{ const m=String(id||"").match(/^GH-B0?(\d)$/); return m?("Blok "+m[1]):String(id||"").replace("GH-",""); };
 const SUPERVISORS = [...Object.values(FS_BY_BLOCK),"Seedling Officer"];
 const AGRONOMISTS = ["Agronomy Head","Asisten Agronomi 1","Asisten Agronomi 2"];
 
@@ -510,20 +512,20 @@ const SOPS=[
 ];
 
 const CAL_EVENTS=[
- {id:"EV-01",d:"2026-07-15",title:"Pemupukan NPK Durian — GH-B01 (tahap 2)",act:"Pemupukan",block:"GH-B01",commodity:"durian",status:"Terlambat",sop:"SOP-DUR-03",labor:"12 HOK",material:"1.760 kg NPK 16-16-16"},
- {id:"EV-02",d:"2026-07-20",title:"Penyiraman Terjadwal — GH-B04",act:"Penyiraman",block:"GH-B04",commodity:"durian",status:"Terjadwal",sop:"SOP-UMU-02",labor:"6 HOK",material:"—"},
- {id:"EV-03",d:"2026-07-21",title:"Inspeksi Kesehatan Bulanan — GH-B02",act:"Inspeksi kesehatan",block:"GH-B02",commodity:"manggis",status:"Terjadwal",sop:"SOP-UMU-04",labor:"4 HOK",material:"—"},
- {id:"EV-04",d:"2026-07-22",title:"Pemasangan Perangkap Lalat Buah — GH-B01",act:"Pengendalian hama",block:"GH-B01",commodity:"alpukat",status:"Terjadwal",sop:"SOP-ALP-01",labor:"4 HOK",material:"60 perangkap metil eugenol"},
- {id:"EV-05",d:"2026-07-23",title:"Aplikasi Dolomit Koreksi pH — GH-B02",act:"Pemupukan",block:"GH-B02",commodity:"manggis",status:"Terjadwal",sop:"SOP-MGS-02",labor:"8 HOK",material:"1.500 kg dolomit"},
- {id:"EV-06",d:"2026-07-24",title:"Soil Sampling Semester 2 — GH-B02",act:"Soil sampling",block:"GH-B02",commodity:"petai",status:"Terjadwal",sop:"SOP-UMU-04",labor:"2 HOK",material:"Kit sampling"},
- {id:"EV-07",d:"2026-07-25",title:"Penyulaman Durian Batch Juli — GH-B01",act:"Penyulaman",block:"GH-B01",commodity:"durian",status:"Terjadwal",sop:"SOP-DUR-03",labor:"10 HOK",material:"120 bibit durian + ajir"},
- {id:"EV-08",d:"2026-07-08",title:"Penyiangan Jalur Tanam — GH-B03",act:"Penyiangan",block:"GH-B03",commodity:"jengkol",status:"Selesai",sop:"SOP-JKL-01",labor:"8 HOK",material:"—"},
- {id:"EV-09",d:"2026-07-10",title:"Pemupukan Organik Alpukat — GH-B04",act:"Pemupukan",block:"GH-B04",commodity:"alpukat",status:"Selesai",sop:"SOP-PET-01",labor:"12 HOK",material:"9.000 kg pupuk kandang"},
- {id:"EV-10",d:"2026-07-05",title:"Sanitasi Kebun — GH-B03",act:"Sanitasi kebun",block:"GH-B03",commodity:"rambutan",status:"Selesai",sop:"SOP-RBT-02",labor:"6 HOK",material:"—"},
- {id:"EV-11",d:"2026-07-17",title:"Pemupukan NPK Durian — GH-B01 (berjalan)",act:"Pemupukan",block:"GH-B01",commodity:"durian",status:"Berjalan",sop:"SOP-DUR-03",labor:"12 HOK",material:"NPK 16-16-16"},
- {id:"EV-12",d:"2026-07-28",title:"Pemangkasan Lengkeng — GH-B01",act:"Pemangkasan",block:"GH-B01",commodity:"lengkeng",status:"Terjadwal",sop:"SOP-LKG-02",labor:"8 HOK",material:"—"},
- {id:"EV-13",d:"2026-07-30",title:"Pemupukan Organik Petai — GH-B02",act:"Pemupukan",block:"GH-B02",commodity:"petai",status:"Terjadwal",sop:"SOP-PET-01",labor:"10 HOK",material:"Pupuk kandang fermentasi"},
- {id:"EV-14",d:"2026-07-12",title:"Pengendalian Antraknosa — GH-B04",act:"Pengendalian hama",block:"GH-B04",commodity:"durian",status:"Berjalan",sop:"SOP-MGS-02",labor:"5 HOK",material:"Mankozeb 80WP"},
+ {id:"EV-01",d:"2026-07-15",title:"Pemupukan NPK Durian — Blok 1 (tahap 2)",act:"Pemupukan",block:"GH-B01",commodity:"durian",status:"Terlambat",sop:"SOP-DUR-03",labor:"12 HOK",material:"1.760 kg NPK 16-16-16"},
+ {id:"EV-02",d:"2026-07-20",title:"Penyiraman Terjadwal — Blok 4",act:"Penyiraman",block:"GH-B04",commodity:"durian",status:"Terjadwal",sop:"SOP-UMU-02",labor:"6 HOK",material:"—"},
+ {id:"EV-03",d:"2026-07-21",title:"Inspeksi Kesehatan Bulanan — Blok 2",act:"Inspeksi kesehatan",block:"GH-B02",commodity:"manggis",status:"Terjadwal",sop:"SOP-UMU-04",labor:"4 HOK",material:"—"},
+ {id:"EV-04",d:"2026-07-22",title:"Pemasangan Perangkap Lalat Buah — Blok 1",act:"Pengendalian hama",block:"GH-B01",commodity:"alpukat",status:"Terjadwal",sop:"SOP-ALP-01",labor:"4 HOK",material:"60 perangkap metil eugenol"},
+ {id:"EV-05",d:"2026-07-23",title:"Aplikasi Dolomit Koreksi pH — Blok 2",act:"Pemupukan",block:"GH-B02",commodity:"manggis",status:"Terjadwal",sop:"SOP-MGS-02",labor:"8 HOK",material:"1.500 kg dolomit"},
+ {id:"EV-06",d:"2026-07-24",title:"Soil Sampling Semester 2 — Blok 2",act:"Soil sampling",block:"GH-B02",commodity:"petai",status:"Terjadwal",sop:"SOP-UMU-04",labor:"2 HOK",material:"Kit sampling"},
+ {id:"EV-07",d:"2026-07-25",title:"Penyulaman Durian Batch Juli — Blok 1",act:"Penyulaman",block:"GH-B01",commodity:"durian",status:"Terjadwal",sop:"SOP-DUR-03",labor:"10 HOK",material:"120 bibit durian + ajir"},
+ {id:"EV-08",d:"2026-07-08",title:"Penyiangan Jalur Tanam — Blok 3",act:"Penyiangan",block:"GH-B03",commodity:"jengkol",status:"Selesai",sop:"SOP-JKL-01",labor:"8 HOK",material:"—"},
+ {id:"EV-09",d:"2026-07-10",title:"Pemupukan Organik Alpukat — Blok 4",act:"Pemupukan",block:"GH-B04",commodity:"alpukat",status:"Selesai",sop:"SOP-PET-01",labor:"12 HOK",material:"9.000 kg pupuk kandang"},
+ {id:"EV-10",d:"2026-07-05",title:"Sanitasi Kebun — Blok 3",act:"Sanitasi kebun",block:"GH-B03",commodity:"rambutan",status:"Selesai",sop:"SOP-RBT-02",labor:"6 HOK",material:"—"},
+ {id:"EV-11",d:"2026-07-17",title:"Pemupukan NPK Durian — Blok 1 (berjalan)",act:"Pemupukan",block:"GH-B01",commodity:"durian",status:"Berjalan",sop:"SOP-DUR-03",labor:"12 HOK",material:"NPK 16-16-16"},
+ {id:"EV-12",d:"2026-07-28",title:"Pemangkasan Lengkeng — Blok 1",act:"Pemangkasan",block:"GH-B01",commodity:"lengkeng",status:"Terjadwal",sop:"SOP-LKG-02",labor:"8 HOK",material:"—"},
+ {id:"EV-13",d:"2026-07-30",title:"Pemupukan Organik Petai — Blok 2",act:"Pemupukan",block:"GH-B02",commodity:"petai",status:"Terjadwal",sop:"SOP-PET-01",labor:"10 HOK",material:"Pupuk kandang fermentasi"},
+ {id:"EV-14",d:"2026-07-12",title:"Pengendalian Antraknosa — Blok 4",act:"Pengendalian hama",block:"GH-B04",commodity:"durian",status:"Berjalan",sop:"SOP-MGS-02",labor:"5 HOK",material:"Mankozeb 80WP"},
 ];
 
 const BATCHES=[
@@ -4723,7 +4725,7 @@ function WorkOrdersPage(){
         <td className={T.td+" font-semibold text-green-700"}>{w.id}</td>
         <td className={T.td+" max-w-64 truncate"}>{w.title}</td>
         <td className={T.td}>{w.activity}</td>
-        <td className={T.td}>{w.block}</td>
+        <td className={T.td}>{blockLabel(w.block)}</td>
         <td className={T.td}><Badge v={w.status}/>{woOverdue(w)&&w.status!=="Terlambat"?<span className="ml-1 text-xs text-red-600">lewat tenggat</span>:null}</td>
         <td className={T.td}><Badge v={w.priority}/></td>
         <td className={T.td}>{w.supervisor}</td>
@@ -4743,7 +4745,7 @@ function WorkOrdersPage(){
           <button key={w.id} onClick={()=>nav("wo",{woId:w.id})} className="w-full text-left bg-white border border-gray-200 rounded-md p-2.5 hover:border-green-600 shadow-sm">
            <div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold text-green-700">{w.id}</span><Badge v={w.priority}/></div>
            <div className="text-sm text-gray-900 mt-1 leading-snug">{w.title}</div>
-           <div className="text-xs text-gray-500 mt-1.5">{w.block} • {w.supervisor}</div>
+           <div className="text-xs text-gray-500 mt-1.5">{blockLabel(w.block)} • {w.supervisor}</div>
            <div className="mt-1.5 flex items-center gap-2"><ProgressBar v={w.progress}/><span className="text-xs text-gray-500">{w.progress}%</span></div>
           </button>))}
          {items.length===0 && <div className="text-xs text-gray-300 border border-dashed border-gray-200 rounded-md p-3 text-center">Kosong</div>}
@@ -4758,7 +4760,7 @@ function WorkOrdersPage(){
         <div className="flex-1 space-y-2">
          {byDate[d].map(w=>(
           <button key={w.id} onClick={()=>nav("wo",{woId:w.id})} className="w-full text-left border border-gray-200 rounded-md px-3 py-2 hover:border-green-600 flex flex-wrap items-center gap-2">
-           <span className="text-xs font-semibold text-green-700">{w.id}</span><span className="text-sm text-gray-900 flex-1">{w.title}</span><Badge v={w.status}/><span className="text-xs text-gray-500">{w.block}</span>
+           <span className="text-xs font-semibold text-green-700">{w.id}</span><span className="text-sm text-gray-900 flex-1">{w.title}</span><Badge v={w.status}/><span className="text-xs text-gray-500">{blockLabel(w.block)}</span>
           </button>))}
         </div>
        </div>))}
@@ -5109,7 +5111,7 @@ function VerificationPage(){
       <tr key={w.id} className={T.tr} onClick={()=>setSelId(w.id)}>
        <td className={T.td+" font-semibold text-green-700"}>{w.id}</td>
        <td className={T.td+" max-w-64 truncate"}>{w.title}</td>
-       <td className={T.td}>{w.block}</td>
+       <td className={T.td}>{blockLabel(w.block)}</td>
        <td className={T.td}>{w.supervisor}</td>
        <td className={T.td}>{fmtD(w.submitted)}</td>
        <td className={T.td+(age(w)>=3?" text-red-600 font-semibold":"")}>{age(w)} hari</td>
@@ -5231,7 +5233,7 @@ function HealthPage(){
       <tr key={c.id} className={T.tr} onClick={()=>nav("case",{caseId:c.id})}>
        <td className={T.td+" font-semibold text-green-700"}>{c.id}</td>
        <td className={T.td}>{c.target}</td>
-       <td className={T.td}>{c.block}</td>
+       <td className={T.td}>{blockLabel(c.block)}</td>
        <td className={T.td+" max-w-56 truncate"}>{c.symptoms}</td>
        <td className={T.td+" max-w-48 truncate"}>{c.suspected}</td>
        <td className={T.td}><Badge v={c.severity}/></td>
@@ -5567,7 +5569,7 @@ function FertilizationPage(){
       <thead><tr>{["Blok","Tanggal","pH","C-Org","N","P","K","Rekomendasi"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
       <tbody>{SOIL_TESTS.map(s=>(
        <tr key={s.block} className={T.tr} onClick={()=>nav("block",{blockId:s.block})}>
-        <td className={T.td+" font-semibold"}>{s.block}</td><td className={T.td}>{fmtD(s.date)}</td>
+        <td className={T.td+" font-semibold"}>{blockLabel(s.block)}</td><td className={T.td}>{fmtD(s.date)}</td>
         <td className={T.td}><span className={"font-bold "+(s.pH<5.3?"text-red-600":s.pH<6?"text-amber-600":"text-green-700")}>{String(s.pH).replace(".",",")}</span></td>
         <td className={T.td}>{s.corg}</td>
         {[s.n,s.p,s.k].map((v,i)=><td key={i} className={T.td}><span className={v==="Rendah"?"text-red-600 font-medium":v==="Tinggi"?"text-green-700 font-medium":"text-gray-700"}>{v}</span></td>)}
@@ -6092,7 +6094,7 @@ function HsMapSvg({sel="GH",onSel,selTree,onTree,source="all",metric="NDVI",laye
    {/* Label */}
    {L.label&&paintUnits.map(cu=>(
     <text key={"l"+cu.id} x={cu.cxy[0]} y={cu.cxy[1]} textAnchor="middle" fontSize={(level==="estate"?15:9)*scale*1.4} fontWeight="700"
-     fill={base==="citra"?"#F9FAFB":"#14532D"} style={{pointerEvents:"none"}}>{level==="estate"?cu.id.replace("GH-",""):cu.id.split("-").slice(-1)[0]}</text>))}
+     fill={base==="citra"?"#F9FAFB":"#14532D"} style={{pointerEvents:"none"}}>{level==="estate"?blockLabel(cu.id):cu.id.split("-").slice(-1)[0]}</text>))}
   </svg>);
 }
 
@@ -6444,7 +6446,7 @@ function HsCommandMapPage(){
     <Card title="Anomali Prioritas" action={<button onClick={()=>nav("hs-alerts")} className="text-xs font-semibold text-green-700">Semua →</button>}>
      {activeAlerts.slice(0,4).map(a=><button key={a.id} onClick={()=>nav("hs-alerts",{focus:a.id})} className="w-full text-left flex items-center gap-2 py-1.5 border-b border-gray-50 hover:bg-gray-50 rounded px-1 text-sm">
       <Badge v={a.severity}/><span className="flex-1 min-w-0 truncate font-medium text-gray-800">{a.title}</span>
-      <SrcChip v={a.source}/><ConfChip v={a.confidence}/><span className="text-[11px] text-gray-400">{a.landId.replace("GH-","")}</span>
+      <SrcChip v={a.source}/><ConfChip v={a.confidence}/><span className="text-[11px] text-gray-400">{landLabel(a.landId)}</span>
      </button>)}
     </Card>
     <Card title="Timeline Observasi (lintas sumber)" action={<button onClick={()=>nav("hs-history")} className="text-xs font-semibold text-green-700">Analisis →</button>}>
@@ -6543,7 +6545,7 @@ function HsDronePage(){
      <tbody>
       {HS_FLIGHTS.map(x=><tr key={x.id} className={T.tr+(selF===x.id?" bg-green-50":"")} onClick={()=>setSelF(x.id)}>
        <td className={T.td+" font-semibold text-green-800"}>{x.id}</td><td className={T.td}>{fmtD(x.date)}</td>
-       <td className={T.td}>{x.plots.map(p=>p.replace("GH-","")).join(", ")}</td>
+       <td className={T.td}>{x.plots.map(p=>landLabel(p)).join(", ")}</td>
        <td className={T.td}>{x.sensor}</td><td className={T.td}>{x.gsd}</td><td className={T.td}>{x.coverage}%</td><td className={T.td}>{x.quality}</td>
        <td className={T.td}>{x.treesDetected?fmtN(x.treesDetected):"—"}</td><td className={T.td}>{x.crowns?fmtN(x.crowns):"—"}</td>
        <td className={T.td}>{x.unmatched??"—"}</td><td className={T.td+" text-red-600 font-semibold"}>{x.suspectDead??"—"}</td>
@@ -6552,7 +6554,7 @@ function HsDronePage(){
       </tr>)}
       {hsMissions.map(m=><tr key={m.id} className="bg-blue-50/40">
        <td className={T.td+" font-semibold text-blue-800"}>{m.id}</td><td className={T.td}>{fmtD(m.planned)}</td>
-       <td className={T.td}>{m.landId.replace("GH-","")}</td><td className={T.td}>{m.sensor}</td>
+       <td className={T.td}>{landLabel(m.landId)}</td><td className={T.td}>{m.sensor}</td>
        <td className={T.td} colSpan={7}><span className="text-xs text-gray-500">Alasan: {m.reason}{m.fromAlert?" • dari "+m.fromAlert:""} • pilot {m.pilot} • prioritas {m.priority}</span></td>
        <td className={T.td}><Badge v={m.status}/></td>
       </tr>)}
@@ -6618,7 +6620,7 @@ function HsSensorsPage(){
        <span className="font-bold text-gray-900 text-sm">{x.id}</span>
        {x.status==="online"?<span className="flex items-center gap-1 text-[10px] font-semibold text-blue-700"><Wifi size={12}/>Online</span>:x.status==="offline"?<span className="flex items-center gap-1 text-[10px] font-semibold text-red-600"><WifiOff size={12}/>Offline</span>:<span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600"><RefreshCw size={12}/>Pemeliharaan</span>}
       </div>
-      <div className="text-[10px] text-gray-400">{x.zoneId} • {x.landId.replace("GH-","")} • {x.depth} cm • r±{x.radius} m</div>
+      <div className="text-[10px] text-gray-400">{x.zoneId} • {landLabel(x.landId)} • {x.depth} cm • r±{x.radius} m</div>
       <div className="flex items-end gap-3 mt-1.5">
        <div><div className="text-[10px] text-gray-400">Kelembapan</div><div className={"text-lg font-bold "+(low?"text-red-600":"text-gray-900")}>{last?String(last.moist).replace(".",",")+"%":"—"}</div></div>
        <div><div className="text-[10px] text-gray-400">EC</div><div className={"text-sm font-semibold "+(last&&last.ec>HS_SENSOR_ALERT_TH.ecHigh?"text-red-600":"text-gray-700")}>{last?String(last.ec).replace(".",","):"—"}</div></div>
@@ -6647,7 +6649,7 @@ function HsSensorsPage(){
     <Card title={"Alert Sensor ("+sensorAlerts.length+")"}>
      {sensorAlerts.map(a=><button key={a.id} onClick={()=>nav("hs-alerts",{focus:a.id})} className="w-full text-left py-2 border-b border-gray-50 hover:bg-gray-50 rounded px-1">
       <div className="flex items-center gap-2 text-sm"><Badge v={a.severity}/><span className="font-medium text-gray-800 flex-1 truncate">{a.title}</span></div>
-      <div className="text-[11px] text-gray-500 mt-0.5">{a.id} • {a.landId.replace("GH-","")} • <ConfChip v={a.confidence}/></div>
+      <div className="text-[11px] text-gray-500 mt-0.5">{a.id} • {landLabel(a.landId)} • <ConfChip v={a.confidence}/></div>
      </button>)}
      <div className="text-[10px] text-gray-400 mt-2">Aturan: kelembapan &lt;{HS_SENSOR_ALERT_TH.moistLow}% / &gt;{HS_SENSOR_ALERT_TH.moistHigh}%, EC &gt;{String(HS_SENSOR_ALERT_TH.ecHigh).replace(".",",")} mS/cm, offline &gt;24 jam, baterai &lt;20%.</div>
     </Card>
@@ -6689,7 +6691,7 @@ function HsTreesPage(){
    </div>
    {!flight&&<div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex gap-2"><Info size={14} className="shrink-0 mt-0.5"/>Petak ini belum tercakup penerbangan drone yang selesai diproses — kolom metrik drone kosong. Data pohon berasal dari Demo Tree Registry.</div>}
    <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-    <Card title={"Peta Pohon — "+plotId.replace("GH-","")} pad={false} className="xl:col-span-1">
+    <Card title={"Peta Pohon — "+landLabel(plotId)} pad={false} className="xl:col-span-1">
      <div className="p-2"><HsMapSvg sel={plotId} onSel={setHsSel} selTree={hsTree} onTree={setHsTree} source={flight?"Drone":"all"} metric="NDVI" op={0.35} height={330} hsAlerts={hsAlerts}/></div>
      <div className="px-3 pb-2"><HsLegend source={flight?"Drone":"all"} metric="NDVI"/></div>
     </Card>
@@ -6717,7 +6719,7 @@ function HsTreesPage(){
     <Card title="Detail Pohon" className="xl:col-span-2"><HsTreePanel treeId={hsTree} hsAlerts={hsAlerts} hsInsp={hsInsp} onCreateInsp={(v)=>setInspM(v)} onWo={(t)=>nav("wo-new",{prefill:{activity:"Irigasi & Air",block:hsWoBlock(t.id),title:"Tindak lanjut HS "+t.id,note:"Lokasi Hybrid Sensing: "+t.id}})} toast={toast} onClose={()=>setHsTree(null)}/></Card>
     <Card title="Perbandingan Peer Group">
      {selPeer?<div className="space-y-2.5 text-sm">
-      <div className="text-[11px] text-gray-500">Peer: {selPeer.n} pohon {comName(plot.commodity)} aktif, cluster {plot.parentId.replace("GH-","")}, umur tanam sama. Persentil = posisi pohon ini terhadap peer.</div>
+      <div className="text-[11px] text-gray-500">Peer: {selPeer.n} pohon {comName(plot.commodity)} aktif, cluster {landLabel(plot.parentId)}, umur tanam sama. Persentil = posisi pohon ini terhadap peer.</div>
       {[["Luas tajuk",selPeer.crown],["Tinggi estimasi",selPeer.h],["Vegetation index",selPeer.vi]].map(([l,v])=>(
        <div key={l}><div className="flex justify-between text-xs"><span className="text-gray-500">{l}</span><span className="font-bold">{v}th persentil</span></div><ProgressBar v={v} tone={v<25?"#DC2626":v<45?"#F59E0B":"#16A34A"}/></div>))}
       <div className="text-[11px] text-amber-700 bg-amber-50 rounded-md p-2 flex gap-1.5"><Info size={12} className="shrink-0 mt-0.5"/>Perbandingan hanya valid untuk komoditas & umur setara. Pohon beda umur/petak tidak dibandingkan langsung.</div>
@@ -6756,7 +6758,7 @@ function HsVerificationPage(){
       <td className={T.td+" font-semibold text-green-800"}>{x.id}</td>
       <td className={T.td}><SrcChip v={x.sourceType}/></td>
       <td className={T.td+" text-xs"}>{x.sourceAlertId||"—"}</td>
-      <td className={T.td}>{x.landId.replace("GH-","")}</td>
+      <td className={T.td}>{landLabel(x.landId)}</td>
       <td className={T.td+" text-xs"}>{x.treeId?x.treeId.split("-").slice(-1)[0]:"—"}</td>
       <td className={T.td}><Badge v={x.priority}/></td>
       <td className={T.td}>{x.assignedTo}</td>
@@ -6826,7 +6828,7 @@ function HsAlertsPage(){
       <td className={T.td+" font-semibold text-green-800"}>{x.id}</td>
       <td className={T.td}><SrcChip v={x.source}/></td>
       <td className={T.td+" max-w-[260px] truncate font-medium"}>{x.title}</td>
-      <td className={T.td+" text-xs"}>{(x.treeId||x.landId).replace("GH-","")}</td>
+      <td className={T.td+" text-xs"}>{landLabel(x.treeId||x.landId)}</td>
       <td className={T.td}><Badge v={x.severity}/></td>
       <td className={T.td}><ConfChip v={x.confidence}/></td>
       <td className={T.td}>{fmtD(x.detectedAt)}</td>
@@ -7130,7 +7132,7 @@ function UsersPage(){
         <div><div className="font-semibold text-gray-900">{u.name}</div><div className="text-[10px] text-gray-400">{u.id}</div></div></div></td>
        <td className={T.td+" text-xs"}>{u.email}<div className="text-gray-400">{u.phone}</div></td>
        <td className={T.td}>{u.role}</td>
-       <td className={T.td+" text-xs"}>{u.blocks.length?u.blocks.map(b=>b.replace("GH-","")).join(", "):"—"}</td>
+       <td className={T.td+" text-xs"}>{u.blocks.length?u.blocks.map(blockLabel).join(", "):"—"}</td>
        <td className={T.td}>{u.twoFA?<Check size={14} className="text-green-600"/>:<span className="text-gray-300">—</span>}</td>
        <td className={T.td+" text-xs"}>{u.lastLogin||<span className="text-amber-600">Belum pernah</span>}</td>
        <td className={T.td}><UStat v={u.status}/></td>
@@ -7712,7 +7714,7 @@ function WorkerProfilePage(){
     <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2 text-xs text-blue-800 bg-blue-50/60"><Fingerprint size={14} className="text-blue-700"/>Absensi via fingerprint • {LB_FP_DEVICE[w.block]} • bulan berjalan: {attSum.present} hadir, {attSum.hok} HOK, {attSum.ot} jam lembur</div>
     <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Tanggal","Masuk","Pulang","Status","HOK","Lembur","Sumber","Verifikasi"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead><tbody>{attend.map((a,i)=>(<tr key={i} className="hover:bg-green-50"><td className={T.td}>{fmtD(a.date)}</td><td className={T.td+" font-mono text-xs"}>{a.in}</td><td className={T.td+" font-mono text-xs"}>{a.out}</td><td className={T.td}><LbBadge v={a.st}/></td><td className={T.td+" text-right font-semibold"}>{a.hok}</td><td className={T.td+" text-right"}>{a.ot||"—"}</td><td className={T.td+" text-xs text-blue-700"}><span className="inline-flex items-center gap-1"><Fingerprint size={11}/>{a.src}</span></td><td className={T.td}><LbBadge v={a.verif}/></td></tr>))}</tbody></table></div>
    </Card>}
-   {tab==="riwayat"&&<Card pad={false}><div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Tanggal","Work Order","Pekerjaan","Blok","Target","Realisasi","HOK","Verifikasi"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead><tbody>{hist.map((h,i)=>(<tr key={i} className="hover:bg-green-50"><td className={T.td}>{fmtD(h.date)}</td><td className={T.td+" text-green-700"}>{h.wo}</td><td className={T.td}>{h.type}</td><td className={T.td}>{h.block}</td><td className={T.td+" text-right"}>{h.target}</td><td className={T.td+" text-right"}>{h.real}</td><td className={T.td+" text-right"}>{h.hok}</td><td className={T.td}><LbBadge v={h.verif}/></td></tr>))}</tbody></table></div></Card>}
+   {tab==="riwayat"&&<Card pad={false}><div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Tanggal","Work Order","Pekerjaan","Blok","Target","Realisasi","HOK","Verifikasi"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead><tbody>{hist.map((h,i)=>(<tr key={i} className="hover:bg-green-50"><td className={T.td}>{fmtD(h.date)}</td><td className={T.td+" text-green-700"}>{h.wo}</td><td className={T.td}>{h.type}</td><td className={T.td}>{blockLabel(h.block)}</td><td className={T.td+" text-right"}>{h.target}</td><td className={T.td+" text-right"}>{h.real}</td><td className={T.td+" text-right"}>{h.hok}</td><td className={T.td}><LbBadge v={h.verif}/></td></tr>))}</tbody></table></div></Card>}
    {tab==="produktivitas"&&<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <Card title="Tren produktivitas (%)"><ResponsiveContainer width="100%" height={220}><LineChart data={prodTrend}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="m" {...AXIS}/><YAxis domain={[0,130]} {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>v+"%"}/><Line type="monotone" dataKey="v" name="Produktivitas" stroke="#16A34A" strokeWidth={2.5} dot={{r:3}}/></LineChart></ResponsiveContainer></Card>
     <Card title="Ringkasan"><KV k="Produktivitas rata-rata" v={w.prod+"%"}/><KV k="Pekerjaan selesai (bln)" v={hist.length}/><KV k="Lolos verifikasi" v={Math.round(80+rnd()*18)+"%"}/><KV k="vs rata-rata kelompok" v={(w.prod>=90?"+":"")+(w.prod-92)+" poin"}/><KV k="Evaluasi Field Supervisor" v={w.prod>=95?"Sangat baik":w.prod>=85?"Baik":"Cukup"}/></Card>
@@ -12001,7 +12003,7 @@ function AlertsPage(){
       <Sel value={fStage} onChange={e=>setFStage(e.target.value)} options={["Semua",...AL_STAGE_LIST]}/>
       <Sel value={fSla} onChange={e=>setFSla(e.target.value)} options={[["Semua","SLA: Semua"],["ok","Dalam SLA"],["near","Mendekati"],["overdue","Terlambat"],["escalated","Escalated"],["paused","Ditahan"]]}/>
       <Sel value={fSrc} onChange={e=>setFSrc(e.target.value)} options={srcOpts}/>
-      <Sel value={fBlock} onChange={e=>setFBlock(e.target.value)} options={["Semua",...BLOCKS.filter(b=>inScope(sbA,b.id)).map(b=>b.id)]}/>
+      <Sel value={fBlock} onChange={e=>setFBlock(e.target.value)} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sbA,b.id)).map(b=>[b.id,b.name])]}/>
      </div>
      {selIds.length>0&&<div className="flex flex-wrap items-center gap-2 bg-green-50 border border-green-200 rounded-md px-3 py-1.5">
       <span className="text-xs font-semibold text-green-900">{selIds.length} terpilih</span>
@@ -12596,11 +12598,11 @@ const PLAN_INIT_ACTS=[
 ];
 /* ---- Paket kerja mingguan (pekan 30: 20–26 Jul) — jembatan kalender → WO ---- */
 const PLAN_INIT_PKGS=[
- {id:"PKT-30-01",name:"Paket GH-B04 — Penyiraman Terjadwal",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B04",events:["EV-02"],crew:6,fs:FS_BY_BLOCK["GH-B04"],status:"Siap",woIds:[],
+ {id:"PKT-30-01",name:"Paket Blok 4 — Penyiraman Terjadwal",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B04",events:["EV-02"],crew:6,fs:FS_BY_BLOCK["GH-B04"],status:"Siap",woIds:[],
   checklist:[{t:"Tim & HOK dikonfirmasi",done:true},{t:"Pompa & selang dicek laik pakai",done:true},{t:"Briefing SOP & APD",done:true},{t:"Cek prakiraan cuaca H-1",done:true}]},
- {id:"PKT-30-02",name:"Paket GH-B02 — Inspeksi, Dolomit & Sampel Tanah",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B02",events:["EV-03","EV-05","EV-06"],crew:10,fs:FS_BY_BLOCK["GH-B02"],status:"Draft",woIds:[],
+ {id:"PKT-30-02",name:"Paket Blok 2 — Inspeksi, Dolomit & Sampel Tanah",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B02",events:["EV-03","EV-05","EV-06"],crew:10,fs:FS_BY_BLOCK["GH-B02"],status:"Draft",woIds:[],
   checklist:[{t:"Material dicadangkan di gudang (dolomit 1.500 kg)",done:false},{t:"Tim & HOK dikonfirmasi",done:true},{t:"Briefing SOP & APD",done:false},{t:"Cek prakiraan cuaca H-1",done:false}]},
- {id:"PKT-30-03",name:"Paket GH-B01 — Perangkap Lalat Buah & Penyulaman",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B01",events:["EV-04","EV-07"],crew:10,fs:FS_BY_BLOCK["GH-B01"],status:"Draft",woIds:[],
+ {id:"PKT-30-03",name:"Paket Blok 1 — Perangkap Lalat Buah & Penyulaman",week:"Pekan 30 • 20–26 Jul 2026",block:"GH-B01",events:["EV-04","EV-07"],crew:10,fs:FS_BY_BLOCK["GH-B01"],status:"Draft",woIds:[],
   checklist:[{t:"60 perangkap metil eugenol tersedia",done:true},{t:"120 bibit durian + ajir siap kirim",done:false},{t:"Tim & HOK dikonfirmasi",done:true},{t:"Briefing SOP & APD",done:false}]},
 ];
 const PLAN_INIT_LOG=[
@@ -12802,7 +12804,7 @@ function PlanDashboardPage(){
        <Line dataKey="kapasitas" name="Kapasitas (40 pekerja × 22 hari)" stroke="#9CA3AF" strokeWidth={2} dot={false}/>
       </ComposedChart>
      </ResponsiveContainer>
-     <div className="text-xs text-gray-500 mt-1.5">Kapasitas total memadai, namun distribusi per blok tidak merata — GH-B01 kelebihan beban pada November (lihat Sumber Daya).</div>
+     <div className="text-xs text-gray-500 mt-1.5">Kapasitas total memadai, namun distribusi per blok tidak merata — Blok 1 kelebihan beban pada November (lihat Sumber Daya).</div>
     </Card>
    </div>
    <div className="grid lg:grid-cols-3 gap-4">
@@ -13124,7 +13126,7 @@ function PlanResourcesPage(){
        </tbody>
       </table>
      </div>
-     <div className="px-4 py-3 text-xs text-gray-500 border-t border-gray-100">GH-B01 November melebihi kapasitas (penyulaman massal + pemupukan organik beririsan). Opsi: geser salah satu jadwal ±1 pekan, atau pinjam tim GH-B03 yang bebannya rendah — uji dampaknya di halaman Skenario.</div>
+     <div className="px-4 py-3 text-xs text-gray-500 border-t border-gray-100">Blok 1 November melebihi kapasitas (penyulaman massal + pemupukan organik beririsan). Opsi: geser salah satu jadwal ±1 pekan, atau pinjam tim Blok 3 yang bebannya rendah — uji dampaknya di halaman Skenario.</div>
     </Card>
    </div>}
    {tab==="Peralatan"&&<div className="mt-4">
@@ -13393,13 +13395,13 @@ const AI_MODELS=[
 const mkAiRec=(o)=>({status:"Baru",engine:"rule",verification:null,entityRef:null,audit:[{at:"18 Jul 2026",by:"Sistem",t:o.modelId?"Rekomendasi dihasilkan model "+o.modelId+" v"+((AI_MODELS.find(m=>m.id===o.modelId)||{}).ver||"")+" (skor terkalibrasi; serving berstatus Aktif) — simulasi":"Rekomendasi dihasilkan oleh rule "+o.ruleId+" v"+((AI_RULES.find(r=>r.id===o.ruleId)||{}).ver||"1.0")+" (simulasi deterministik)"}],...o});
 const AI_INIT_RECS=[
  mkAiRec({id:"REC-2026-001",ruleId:"AIR-HLT-01",domain:"Kesehatan Tanaman",urgency:"Tinggi",expiresAt:"2026-08-14",
-  title:"Percepat investigasi & preventif busuk akar — Durian GH-B04 (cluster B4C2)",
+  title:"Percepat investigasi & preventif busuk akar — Durian Blok 4 (Cluster 2)",
   summary:"Dua sinyal independen (penurunan vigor sensing + kelembapan tinggi berkelanjutan) menunjuk risiko Phytophthora dini pada cluster durian B4C2. SOP-DUR-02 memiliki jendela preventif pra-puncak hujan.",
   action:{type:"case",block:"GH-B04",target:"B4C2",suspected:"Busuk akar Phytophthora (indikasi dini)",severity:"Tinggi",sopId:"SOP-DUR-02"},
   evidence:[
    {src:"hs-satellite",metric:"Tren NDVI cluster B4C2 (14 hari)",value:"−0,12 (simulasi)",threshold:"> −0,08",weight:"kuat"},
    {src:"weather",metric:"Curah hujan kumulatif 7 hari",value:"142 mm (simulasi)",threshold:"> 100 mm",weight:"kuat"},
-   {src:"health",metric:"Aktivitas patogen kelembapan tinggi di GH-B04",value:"Pengendalian antraknosa sedang berjalan (EV-14)",threshold:"—",weight:"pendukung"},
+   {src:"health",metric:"Aktivitas patogen kelembapan tinggi di Blok 4",value:"Pengendalian antraknosa sedang berjalan (EV-14)",threshold:"—",weight:"pendukung"},
    {src:"protocols",metric:"Jendela preventif SOP-DUR-02",value:"Pra-puncak musim hujan",threshold:"—",weight:"dasar"}],
   confidence:{level:"Sedang",score:0.62,factors:[
    {f:"2 sinyal independen searah + jendela SOP aktif",d:1},
@@ -13407,25 +13409,25 @@ const AI_INIT_RECS=[
    {f:"1.381 pohon belum memiliki umur tanam valid — memengaruhi presisi target",d:-1}],dqRefs:["DQ-2026-001"]},
   counterfactual:"Tanpa penurunan NDVI, kondisi cuaca basah saja hanya memicu pengingat rutin — bukan rekomendasi kasus."}),
  mkAiRec({id:"REC-2026-002",ruleId:"AIR-POP-01",domain:"Populasi",urgency:"Sedang",expiresAt:"2026-11-30",
-  title:"Penyulaman massal GH-B02 — mortalitas 12,4% (535 pohon)",
-  summary:"Sensus mencatat GH-B02 sebagai blok dengan mortalitas tertinggi (12,4%, jauh di atas ambang 8%). Rencana existing baru mencakup penyulaman GH-B01. Awal musim hujan November adalah jendela tanam optimal.",
+  title:"Penyulaman massal Blok 2 — mortalitas 12,4% (535 pohon)",
+  summary:"Sensus mencatat Blok 2 sebagai blok dengan mortalitas tertinggi (12,4%, jauh di atas ambang 8%). Rencana existing baru mencakup penyulaman Blok 1. Awal musim hujan November adalah jendela tanam optimal.",
   action:{type:"plan",planAct:{name:"Penyulaman Massal GH-B02 (Rekomendasi AI)",sop:"SOP-UMU-01",act:"Penyulaman",block:"GH-B02",commodity:"umum",start:"2026-11-09",end:"2026-11-20",targetTrees:535,hok:134,materials:[{id:"MAT-009",qty:535},{id:"MAT-003",qty:5350}],priority:"Tinggi",note:"Rincian bibit per komoditas (durian/lengkeng/alpukat/jengkol) ditetapkan verifikator saat persetujuan."}},
   evidence:[
-   {src:"census",metric:"Pohon mati GH-B02 (Sensus Des 2025)",value:"535 dari 4.321 (12,4%)",threshold:"> 8%",weight:"kuat"},
-   {src:"census",metric:"Tingkat hidup GH-B02",value:"87,6% — terendah antar blok",threshold:"—",weight:"pendukung"},
-   {src:"plan",metric:"Cakupan rencana penyulaman existing",value:"Hanya GH-B01 (PLN-11-01)",threshold:"—",weight:"pendukung"},
+   {src:"census",metric:"Pohon mati Blok 2 (Sensus Des 2025)",value:"535 dari 4.321 (12,4%)",threshold:"> 8%",weight:"kuat"},
+   {src:"census",metric:"Tingkat hidup Blok 2",value:"87,6% — terendah antar blok",threshold:"—",weight:"pendukung"},
+   {src:"plan",metric:"Cakupan rencana penyulaman existing",value:"Hanya Blok 1 (PLN-11-01)",threshold:"—",weight:"pendukung"},
    {src:"weather",metric:"Jendela musim tanam",value:"Awal musim hujan November",threshold:"—",weight:"dasar"}],
   confidence:{level:"Tinggi",score:0.85,factors:[
    {f:"Bersumber sensus penuh 4.321 pohon (bukan sampel)",d:1},
-   {f:"Konsisten dengan pola SOP-UMU-01 dan praktik GH-B01",d:1},
+   {f:"Konsisten dengan pola SOP-UMU-01 dan praktik Blok 1",d:1},
    {f:"Komposisi & harga bibit campuran belum dikunci",d:-1}],dqRefs:[]},
   counterfactual:"Jika mortalitas ≤8% (rerata estate), penyulaman cukup masuk siklus rutin tahunan tanpa rekomendasi khusus."}),
  mkAiRec({id:"REC-2026-003",ruleId:"AIR-SCH-01",domain:"Penjadwalan",urgency:"Sedang",expiresAt:"2026-10-31",
-  title:"Majukan Penyulaman GH-B01 (PLN-11-01) satu pekan — urai puncak beban November",
-  summary:"Dua aktivitas besar GH-B01 beririsan pada November sehingga beban melebihi kapasitas tim. PLN-11-01 memiliki jendela paling fleksibel: akhir Oktober sudah memenuhi syarat awal musim hujan.",
+  title:"Majukan Penyulaman Blok 1 (PLN-11-01) satu pekan — urai puncak beban November",
+  summary:"Dua aktivitas besar Blok 1 beririsan pada November sehingga beban melebihi kapasitas tim. PLN-11-01 memiliki jendela paling fleksibel: akhir Oktober sudah memenuhi syarat awal musim hujan.",
   action:{type:"shift",planId:"PLN-11-01",shiftDays:-7},
   evidence:[
-   {src:"plan",metric:"Beban HOK GH-B01 November",value:"230 HOK",threshold:"> kapasitas 220",weight:"kuat"},
+   {src:"plan",metric:"Beban HOK Blok 1 November",value:"230 HOK",threshold:"> kapasitas 220",weight:"kuat"},
    {src:"plan",metric:"Irisan jadwal",value:"PLN-11-01 (120 HOK) beririsan dengan PLN-11-02 (110 HOK)",threshold:"—",weight:"pendukung"},
    {src:"weather",metric:"Syarat agronomis penyulaman",value:"Akhir Okt sudah masuk awal musim hujan (klimatologi)",threshold:"—",weight:"dasar"}],
   confidence:{level:"Tinggi",score:0.9,factors:[
@@ -13458,13 +13460,13 @@ const AI_INIT_RECS=[
    {f:"Ketersediaan spare part & vendor belum terkonfirmasi",d:-1}],dqRefs:[]},
   counterfactual:"Jika kebutuhan puncak ≤10 unit, servis dapat menunggu jadwal pemeliharaan rutin."}),
  mkAiRec({id:"REC-2026-006",ruleId:"AIR-NUT-01",domain:"Nutrisi & Tanah",urgency:"Rendah",expiresAt:"2026-12-31",status:"Ditolak",
-  title:"Aplikasi dolomit koreksi pH — GH-B03 (indikasi pH 5,2)",
-  summary:"Sensor tanah GH-B03 menunjukkan rerata pH 5,2 selama 7 hari, di bawah rentang optimal mayoritas komoditas blok. Diusulkan aktivitas koreksi dolomit pada Desember.",
+  title:"Aplikasi dolomit koreksi pH — Blok 3 (indikasi pH 5,2)",
+  summary:"Sensor tanah Blok 3 menunjukkan rerata pH 5,2 selama 7 hari, di bawah rentang optimal mayoritas komoditas blok. Diusulkan aktivitas koreksi dolomit pada Desember.",
   action:{type:"plan",planAct:{name:"Aplikasi Dolomit Koreksi pH GH-B03 (Rekomendasi AI)",sop:"SOP-MGS-02",act:"Pemupukan",block:"GH-B03",commodity:"umum",start:"2026-12-07",end:"2026-12-11",targetTrees:1894,hok:40,materials:[{id:"MAT-004",qty:950}],priority:"Sedang",note:"Dosis final menunggu hasil sampel tanah semester 2."}},
   evidence:[
-   {src:"hs-sensors",metric:"pH tanah GH-B03 (rerata 7 hari)",value:"5,2 (sensor, simulasi)",threshold:"< 5,5",weight:"kuat"},
+   {src:"hs-sensors",metric:"pH tanah Blok 3 (rerata 7 hari)",value:"5,2 (sensor, simulasi)",threshold:"< 5,5",weight:"kuat"},
    {src:"protocols",metric:"Dosis pembenah acuan",value:"SOP-MGS-02 — 500 g dolomit/pohon",threshold:"—",weight:"dasar"},
-   {src:"census",metric:"Populasi aktif GH-B03",value:"1.894 pohon",threshold:"—",weight:"pendukung"}],
+   {src:"census",metric:"Populasi aktif Blok 3",value:"1.894 pohon",threshold:"—",weight:"pendukung"}],
   confidence:{level:"Rendah",score:0.45,factors:[
    {f:"Konsisten dengan kecenderungan keasaman tanah historis",d:1},
    {f:"Hanya 1 sensor aktif mewakili seluruh blok",d:-1},
@@ -13475,19 +13477,19 @@ const AI_INIT_RECS=[
 
  mkAiRec({id:"REC-2026-007",ruleId:"AIR-RES-02",domain:"Sumber Daya",urgency:"Tinggi",expiresAt:"2026-07-15",
   title:"Perbaiki pompa air P-02 sebelum jendela penyiraman pekan 29",
-  summary:"Pompa P-02 terindikasi kehilangan tekanan menjelang jadwal penyiraman GH-B04. Rekomendasi kedaluwarsa karena jendela tindakan lewat — kebutuhan ini nyatanya sudah ditangani melalui Closed-Loop Alert (WO-2026-0138).",
+  summary:"Pompa P-02 terindikasi kehilangan tekanan menjelang jadwal penyiraman Blok 4. Rekomendasi kedaluwarsa karena jendela tindakan lewat — kebutuhan ini nyatanya sudah ditangani melalui Closed-Loop Alert (WO-2026-0138).",
   action:{type:"wo",wo:{title:"Perbaikan seal & uji tekanan pompa P-02",activity:"Perbaikan irigasi",block:"GH-B04",sop:"SOP-UMU-02",scheduled:"2026-07-13",due:"2026-07-15",team:2}},
   relatedRefs:[{type:"wo",id:"WO-2026-0138",label:"WO Closed-Loop Alert"}],
   evidence:[
    {src:"equip",metric:"Registri EQ-02 Pompa Air",value:"3 dari 4 unit laik pakai (1 servis)",threshold:"—",weight:"kuat"},
-   {src:"plan",metric:"Jadwal penyiraman GH-B04",value:"Pekan 29 (EV-02 kalender)",threshold:"—",weight:"dasar"},
+   {src:"plan",metric:"Jadwal penyiraman Blok 4",value:"Pekan 29 (EV-02 kalender)",threshold:"—",weight:"dasar"},
    {src:"weather",metric:"Defisit air minggu berjalan",value:"Hujan < 10 mm (simulasi)",threshold:"< 20 mm",weight:"pendukung"}],
   confidence:{level:"Sedang",score:0.66,factors:[
    {f:"Status registri alat pasti",d:1},
    {f:"Indikasi tekanan dari laporan lapangan, belum diukur alat",d:-1}],dqRefs:[]},
   counterfactual:"Jika seluruh pompa laik pakai atau penyiraman tidak terjadwal pekan itu, rekomendasi tidak dibuat."}),
  mkAiRec({id:"REC-2026-008",engine:"ml",ruleId:null,modelId:"MDL-HLT-01",domain:"Kesehatan Tanaman",urgency:"Sedang",expiresAt:"2026-08-05",
-  title:"Risiko stres tanaman cluster B1C2 — GH-B01 (skor model 0,74)",
+  title:"Risiko stres tanaman Cluster 2 (Blok 1) — skor model 0,74",
   summary:"Model MDL-HLT-01 v2.1 mengklasifikasikan cluster B1C2 berisiko stres di atas ambang layanan (0,74 ≥ 0,60) dari kombinasi tren NDVI, cuaca, dan kelembapan tanah. Ini indikasi statistik, bukan diagnosis — investigasi lapangan diperlukan sebelum tindakan.",
   action:{type:"case",block:"GH-B01",target:"B1C2",suspected:"Stres tanaman multi-faktor (indikasi model)",severity:"Sedang",sopId:"SOP-UMU-04"},
   attribution:[{f:"Tren NDVI 14 hari: −0,09",val:0.31},{f:"Curah hujan kumulatif 7 hari: 142 mm",val:0.24},{f:"Kelembapan tanah 63% (data 3 hari — konektor degraded)",val:0.12},{f:"Riwayat kasus blok 90 hari: 1 kasus",val:0.07}],
