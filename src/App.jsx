@@ -876,20 +876,16 @@ const LABOR_MATERIAL=[{name:"Tenaga Kerja",value:46,color:"#16A34A"},{name:"Mate
 const CASH_REQ=[{m:"Agu",v:1.92},{m:"Sep",v:1.88},{m:"Okt",v:2.05},{m:"Nov",v:2.10}];
 
 const HARVEST_PROJ=[
- {commodity:"lengkeng",first:"2026 (berjalan)",est:"6–8 ton"},
- {commodity:"alpukat",first:"2026 (berjalan)",est:"4–5 ton"},
+ {commodity:"lengkeng",first:"2026 (perkiraan)",est:"6–8 ton"},
+ {commodity:"alpukat",first:"2026–2027 (perkiraan)",est:"4–5 ton"},
  {commodity:"rambutan",first:"2027",est:"10–12 ton"},
  {commodity:"durian",first:"2027–2028",est:"18–25 ton"},
  {commodity:"manggis",first:"2029",est:"6–9 ton"},
  {commodity:"petai",first:"2028",est:"3–4 ton"},
  {commodity:"jengkol",first:"2028",est:"3–4 ton"},
 ];
-const HARVEST_HISTORY=[
- {date:"2026-07-12",block:"GH-B04",commodity:"lengkeng",qty:420,grade:"A: 62% • B: 38%",buyer:"Pengepul Purwakarta"},
- {date:"2026-07-05",block:"GH-B01",commodity:"lengkeng",qty:310,grade:"A: 55% • B: 45%",buyer:"Toko Buah Sadang"},
- {date:"2026-06-28",block:"GH-B04",commodity:"alpukat",qty:280,grade:"A: 70% • B: 30%",buyer:"Supplier Horeka Bandung"},
- {date:"2026-06-20",block:"GH-B04",commodity:"lengkeng",qty:380,grade:"A: 60% • B: 40%",buyer:"Pengepul Purwakarta"},
-];
+/* Seluruh populasi masih fase TBM (tanaman belum menghasilkan) — belum ada panen tercatat. */
+const HARVEST_HISTORY=[];
 
 const DECISIONS=[
  {t:"Percepat perbaikan drainase Blok 1 sebelum puncak curah hujan",pic:"Estate Manager",due:"2026-07-24",status:"Berjalan"},
@@ -4719,7 +4715,7 @@ function TreePassportPage(){
  const qrPayload="https://app.varmos.id/pohon/"+t.id;
  const b=BLOCKS.find(x=>x.id===t.block);
  const treeCase=cases.find(c=>c.target===t.id && c.status!=="Selesai") || (t.activeCase?cases.find(c=>c.id===t.activeCase):null);
- const harvest = t.commodity==="lengkeng" ? [{d:"2026-07-12",qty:"18 kg",grade:"A"},{d:"2026-06-20",qty:"14 kg",grade:"A/B"}] : [];
+ const harvest = []; /* seluruh tanaman masih fase TBM — belum ada panen tercatat */
  const submitReport=()=>{
   if(!rf.symptoms.trim()){ toast("Isi deskripsi gejala terlebih dahulu","warn"); return; }
   const cid="HC-"+String(cases.length+1).padStart(3,"0");
@@ -6053,20 +6049,16 @@ function HarvestPage(){
  const {toast,role,curUser}=useApp();
  const sb=scopeBlocks(role,curUser);
  const hist=HARVEST_HISTORY.filter(h=>inScope(sb,h.block));
- const julKg=hist.filter(h=>h.date.startsWith("2026-07")).reduce((a,h)=>a+h.qty,0);
- const julLabel=hist.filter(h=>h.date.startsWith("2026-07")).reduce((m,h)=>{m[h.commodity]=(m[h.commodity]||0)+h.qty;return m;},{});
  return (
   <div>
-   <PageHeader title="Panen" subtitle={"Proyeksi produksi & realisasi panen perdana."+(sb?" • blok penugasan Anda: "+sb.map(blockLabel).join(", "):"")}
+   <PageHeader title="Panen" subtitle={"Proyeksi panen perdana — seluruh tanaman masih fase TBM."+(sb?" • blok penugasan Anda: "+sb.map(blockLabel).join(", "):"")}
     actions={<Btn variant="secondary" onClick={()=>toast("Rekap panen diekspor (simulasi)")}><Download size={14}/>Ekspor</Btn>}/>
-   <div className="mb-4 text-sm text-blue-900 bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2"><Info size={16} className="shrink-0 mt-0.5"/>Mayoritas populasi masih fase TBM (tanaman belum menghasilkan). Panen komersial saat ini terbatas pada lengkeng dan alpukat tanam awal 2023.</div>
+   <div className="mb-4 text-sm text-blue-900 bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2"><Info size={16} className="shrink-0 mt-0.5"/>Seluruh populasi masih fase TBM (tanaman belum menghasilkan). Belum ada panen komersial yang tercatat — tabel di bawah menampilkan proyeksi panen perdana per komoditas.</div>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-    {sb
-     ?<Kpi label="Volume panen Juli" value={fmtN(julKg)+" kg"} icon={Wheat} tone="green" sub={Object.entries(julLabel).map(([c,v])=>comName(c)+" "+fmtN(v)+" kg").join(" · ")||"belum ada panen blok ini"}/>
-     :<Kpi label="Volume panen Juli" value="730 kg" icon={Wheat} tone="green" sub="lengkeng 730 kg"/>}
-    <Kpi label="Grade A rata-rata" value="59%" icon={CheckCircle2} tone="amber" sub="target 65%"/>
-    {!sb&&<Kpi label="Pendapatan MTD" value={fmtRpC(21900000)} icon={Wallet} tone="green"/>}
-    <Kpi label="Komoditas produktif" value="2 / 7" icon={Trees} tone="blue"/>
+    <Kpi label="Volume panen" value="0 kg" icon={Wheat} tone="gray" sub="belum ada panen"/>
+    <Kpi label="Grade A rata-rata" value="—" icon={CheckCircle2} tone="gray" sub="belum ada panen"/>
+    {!sb&&<Kpi label="Pendapatan panen" value={fmtRpC(0)} icon={Wallet} tone="gray" sub="belum ada panen"/>}
+    <Kpi label="Komoditas produktif" value="0 / 7" icon={Trees} tone="gray" sub="seluruh tanaman TBM"/>
    </div>
    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <Card title="Proyeksi panen perdana per komoditas" pad={false}>
@@ -6076,10 +6068,12 @@ function HarvestPage(){
       </tbody></table>
     </Card>
     <Card title="Riwayat panen terakhir" pad={false}>
-     <table className={T.table}><thead><tr>{["Tanggal","Blok","Komoditas","Volume","Grading","Pembeli"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{hist.map((h,i)=>(
-       <tr key={i}><td className={T.td}>{fmtD(h.date)}</td><td className={T.td}>{blockLabel(h.block)}</td><td className={T.td}>{comName(h.commodity)}</td><td className={T.td+" font-semibold"}>{fmtN(h.qty)} kg</td><td className={T.td}>{h.grade}</td><td className={T.td}>{h.buyer}</td></tr>))}
-      </tbody></table>
+     {hist.length===0
+      ? <div className="p-6 text-sm text-gray-400 text-center">Belum ada panen tercatat — seluruh tanaman masih fase TBM (tanaman belum menghasilkan).</div>
+      : <table className={T.table}><thead><tr>{["Tanggal","Blok","Komoditas","Volume","Grading","Pembeli"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
+       <tbody>{hist.map((h,i)=>(
+        <tr key={i}><td className={T.td}>{fmtD(h.date)}</td><td className={T.td}>{blockLabel(h.block)}</td><td className={T.td}>{comName(h.commodity)}</td><td className={T.td+" font-semibold"}>{fmtN(h.qty)} kg</td><td className={T.td}>{h.grade}</td><td className={T.td}>{h.buyer}</td></tr>))}
+       </tbody></table>}
     </Card>
    </div>
   </div>);
