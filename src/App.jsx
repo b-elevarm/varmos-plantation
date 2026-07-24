@@ -1410,6 +1410,7 @@ function CommandPalette(){
 
 /* Foto/emblem per akun untuk kartu akses cepat login. Kunci = userId (atau khusus mitra). */
 const USER_AVATAR={
+ "USR-001":"/avatar-USR-001.jpg", // Admin — System Administrator
  "USR-002":"/avatar-USR-002.jpg", // Bayu Syerli — CEO
  "USR-003":"/avatar-USR-003.jpg", // Febi Agil — CFO
  "USR-004":"/avatar-USR-004.jpg", // Lintang Pratiwi — CAO
