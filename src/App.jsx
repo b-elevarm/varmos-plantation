@@ -1406,7 +1406,15 @@ function CommandPalette(){
   </div>);
 }
 
-/* Avatar kartu akses cepat: pakai gambar (mis. emblem PEAK 92) bila tersedia,
+/* Foto/emblem per akun untuk kartu akses cepat login. Kunci = userId (atau khusus mitra). */
+const USER_AVATAR={
+ "USR-002":"/avatar-USR-002.jpg", // Bayu Syerli — CEO
+ "USR-003":"/avatar-USR-003.jpg", // Febi Agil — CFO
+ "USR-004":"/avatar-USR-004.jpg", // Lintang Pratiwi — CAO
+ "USR-005":"/avatar-USR-005.jpg", // Bayu Adi Persada — CPO
+ "USR-006":"/peak92-logo.jpg",    // PEAK 92 — Mitra Lahan (emblem)
+};
+/* Avatar kartu akses cepat: pakai gambar (foto/emblem) bila tersedia,
    jatuh ke ikon peran hijau bila gambar tak ada/gagal dimuat. */
 function DemoAvatar({src,Icon}){
  const [err,setErr]=useState(false);
@@ -1532,7 +1540,7 @@ function LoginPage(){
         return (
         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
-          <DemoAvatar src={u.role==="Mitra Lahan"?"/peak92-logo.jpg":null} Icon={Ic}/>
+          <DemoAvatar src={USER_AVATAR[u.id]||null} Icon={Ic}/>
           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{name}</div>
            <div className="text-[10px] text-gray-400 truncate">{sub}</div></div>
          </div>
