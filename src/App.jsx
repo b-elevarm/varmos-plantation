@@ -471,6 +471,17 @@ const INIT_INV=[
 ];
 const invStatus=(it)=> it.onHand < it.min ? "Kritis" : (it.onHand - it.reserved) < it.min ? "Menipis" : "Aman";
 const invExpiring=(it)=> it.expiry && daysBetween(TODAY,it.expiry) <= 45;
+/* ---- Pengajuan pengadaan material: diajukan WO/AH/EM, disetujui minimal 3 Direksi ---- */
+const INV_APPROVALS_MIN=3;
+const INV_CAN_REQUEST=["Warehouse Officer","Agronomy Head","Estate Manager"];
+const INV_INIT_REQS=[
+ {id:"REQ-2026-014",items:[{id:"MAT-001",name:"NPK 16-16-16",qty:10000,unit:"kg"}],note:"Stok NPK di bawah minimum; kebutuhan pemupukan semester 2 (rencana Agustus).",
+  requestedBy:"Akun Warehouse Officer",requesterRole:"Warehouse Officer",date:"2026-07-22",status:"Menunggu Persetujuan",
+  approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-23"}],rejectedBy:null},
+ {id:"REQ-2026-013",items:[{id:"MAT-007",name:"Mankozeb 80WP",qty:120,unit:"kg"},{id:"MAT-004",name:"Dolomit",qty:1500,unit:"kg"}],note:"Pengendalian antraknosa & koreksi pH Blok 2–3.",
+  requestedBy:"Akun Agronomy Head",requesterRole:"Agronomy Head",date:"2026-07-15",status:"Disetujui",
+  approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-16"},{id:"USR-003",name:"Febi Agil",at:"2026-07-16"},{id:"USR-004",name:"Lintang Pratiwi",at:"2026-07-17"}],rejectedBy:null},
+];
 
 const SOPS=[
  {id:"SOP-DUR-03",commodity:"durian",stage:"TBM Tahun 3–4",name:"Pemupukan NPK Semester",ver:"2.1",eff:"2026-01-05",approved:true,objective:"Memenuhi kebutuhan hara makro fase vegetatif akhir menuju generatif.",trigger:"Jadwal semester atau hasil analisis daun",freq:"2x per tahun",dose:"800 g NPK 16-16-16 per pohon",method:"Ditabur melingkar pada piringan sesuai radius tajuk, ditutup tanah tipis.",checklist:["Cek kelembapan tanah minimal 40%","Timbang dosis per pohon","Aplikasi merata di piringan","Foto sebelum & sesudah aplikasi","Catat batch material yang dipakai"],safety:"Gunakan sarung tangan; hindari aplikasi menjelang hujan lebat.",verify:"Foto geotag piringan, varian pemakaian material di bawah 5%.",history:[{v:"2.1",d:"2026-01-05",n:"Penyesuaian dosis hasil uji tanah 2025"},{v:"2.0",d:"2025-02-11",n:"Perubahan formula pupuk majemuk"}]},
@@ -928,10 +939,10 @@ const ROLES={
  "Mitra Lahan":{def:"command-center",hide:["integrations","wo-new","admin","users","budget","verification","fertilization","water","inventory","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","planting","census","hs-verification","hs-alerts","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Pemilik lahan (landowner) — pemantauan kinerja, kesehatan, panen, dan laporan kebun"},
  "Estate Manager":{def:"command-center",hide:["admin","field-attendance","field-work","field-inspection","field-census"],desc:"Kendali penuh operasional harian estate"},
  "Agronomy Head":{def:"health",hide:["budget","admin","users","dq-rules","field-attendance","field-work","field-census"],desc:"Kesehatan tanaman, SOP, dan program pemupukan"},
- "Field Supervisor":{def:"command-center",hide:["integrations","budget","admin","users","reports","plan-scenario","dq-dashboard","dq-sources","dq-rules","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-history","hs-compare","hs-data"],desc:"Eksekusi dan pelaporan pekerjaan lapangan"},
+ "Field Supervisor":{def:"command-center",hide:["inventory","integrations","budget","admin","users","reports","plan-scenario","dq-dashboard","dq-sources","dq-rules","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-history","hs-compare","hs-data"],desc:"Eksekusi dan pelaporan pekerjaan lapangan"},
  "Warehouse Officer":{def:"inventory",hide:["budget","admin","users","census","ai-recs","health","calendar","plan-dashboard","plan-annual","plan-weekly","plan-scenario","protocols","fertilization","verification","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Stok material, batch, dan distribusi gudang"},
- "Seedling Officer":{def:"planting",hide:["integrations","budget","admin","users","reports","ai-recs","verification","fertilization","water","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-attendance","field-inspection"],desc:"Pembibitan, penyulaman, dan pengelolaan bibit di nursery"},
- "Finance":{def:"budget",hide:["verification","wo-new","admin","users","census","planting","plan-weekly","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Anggaran, realisasi, dan varian biaya"},
+ "Seedling Officer":{def:"planting",hide:["inventory","integrations","budget","admin","users","reports","ai-recs","verification","fertilization","water","protocols","calendar","plan-dashboard","plan-annual","plan-weekly","plan-resources","plan-scenario","workorders","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-issues","dq-issue","dq-sources","dq-rules","field-attendance","field-inspection"],desc:"Pembibitan, penyulaman, dan pengelolaan bibit di nursery"},
+ "Finance":{def:"budget",hide:["inventory","verification","wo-new","admin","users","census","planting","plan-weekly","hs-map","hs-satellite","hs-drone","hs-sensors","hs-trees","hs-verification","hs-history","hs-compare","hs-alerts","hs-data","dq-dashboard","dq-sources","dq-rules","field-home","field-tasks","field-attendance","field-work","field-inspection","field-census","field-map","field-drafts","field-sync","field-downloads"],desc:"Anggaran, realisasi, dan varian biaya"},
 };
 const ROLE_ICONS={"Super Admin":Settings,"Direksi":User,"Mitra Lahan":Users,"Estate Manager":Gauge,"Agronomy Head":FlaskConical,"Field Supervisor":ClipboardList,"Warehouse Officer":Warehouse,"Seedling Officer":Sprout,"Finance":Wallet};
 /* Scope blok Field Supervisor: FS hanya melihat antrean kerja & data operasional blok penugasannya.
@@ -5693,13 +5704,23 @@ function WaterPage(){
 }
 
 function InventoryPage(){
- const {toast,role}=useApp();
+ const {toast,role,curUser,invReqs,addInvReq,approveInvReq,rejectInvReq}=useApp();
  const critical=INIT_INV.filter(i=>invStatus(i)==="Kritis"),thin=INIT_INV.filter(i=>invStatus(i)==="Menipis"),exp=INIT_INV.filter(invExpiring);
  const totVal=INIT_INV.reduce((a,i)=>a+i.onHand*i.price,0);
+ const canRequest=INV_CAN_REQUEST.includes(role);
+ const isDireksi=role==="Direksi";
+ const [reqOpen,setReqOpen]=useState(false);
+ const [rf,setRf]=useState({items:[{id:"MAT-001",qty:""}],note:""});
+ const rfSet=(idx,patch)=>setRf(f=>({...f,items:f.items.map((it,i)=>i===idx?{...it,...patch}:it)}));
+ const submitReq=()=>{ const items=rf.items.filter(it=>it.id&&Number(it.qty)>0).map(it=>{ const m=INIT_INV.find(x=>x.id===it.id); return {id:m.id,name:m.name,qty:Number(it.qty),unit:m.unit}; });
+  if(!items.length){ toast("Isi minimal satu material dengan jumlah yang valid.","warn"); return; }
+  addInvReq({items,note:rf.note,requestedBy:curUser?curUser.name:role,requesterRole:role});
+  setReqOpen(false); setRf({items:[{id:"MAT-001",qty:""}],note:""}); };
+ const ReqBadge=({v})=><span className={"inline-flex items-center text-xs font-semibold rounded-full px-2 py-0.5 "+(v==="Disetujui"?"bg-green-100 text-green-800":v==="Ditolak"?"bg-red-100 text-red-700":"bg-amber-100 text-amber-800")}>{v}</span>;
  return (
   <div>
    <PageHeader title="Inventori Material" subtitle="Posisi stok gudang pusat & reservasi work order aktif."
-    actions={<><DqModuleBadge domains={["Inventori"]}/><Btn variant="secondary" onClick={()=>toast("Formulir stock opname dibuka (simulasi)")}>Stock Opname</Btn>{["Warehouse Officer","Estate Manager"].includes(role)&&<Btn onClick={()=>toast("Draft PO NPK 10 ton dibuat & dikirim ke Finance (simulasi)")}><Plus size={15}/>Buat PO</Btn>}</>}/>
+    actions={<><DqModuleBadge domains={["Inventori"]}/><Btn variant="secondary" onClick={()=>toast("Formulir stock opname dibuka (simulasi)")}>Stock Opname</Btn>{canRequest&&<Btn onClick={()=>setReqOpen(true)}><Plus size={15}/>Buat Pengajuan</Btn>}</>}/>
    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
     <Kpi label="Total SKU" value={INIT_INV.length} icon={Package} tone="blue"/>
     <Kpi label="Stok kritis" value={critical.length} icon={AlertTriangle} tone="red" sub={critical.map(i=>i.name.split(" ")[0]).join(", ")}/>
@@ -5725,6 +5746,48 @@ function InventoryPage(){
       </tr>);})}
     </tbody></table></div>
    </Card>
+   {/* ===== Pengajuan pengadaan — diajukan WO/AH/EM, disetujui minimal 3 Direksi ===== */}
+   <Card title={"Pengajuan Pengadaan ("+invReqs.length+")"} pad={false} className="mt-4"
+    action={<span className="text-[11px] text-gray-400">Persetujuan minimal {INV_APPROVALS_MIN} Direksi</span>}>
+    <div className="divide-y divide-gray-100">
+     {invReqs.length===0&&<div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada pengajuan.</div>}
+     {invReqs.map(r=>{ const mine=curUser&&r.approvals.some(a=>a.id===curUser.id);
+      return (
+      <div key={r.id} className="px-4 py-3">
+       <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-green-700">{r.id}</span>
+        <ReqBadge v={r.status}/>
+        {r.status==="Menunggu Persetujuan"&&<span className="text-[11px] font-semibold text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">{r.approvals.length}/{INV_APPROVALS_MIN} persetujuan</span>}
+        <span className="text-xs text-gray-400 ml-auto">{fmtD(r.date)} • {r.requestedBy} ({r.requesterRole})</span>
+       </div>
+       <div className="text-sm text-gray-900 mt-1.5">{r.items.map(it=>it.name+" "+fmtN(it.qty)+" "+it.unit).join(" • ")}</div>
+       {r.note&&<div className="text-xs text-gray-500 mt-0.5">{r.note}</div>}
+       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+        {r.approvals.length>0&&<span>Disetujui oleh: {r.approvals.map(a=>a.name).join(", ")}</span>}
+        {r.rejectedBy&&<span className="text-red-600">Ditolak oleh {r.rejectedBy.name}{r.rejectedBy.reason&&r.rejectedBy.reason!=="—"?" — "+r.rejectedBy.reason:""}</span>}
+       </div>
+       {isDireksi&&r.status==="Menunggu Persetujuan"&&<div className="mt-2 flex gap-2">
+        <Btn size="sm" onClick={()=>approveInvReq(r.id)} disabled={mine}>{mine?"Anda sudah menyetujui":"Setujui"}</Btn>
+        <Btn size="sm" variant="secondary" onClick={()=>rejectInvReq(r.id)}>Tolak</Btn>
+       </div>}
+      </div>); })}
+    </div>
+    <div className="px-4 py-2.5 text-[11px] text-gray-500 border-t border-gray-100 bg-gray-50">Alur: pengajuan oleh Warehouse Officer / Agronomy Head / Estate Manager → persetujuan kuorum minimal {INV_APPROVALS_MIN} dari {`4`} Direksi → PO diterbitkan.</div>
+   </Card>
+   <Modal open={reqOpen} onClose={()=>setReqOpen(false)} title="Buat Pengajuan Pengadaan"
+    footer={<><Btn variant="secondary" onClick={()=>setReqOpen(false)}>Batal</Btn><Btn onClick={submitReq}><Check size={14}/>Kirim Pengajuan</Btn></>}>
+    <div className="space-y-3 text-sm">
+     {rf.items.map((it,idx)=>(
+      <div key={idx} className="grid grid-cols-[1fr_120px_36px] gap-2 items-end">
+       <label className="block"><span className="text-xs text-gray-500">Material</span><Sel value={it.id} onChange={v=>rfSet(idx,{id:v})} options={INIT_INV.map(m=>[m.id,m.name+" ("+m.unit+")"])} className="w-full"/></label>
+       <label className="block"><span className="text-xs text-gray-500">Jumlah</span><Inp type="number" value={it.qty} onChange={e=>rfSet(idx,{qty:e.target.value})} placeholder="0"/></label>
+       <button type="button" aria-label="Hapus baris" onClick={()=>setRf(f=>({...f,items:f.items.length>1?f.items.filter((_,i)=>i!==idx):f.items}))} className="h-9 rounded-md border border-gray-200 text-gray-400 hover:text-red-600"><X size={14} className="mx-auto"/></button>
+      </div>))}
+     <Btn size="sm" variant="secondary" onClick={()=>setRf(f=>({...f,items:[...f.items,{id:"MAT-001",qty:""}]}))}><Plus size={13}/>Tambah material</Btn>
+     <label className="block"><span className="text-xs text-gray-500">Catatan / justifikasi</span><textarea value={rf.note} onChange={e=>setRf(f=>({...f,note:e.target.value}))} rows={3} className="mt-1 w-full text-sm border border-gray-200 rounded-md px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Alasan kebutuhan, rencana pemakaian, urgensi…"/></label>
+     <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2">Pengajuan akan menunggu persetujuan minimal {INV_APPROVALS_MIN} Direksi sebelum PO diterbitkan.</div>
+    </div>
+   </Modal>
   </div>);
 }
 
@@ -14048,6 +14111,18 @@ export default function App(){
  const [users,setUsers]=useState(INIT_USERS);
  const [userLog,setUserLog]=useState(INIT_USER_LOG);
  const [cenEntries,setCenEntries]=useState([]);
+ /* pengajuan pengadaan material — persetujuan kuorum Direksi */
+ const [invReqs,setInvReqs]=useState(INV_INIT_REQS);
+ const addInvReq=(req)=>{ const id="REQ-2026-0"+(15+invReqs.length); setInvReqs(xs=>[{...req,id,date:TODAY,status:"Menunggu Persetujuan",approvals:[],rejectedBy:null},...xs]); toast("Pengajuan "+id+" dikirim — menunggu persetujuan "+INV_APPROVALS_MIN+" Direksi"); return id; };
+ const approveInvReq=(id)=>{ if(!curUser||curUser.role!=="Direksi"){ toast("Hanya Direksi yang dapat menyetujui pengajuan.","warn"); return; }
+  setInvReqs(xs=>xs.map(r=>{ if(r.id!==id||r.status!=="Menunggu Persetujuan"||r.approvals.some(a=>a.id===curUser.id)) return r;
+   const approvals=[...r.approvals,{id:curUser.id,name:curUser.name,at:TODAY}];
+   const done=approvals.length>=INV_APPROVALS_MIN;
+   if(done) toast("Pengajuan "+id+" disetujui ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi) — PO dapat diterbitkan");
+   else toast("Persetujuan tercatat ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi)");
+   return {...r,approvals,status:done?"Disetujui":r.status}; })); };
+ const rejectInvReq=(id,reason)=>{ if(!curUser||curUser.role!=="Direksi"){ toast("Hanya Direksi yang dapat menolak pengajuan.","warn"); return; }
+  setInvReqs(xs=>xs.map(r=>r.id===id&&r.status==="Menunggu Persetujuan"?{...r,status:"Ditolak",rejectedBy:{id:curUser.id,name:curUser.name,at:TODAY,reason:reason||"—"}}:r)); toast("Pengajuan "+id+" ditolak","warn"); };
  const addCenEntry=(e)=>setCenEntries(xs=>[e,...xs]);
  const uLog=(t)=>setUserLog(xs=>[{d:"19 Jul 2026",by:role||"Sistem",t},...xs]);
  const addUser=(u,logMsg)=>{ setUsers(xs=>[u,...xs]); if(logMsg) uLog(logMsg); };
@@ -14139,7 +14214,7 @@ export default function App(){
  const addCase=(c)=>setCases(cs=>[c,...cs]);
  const updateAlert=(id,patch)=>setAlerts(as=>as.map(a=>a.id===id?{...a,...patch}:a));
  const addAlert=(a)=>setAlerts(as=>[alUpgradeLegacy(a),...as]);
- const resetDemo=()=>{ setWos(AL_SEED_WOS.concat(INIT_WOS)); setCases(INIT_CASES); setAlerts(AL_INIT_ALERTS); if(alertResetRef.current) alertResetRef.current(); setTreesData(REG_SAMPLE_TREES); hsLoadTreePoints().then(D=>{ if(D&&D.n){ setHsTreePts(D); setTreesData(hsPointsToTrees(D)); } }); setConfirm(null); setHsAlerts(HS_INIT_ALERTS); setHsInsp(HS_INIT_INSP); setHsMissions(HS_INIT_MISSIONS); setHsSel("GH"); setHsSource("all"); setHsMetricId("NDVI"); setHsTree(null); setUsers(INIT_USERS); setUserLog(INIT_USER_LOG); setCenEntries([]); setDqIssues(DQ_INIT_ISSUES); setDqSources(DQ_INIT_SOURCES); setDqRules(DQ_INIT_RULES); setDqAuditLog(DQ_INIT_AUDIT); setPlanActs(PLAN_INIT_ACTS); setPlanPkgs(PLAN_INIT_PKGS); setPlanLog(PLAN_INIT_LOG); setAiRecs(AI_INIT_RECS); setAiModels(AI_MODELS); setIntConns(INT_INIT_CONNECTORS); setIntRuns(INT_INIT_RUNS); setIntStaging(INT_INIT_STAGING); setIntOutbound(INT_INIT_OUTBOUND); if(curUserId&&!INIT_USERS.some(u=>u.id===curUserId)){ setCurUserId(null); setRole(null); } toast("Data demo direset ke kondisi awal"); };
+ const resetDemo=()=>{ setWos(AL_SEED_WOS.concat(INIT_WOS)); setCases(INIT_CASES); setAlerts(AL_INIT_ALERTS); if(alertResetRef.current) alertResetRef.current(); setTreesData(REG_SAMPLE_TREES); hsLoadTreePoints().then(D=>{ if(D&&D.n){ setHsTreePts(D); setTreesData(hsPointsToTrees(D)); } }); setConfirm(null); setHsAlerts(HS_INIT_ALERTS); setHsInsp(HS_INIT_INSP); setHsMissions(HS_INIT_MISSIONS); setHsSel("GH"); setHsSource("all"); setHsMetricId("NDVI"); setHsTree(null); setUsers(INIT_USERS); setUserLog(INIT_USER_LOG); setCenEntries([]); setInvReqs(INV_INIT_REQS); setDqIssues(DQ_INIT_ISSUES); setDqSources(DQ_INIT_SOURCES); setDqRules(DQ_INIT_RULES); setDqAuditLog(DQ_INIT_AUDIT); setPlanActs(PLAN_INIT_ACTS); setPlanPkgs(PLAN_INIT_PKGS); setPlanLog(PLAN_INIT_LOG); setAiRecs(AI_INIT_RECS); setAiModels(AI_MODELS); setIntConns(INT_INIT_CONNECTORS); setIntRuns(INT_INIT_RUNS); setIntStaging(INT_INIT_STAGING); setIntOutbound(INT_INIT_OUTBOUND); if(curUserId&&!INIT_USERS.some(u=>u.id===curUserId)){ setCurUserId(null); setRole(null); } toast("Data demo direset ke kondisi awal"); };
 
   /* ===== Closed-Loop Alert — engine ===== */
  const alertLoop=useAlertLoop({alerts,setAlerts,wos,addWo,updateWo,addDqIssue,toast,confirmAction,role,curUser,users,registerReset:(fn)=>{alertResetRef.current=fn;}});
@@ -14183,6 +14258,7 @@ export default function App(){
   treesData,setTreesData,hsTreePts,toast,confirmAction,paletteOpen,setPaletteOpen,dateRange,setDateRange,resetDemo,dark,setDark,workers,setWorkers,
   hsSel,setHsSel,hsSource,setHsSource,hsMetricId,setHsMetricId,hsTree,setHsTree,hsTreeErr,retryHsLoad,
   hsAlerts,updateHsAlert,hsInsp,addHsInsp,updateHsInsp,hsMissions,addHsMission,users,addUser,updateUser,userLog,curUser,loginUser,logout,cenEntries,addCenEntry,
+  invReqs,addInvReq,approveInvReq,rejectInvReq,
   dqIssues,dqSources,dqRules,dqAuditLog,dqDerived,updateDqIssue,addDqIssue,assignDqIssue,resolveDqIssue,verifyDqIssue,closeDqIssue,setDqIssueStatus,addDqComment,addDqEvidence,retryDqSource,runDqValidation,addDqRule,updateDqRule,toggleDqRule,
   field,planActs,updatePlanAct,addPlanAct,addPlanActs,planPkgs,updatePlanPkg,planLog,planAudit,aiRecs,updateAiRec,aiModels,updateAiModel,
   intConns,intRuns,intStaging,intOutbound,intSync,intToggle,intResolveStaging,intOutboundDecide,addIntOutbound};
