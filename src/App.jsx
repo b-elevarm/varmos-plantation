@@ -4585,6 +4585,16 @@ function TreeRegistryPage(){
  const pages=Math.max(1,Math.ceil(filtered.length/perPage));
  const cur=Math.min(page,pages);
  const rows=filtered.slice((cur-1)*perPage,cur*perPage);
+ /* Grid: infinite scroll (muat bertahap saat digulir), bukan paginasi before/next. */
+ const GRID_BATCH=30;
+ const [gridCount,setGridCount]=useState(GRID_BATCH);
+ useEffect(()=>{ setGridCount(GRID_BATCH); },[q,fCom,fBlock,fStatus,fCluster,fPetak,sort,view]);
+ const gridRows=view==="grid"?filtered.slice(0,gridCount):rows;
+ const moreRef=useRef(null);
+ useEffect(()=>{ if(view!=="grid"||gridCount>=filtered.length) return; const el=moreRef.current; if(!el) return;
+  const io=new IntersectionObserver(es=>{ if(es[0].isIntersecting) setGridCount(c=>Math.min(c+GRID_BATCH,filtered.length)); },{rootMargin:"400px"});
+  io.observe(el); return ()=>io.disconnect();
+ },[view,gridCount,filtered.length]);
  const toggleSort=(k)=>setSort(s=>s.k===k?{k,dir:-s.dir}:{k,dir:1});
  const toggleSel=(id)=>setSel(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
  const SortTh=({k,children})=>(<th className={T.th+" cursor-pointer select-none"} onClick={()=>toggleSort(k)}>{children}{sort.k===k?(sort.dir===1?" ↑":" ↓"):""}</th>);
@@ -4660,7 +4670,7 @@ function TreeRegistryPage(){
      </table></div>
     ) : (
      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 p-4">
-      {rows.map(t=>(
+      {gridRows.map(t=>(
        <button key={t.id} onClick={()=>nav("tree",{treeId:t.id})} className="text-left border border-gray-200 rounded-lg p-3 hover:border-green-600">
         <div className="rounded-md overflow-hidden border border-gray-100 bg-gray-50 aspect-[3/4]"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
         <div className="text-xs font-semibold text-green-700 mt-2 truncate">{t.id}</div>
@@ -4668,13 +4678,14 @@ function TreeRegistryPage(){
         <div className="mt-1.5"><Badge v={t.censusLabel||t.status}/></div>
        </button>))}
      </div>)}
+    {view==="grid"&&gridCount<filtered.length&&<div ref={moreRef} className="py-5 text-center text-xs text-gray-400">Memuat lebih banyak…</div>}
     <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
-     <span className="text-gray-500">Menampilkan {rows.length} dari {fmtN(filtered.length)} pohon</span>
-     <div className="flex items-center gap-2">
+     <span className="text-gray-500">Menampilkan {view==="grid"?gridRows.length:rows.length} dari {fmtN(filtered.length)} pohon</span>
+     {view==="table"&&<div className="flex items-center gap-2">
       <Btn size="sm" variant="secondary" disabled={cur<=1} onClick={()=>setPage(cur-1)}><ChevronLeft size={13}/>Sebelumnya</Btn>
       <span className="text-gray-600">Hal {cur} / {pages}</span>
       <Btn size="sm" variant="secondary" disabled={cur>=pages} onClick={()=>setPage(cur+1)}>Berikutnya<ChevronRight size={13}/></Btn>
-     </div>
+     </div>}
     </div>
    </Card>
   </div>);
