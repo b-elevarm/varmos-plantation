@@ -1476,8 +1476,7 @@ function LoginPage(){
     </div>
     <div className="relative max-w-md">
      <h1 className="text-3xl xl:text-4xl font-bold leading-tight">Satu command center<br/>untuk seluruh kebun.</h1>
-     <p className="mt-3.5 text-sm text-green-100/90 leading-relaxed">Peta hidup, perintah kerja, sensus pohon, pemantauan digital, hingga mode lapangan offline.</p>
-     <p className="mt-2 text-sm text-green-100/90 leading-relaxed">Seluruh aktivitas kebun terhubung, terpantau, dan tetap dapat dikerjakan langsung dari lapangan.</p>
+     <p className="mt-3.5 text-sm text-green-100/90 leading-relaxed">Seluruh aktivitas kebun terhubung, terpantau, dan tetap dapat dikerjakan langsung dari lapangan.</p>
      <div className="mt-3 text-xl xl:text-2xl font-semibold text-white leading-snug">Kebun Agroforestry Gunung Hejo, Purwakarta</div>
      <div className="mt-7 grid grid-cols-2 gap-2.5 max-w-sm">
       {[["200,7 ha","luas estate (KML lapangan)"],["4 Blok","22 cluster · 336 petak"],["19.801","pohon tersensus"],["7","komoditas agroforestri"]].map(([v,l])=>(
