@@ -1515,33 +1515,23 @@ function LoginPage(){
      </div>
      <div className="mt-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <div className="text-sm font-semibold text-gray-900 mb-1">Akses cepat demo</div>
-      <div className="text-xs text-gray-500 mb-3">Masuk sekali klik sebagai perwakilan tiap peran — tanpa mengetik kredensial.</div>
+      <div className="text-xs text-gray-500 mb-3">Masuk sekali klik sebagai pengguna mana pun — tanpa mengetik kredensial.</div>
       <div className="grid grid-cols-2 gap-2">
-       {Object.keys(ROLES).map(r=>{ const Ic=ROLE_ICONS[r];
-        /* Field Supervisor: tampilkan semua akun per blok penugasan */
-        if(r==="Field Supervisor"){ return users.filter(x=>x.role===r&&x.status==="Aktif").map(u=>(
-         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
-          <div className="flex items-center gap-2">
-           <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors"><Ic size={14}/></div>
-           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{u.name}</div>
-            <div className="text-[10px] text-gray-400 truncate">FS • {(u.blocks||[]).map(blockLabel).join(", ")||"—"}</div></div>
-          </div>
-         </button>)); }
-        const u=users.find(x=>x.role===r&&x.status==="Aktif");
-        if(!u) return null; /* peran tanpa akun aktif tidak ditawarkan di akses cepat */
+       {users.filter(u=>u.status==="Aktif").map(u=>{ const Ic=ROLE_ICONS[u.role]||User;
+        const sub=u.role==="Field Supervisor"?("FS • "+((u.blocks||[]).map(blockLabel).join(", ")||"—")):userTitle(u);
         return (
-        <button key={r} onClick={()=>login(r)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
+        <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
-          <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors"><Ic size={14}/></div>
-          <div className="min-w-0"><div className="text-xs font-semibold text-gray-900">{r}</div>
-           <div className="text-[10px] text-gray-400 truncate">{u?u.name:"—"}</div></div>
+          <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors shrink-0"><Ic size={14}/></div>
+          <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{u.name}</div>
+           <div className="text-[10px] text-gray-400 truncate">{sub}</div></div>
          </div>
         </button>);
        })}
       </div>
       <div className="text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2.5 mt-3 space-y-1">
        <div className="font-semibold text-gray-700">Login demo:</div>
-       <div>Gunakan tombol peran di atas untuk masuk cepat sebagai perwakilan tiap peran.</div>
+       <div>Gunakan kartu pengguna di atas untuk masuk cepat sebagai orang tersebut.</div>
        <div>Login manual: email akun (mis. <code className="text-green-700">bayu.syerli@varmos.id</code>) • sandi <code className="text-green-700">varmos123</code> • kode 2FA <code className="text-green-700">246810</code></div>
       </div>
      </div>
