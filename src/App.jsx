@@ -1517,13 +1517,16 @@ function LoginPage(){
       <div className="text-sm font-semibold text-gray-900 mb-1">Akses cepat demo</div>
       <div className="text-xs text-gray-500 mb-3">Masuk sekali klik sebagai pengguna mana pun — tanpa mengetik kredensial.</div>
       <div className="grid grid-cols-2 gap-2">
-       {users.filter(u=>u.status==="Aktif").map(u=>{ const Ic=ROLE_ICONS[u.role]||User;
-        const sub=u.role==="Field Supervisor"?("FS • "+((u.blocks||[]).map(blockLabel).join(", ")||"—")):userTitle(u);
+       {(()=>{ const ord=["Super Admin","Mitra Lahan","Direksi","Estate Manager","Agronomy Head","Field Supervisor","Warehouse Officer","Finance"];
+        return users.filter(u=>u.status==="Aktif").slice().sort((a,b)=>{const ia=ord.indexOf(a.role),ib=ord.indexOf(b.role);return (ia<0?99:ia)-(ib<0?99:ib);}); })().map(u=>{ const Ic=ROLE_ICONS[u.role]||User;
+        const name=u.role==="Super Admin"?"Admin":u.name;
+        const sub=u.role==="Field Supervisor"?("Field Spv. "+((u.blocks||[]).map(blockLabel).join(", ")||"—"))
+          :u.role==="Mitra Lahan"?"Partner":userTitle(u);
         return (
         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
           <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors shrink-0"><Ic size={14}/></div>
-          <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{u.name}</div>
+          <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{name}</div>
            <div className="text-[10px] text-gray-400 truncate">{sub}</div></div>
          </div>
         </button>);
