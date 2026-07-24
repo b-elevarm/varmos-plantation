@@ -342,11 +342,17 @@ Halaman **Manajemen Pengguna** → menjadi hub "Orang & Akses" dengan tab (bukan
 
 ---
 
-## 19. Open Product Decisions (butuh keputusan stakeholder)
+## 19. Open Product Decisions — ✅ DIPUTUSKAN (pemilik produk, 24 Jul 2026)
 
-1. **Akun posisi → akun orang** untuk EM, AH, Warehouse, Finance: siapa nama personelnya? (FS sudah; Seedling kosong.)
-2. **Ketua Regu** diberi akun mobile terbatas pada Growth — ya/tidak, dan kapan?
-3. **Approval limit nominal** untuk pengadaan (mis. < Rp X cukup 1 Direksi?) — atau kuorum 3 untuk semua nilai?
-4. **SoD verifikasi WO**: bila AH pembuat WO, apakah EM satu-satunya verifier yang sah (dan sebaliknya)?
-5. **Mitra Lahan** perlu akses laporan unduhan berkala atau cukup dashboard?
-6. Target waktu Fase 1 — apakah dikerjakan sebelum atau sesudah data lapangan riil (embung, GPS infra) masuk?
+1. **Akun posisi → akun orang** — nama personel ditetapkan:
+   - Estate Manager: **Dimas Fadhillah Hakim**
+   - Agronomy Head: **Michelle Aisyah**
+   - Warehouse Officer: **Mahfud Irsyad**
+   - Finance: **Catherine**
+2. **Ketua Regu mendapat akun mobile terbatas** (disetujui; membutuhkan Fase 2 — keterhubungan WorkerProfile↔Person).
+3. **Tanpa limit nominal untuk saat ini** — semua pengeluaran tetap kuorum 3 Direksi. Ke depan diatur lewat **fitur pengaturan approval di modul Pengaturan** (ApprovalAuthority configurable — masuk backlog Fase 3, dimajukan sebagai fitur khusus).
+4. **SoD dikunci di sistem**: pembuat WO tidak boleh memverifikasi WO-nya sendiri.
+5. **Mitra Lahan mendapat unduhan laporan berkala**: Bulanan, Kuartalan, Semesteran, Tahunan. Selain Bulanan, laporan diperkaya *commentary*, analisis, dan rekomendasi.
+6. Fase 1: menunggu penjelasan urgensi & dampak sebelum eksekusi (lihat ringkasan terpisah yang disampaikan ke pemilik produk).
+
+**Urutan eksekusi turunan keputusan:** Fase 1 (fondasi ID & akun personal) → SoD verifikasi WO (butuh actor-ID) → fitur Pengaturan Approval → laporan berkala Mitra (independen, bisa paralel) → akun mobile Ketua Regu (setelah Fase 2).
