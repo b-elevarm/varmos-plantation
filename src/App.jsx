@@ -7641,25 +7641,9 @@ const lbHue=(s)=>{ let h=0; for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%
 const LbAvatar=({name,size=34})=>{ const ini=name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase(); const h=lbHue(name); return <div className="rounded-full flex items-center justify-center font-semibold text-white shrink-0" style={{width:size,height:size,background:"hsl("+h+",45%,45%)",fontSize:size*0.4}}>{ini}</div>; };
 
 /* ---- generate 40 pekerja HOK: dedicated per blok (10/10/6/14) ---- */
-const LB_WORKERS=(()=>{ const rnd=lbRng(20260720); const arr=[]; let idx=0;
- BLOCKS.forEach((b)=>{ const n=LB_BLOCK_HOK[b.id]||0; const fs=lbFsOfBlock(b.id); const grp=LB_GROUPS.find(g=>g.block===b.id);
-  for(let i=0;i<n;i++){ idx++;
-   const name=LB_FIRST[Math.floor(rnd()*LB_FIRST.length)]+" "+LB_LAST[Math.floor(rnd()*LB_LAST.length)];
-   const role=i===0?"Ketua Regu":"Anggota HOK";
-   const type=i===0?"HOK Reguler":["HOK Reguler","HOK Reguler","HOK Reguler","HOK Musiman","Borongan","Tenaga Spesialis"][Math.floor(rnd()*6)];
-   const status=(i===0||rnd()<0.9)?"Aktif":(rnd()<0.7?"Tidak Aktif":"Berhenti");
-   const avail=status!=="Aktif"?"Tidak tersedia":["Tersedia","Tersedia","Tersedia","Sedang bertugas","Sedang bertugas","Cuti/Izin"][Math.floor(rnd()*6)];
-   const nsk=1+Math.floor(rnd()*3); const sks=[]; for(let k=0;k<nsk;k++){ const s=LB_SKILLS[Math.floor(rnd()*LB_SKILLS.length)]; if(!sks.includes(s))sks.push(s); }
-   const hokMonth=+(status==="Aktif"?(rnd()*17+6):(rnd()*4)).toFixed(1);
-   const prod=Math.round(74+rnd()*44);
-   const doc=rnd()<0.72?"Lengkap":(rnd()<0.6?"Belum lengkap":"Menunggu verifikasi");
-   const day=1+Math.floor(rnd()*19);
-   arr.push({ id:"TK-"+String(1000+idx), name, phone:"08"+(1200000000+Math.floor(rnd()*8e8)), desa:LB_DESA[Math.floor(rnd()*LB_DESA.length)],
-    type, role, group:grp.id, groupName:grp.name, mandor:fs.id, fs:fs.id, block:b.id, skills:sks, skill:sks[0],
-    status, avail, hokMonth, prod, doc, joined:"20"+(22+Math.floor(rnd()*4))+"-0"+(1+Math.floor(rnd()*8))+"-"+String(1+Math.floor(rnd()*27)).padStart(2,"0"),
-    lastWork:"2026-07-"+String(day).padStart(2,"0"), rekening:"•••• "+String(1000+Math.floor(rnd()*9000)), bank:["BRI","BNI","Mandiri","BJB"][Math.floor(rnd()*4)] });
-  }
- });
+/* Data pekerja HOK dummy telah dihapus — akan diisi data nyata (mis. via Template Excel).
+   LB_WORKERS kini hanya berisi staf/struktural yang sudah memiliki akun. */
+const LB_WORKERS=(()=>{ const arr=[];
  /* Staf/struktural yang sudah memiliki akun (userId) — tampil di Database Pekerja,
     tetapi di luar analitik HOK (kehadiran fingerprint, produktivitas, rekap HOK). */
  const fsPhone=(uid)=>(FS_ROSTER.find(f=>f.userId===uid)||{}).phone;
@@ -7682,22 +7666,11 @@ const lbFsName=(id)=>(LB_FS.find(f=>f.id===id)||{}).name||id;
 const lbMandorName=(id)=>lbFsName(id);
 const lbGroupName=(id)=>(LB_GROUPS.find(g=>g.id===id)||{}).name||id;
 
-/* ---- sampel penugasan (dengan 1 konflik untuk demo deteksi) ---- */
-const LB_ASSIGN=[
- {id:"ASG-2201",date:"2026-07-20",wo:"WO-2026-0112",type:"Pemupukan",block:"GH-B01",petak:"B1C2P3",group:"REGU-B01",mandor:"FS-01",workers:8,target:"960 pohon",status:"Berjalan"},
- {id:"ASG-2202",date:"2026-07-20",wo:"WO-2026-0113",type:"Penyemprotan HPT",block:"GH-B03",petak:"B3C1P2",group:"REGU-B03",mandor:"FS-03",workers:5,target:"750 pohon",status:"Berjalan"},
- {id:"ASG-2203",date:"2026-07-20",wo:"WO-2026-0114",type:"Penyiangan / babat",block:"GH-B04",petak:"B4C5P1",group:"REGU-B04",mandor:"FS-04",workers:12,target:"4.800 m²",status:"Dijadwalkan"},
- {id:"ASG-2204",date:"2026-07-19",wo:"WO-2026-0110",type:"Pemanenan",block:"GH-B04",petak:"B4C6P2",group:"REGU-B04",mandor:"FS-04",workers:14,target:"2.520 kg",status:"Menunggu verifikasi"},
- {id:"ASG-2205",date:"2026-07-18",wo:"WO-2026-0108",type:"Pemupukan",block:"GH-B02",petak:"B2C9P4",group:"REGU-B02",mandor:"FS-02",workers:9,target:"1.080 pohon",status:"Selesai"},
-];
-const LB_CONFLICTS=[
- {worker:"TK-1004",name:LB_WORKERS[3]&&LB_WORKERS[3].name,issue:"Terjadwal di 2 penugasan bersamaan (ASG-2201 & ASG-2202)",sev:"Konflik"},
- {worker:"TK-1017",name:LB_WORKERS[16]&&LB_WORKERS[16].name,issue:"Sedang Cuti/Izin namun ditugaskan (ASG-2203)",sev:"Peringatan"},
-];
-
-/* ---- seri dummy dashboard ---- */
-const LB_HOK_TREND=[{d:"14",v:84},{d:"15",v:96},{d:"16",v:79},{d:"17",v:102},{d:"18",v:71},{d:"19",v:64},{d:"20",v:88}];
-const LB_COST_TREND=[{m:"Feb",v:118},{m:"Mar",v:132},{m:"Apr",v:145},{m:"Mei",v:139},{m:"Jun",v:151},{m:"Jul",v:96}];
+/* Penugasan, konflik, dan seri tren dashboard — data dummy dihapus; diisi data nyata nanti. */
+const LB_ASSIGN=[];
+const LB_CONFLICTS=[];
+const LB_HOK_TREND=[];
+const LB_COST_TREND=[];
 
 /* ============ Absensi HOK via FINGERPRINT (tersimpan langsung dari mesin sidik jari ke database) ============
    Tiap blok punya 1 mesin fingerprint; scan masuk & pulang tercatat otomatis → nilai HOK dihitung. Read-only dari device. */
