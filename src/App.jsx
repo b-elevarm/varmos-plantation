@@ -7819,7 +7819,7 @@ function WorkerDatabasePage(){
  return (
   <div>
    <PageHeader title="Database Pekerja" subtitle={fmtN(workers.length)+" pekerja HOK terdaftar • master data tenaga kerja lapangan"}
-    actions={<><Btn variant="secondary" onClick={exportCSV}><Download size={14}/>Ekspor</Btn>{can(role,"createWo")&&<Btn onClick={()=>setAdd(true)}><Plus size={14}/>Tambah Pekerja</Btn>}</>}/>
+    actions={<><Btn variant="secondary" onClick={()=>{const a=document.createElement("a");a.href=(import.meta.env.BASE_URL||"/")+"Template-Database-Tenaga-Kerja-HOK.xlsx";a.download="Template-Database-Tenaga-Kerja-HOK.xlsx";document.body.appendChild(a);a.click();a.remove();toast("Template Excel diunduh — isi bersama tim, lalu impor kembali");}}><Download size={14}/>Template Excel</Btn><Btn variant="secondary" onClick={exportCSV}><Download size={14}/>Ekspor</Btn>{can(role,"createWo")&&<Btn onClick={()=>setAdd(true)}><Plus size={14}/>Tambah Pekerja</Btn>}</>}/>
    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
     <Kpi label="Total pekerja" value={fmtN(workers.length)} icon={Users} tone="blue"/>
     <Kpi label="Aktif" value={fmtN(active)} icon={User} tone="green"/>
