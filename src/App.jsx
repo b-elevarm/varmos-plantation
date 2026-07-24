@@ -1410,7 +1410,7 @@ function CommandPalette(){
    jatuh ke ikon peran hijau bila gambar tak ada/gagal dimuat. */
 function DemoAvatar({src,Icon}){
  const [err,setErr]=useState(false);
- if(src&&!err) return <img src={src} alt="" onError={()=>setErr(true)} className="w-8 h-8 rounded-md object-contain bg-white border border-gray-100 shrink-0"/>;
+ if(src&&!err) return <img src={src} alt="" onError={()=>setErr(true)} className="w-10 h-10 rounded-full object-cover shrink-0"/>;
  return <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors shrink-0"><Icon size={14}/></div>;
 }
 function LoginPage(){
