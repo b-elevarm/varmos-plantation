@@ -1368,7 +1368,9 @@ function TopNav(){
     {counts.alerts>0 && <span className="absolute -top-0.5 -right-0.5 text-xs font-bold text-white rounded-full w-4.5 h-4.5 px-1 flex items-center justify-center" style={{background:C.red,minWidth:16,height:16,fontSize:10}}>{counts.alerts}</span>}
    </button>
    <Sel aria-label="Ganti akun (demo)" value={curUser?curUser.id:""} onChange={e=>{const u=users.find(x=>x.id===e.target.value); if(u) loginUser(u);}} options={users.filter(u=>u.status==="Aktif").map(u=>[u.id,u.name+" — "+userTitle(u)])} className="max-w-52"/>
-   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{background:C.dark}} title={curUser?curUser.name+" • "+role:role}>{curUser?uInitials(curUser.name):role.split(" ").map(w=>w[0]).join("").slice(0,2)}</div>
+   {curUser&&USER_AVATAR[curUser.id]
+    ? <img src={USER_AVATAR[curUser.id]} alt={curUser.name} title={curUser.name+" • "+userTitle(curUser)} className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-gray-200"/>
+    : <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{background:C.dark}} title={curUser?curUser.name+" • "+userTitle(curUser):role}>{curUser?uInitials(curUser.name):role.split(" ").map(w=>w[0]).join("").slice(0,2)}</div>}
   </header>);
 }
 
