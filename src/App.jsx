@@ -358,6 +358,16 @@ async function hsLoadTreePoints(){
   return JSON.parse(txt);
  }catch(e){ return null; }
 }
+/* Foto sensus asli (Sensus Desember 2025). public/census-photos.json = array selaras index titik pohon:
+   tiap elemen = nama file foto geotag (atau null). Setiap pohon dapat satu foto unik hasil pencocokan
+   atribut (blok, cluster, komoditas, status, tinggi) terhadap data CSV sensus. URL dibangun ke
+   penyimpanan file AppSheet milik aplikasi sensus lapangan. */
+let CENSUS_PHOTOS=null;
+async function hsLoadCensusPhotos(){ if(CENSUS_PHOTOS) return CENSUS_PHOTOS;
+ try{ const r=await fetch((import.meta.env.BASE_URL||"/")+"census-photos.json"); if(r.ok) CENSUS_PHOTOS=await r.json(); }catch(e){ CENSUS_PHOTOS=null; }
+ return CENSUS_PHOTOS; }
+const CENSUS_PHOTO_BASE="https://www.appsheet.com/template/gettablefileurl?appName=SENSUSTANAMANKERAS-229378962-25-11-07&tableName=SENSUS%20TANAMAN%20KERAS&fileName=SENSUS%20TANAMAN%20KERAS_Images/";
+function censusPhotoUrl(tail){ return tail?CENSUS_PHOTO_BASE+encodeURIComponent(tail):null; }
 /* ID pohon = kode petak + T + nomor urut dalam petak (mis. B1C2P4T44). Turunan dari posisi GPS. */
 function hsTreeId(D,i){
  const pc=(D.pk&&D.pk[i]>=0&&D.pkc)?D.pkc[D.pk[i]]:null;
@@ -386,7 +396,7 @@ function hsPtToTree(D,i){
  };
 }
 /* Bangun seluruh treesData (19.801) dari data titik */
-function hsPointsToTrees(D){ const a=new Array(D.n); for(let i=0;i<D.n;i++) a[i]=hsPtToTree(D,i); return a; }
+function hsPointsToTrees(D){ const ph=CENSUS_PHOTOS; const a=new Array(D.n); for(let i=0;i<D.n;i++){ const t=hsPtToTree(D,i); if(ph&&ph[i]){ t.photoFile=ph[i]; t.photoUrl=censusPhotoUrl(ph[i]); } a[i]=t; } return a; }
 
 /* ============ Mock data: estate, commodities, blocks, trees ============ */
 const ESTATE = { id:"EST-001", name:"Kebun Agroforestry Gununghejo", totalAreaHa:200.68, plantedAreaHa:0, totalTrees:0, survivalRate:0, healthyTrees:0, monitoringTrees:0, sickTrees:0, deadTrees:0, replantedTrees:0, monthlyBudget:0, monthlyActual:0 };
@@ -1250,10 +1260,16 @@ function tpPhotoUrl(commodity,status,heightCm,view){
 }
 /* Coba foto asli dulu; jika gagal / offline, fallback ke ilustrasi SVG parametrik. */
 function TreePhoto(props){
- const [failed,setFailed]=useState(false);
- const url=tpPhotoUrl(props.commodity,props.status,props.heightCm,props.view||"full");
- if(failed||!url) return <TreePhotoSvg {...props}/>;
- return <img src={url} alt={"Foto "+comName(props.commodity)+" — "+(props.status||"")} loading="lazy" onError={()=>setFailed(true)}
+ /* Urutan kandidat: foto sensus asli (src) → foto stok → ilustrasi SVG. */
+ const [i,setI]=useState(0);
+ useEffect(()=>{ setI(0); },[props.src,props.commodity,props.view]);
+ const cands=[];
+ if(props.src) cands.push(props.src);
+ const stock=tpPhotoUrl(props.commodity,props.status,props.heightCm,props.view||"full");
+ if(stock) cands.push(stock);
+ const url=cands[i];
+ if(!url) return <TreePhotoSvg {...props}/>;
+ return <img key={i} src={url} alt={"Foto "+comName(props.commodity)+" — "+(props.status||"")} loading="lazy" onError={()=>setI(x=>x+1)}
   className={(props.className||"")+" object-cover bg-gray-100"} style={{display:"block"}}/>;
 }
 
@@ -4643,7 +4659,7 @@ function TreeRegistryPage(){
      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 p-4">
       {rows.map(t=>(
        <button key={t.id} onClick={()=>nav("tree",{treeId:t.id})} className="text-left border border-gray-200 rounded-lg p-3 hover:border-green-600">
-        <div className="rounded-md overflow-hidden border border-gray-100 h-20"><TreePhoto commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
+        <div className="rounded-md overflow-hidden border border-gray-100 h-20"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
         <div className="text-xs font-semibold text-green-700 mt-2 truncate">{t.id}</div>
         <div className="text-xs text-gray-500 truncate">{comName(t.commodity)} • {blockLabel(t.block)}{t.petak?" • "+t.petak:""}</div>
         <div className="mt-1.5"><Badge v={t.censusLabel||t.status}/></div>
@@ -4716,8 +4732,8 @@ function TreePassportPage(){
       </div>
      </Card>
      <Card title="Foto terbaru">
-      <div className="rounded-lg overflow-hidden border border-gray-100 h-40"><TreePhoto commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
-      <div className="text-xs text-gray-400 mt-1 text-center">Foto {t.id} • {fmtD(t.lastInspection)}</div>
+      <div className="rounded-lg overflow-hidden border border-gray-100 h-40"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
+      <div className="text-xs text-gray-400 mt-1 text-center">{t.photoUrl?"Foto geotag Sensus Desember 2025":("Foto "+t.id+" • "+fmtD(t.lastInspection))}</div>
       <div className="grid grid-cols-3 gap-2 mt-2">{[["kanopi","Kanopi"],["batang","Batang"],["piringan","Piringan"]].map(([v,l])=>(
        <div key={v}><div className="rounded-md overflow-hidden border border-gray-100 h-16"><TreePhoto commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view={v} className="w-full h-full"/></div><div className="text-[10px] text-center text-gray-400 mt-0.5">{l}</div></div>
       ))}</div>
@@ -14301,7 +14317,7 @@ export default function App(){
  },[]);
 
  useEffect(()=>{
-  hsLoadTreePoints().then(D=>{
+  Promise.all([hsLoadTreePoints(),hsLoadCensusPhotos()]).then(([D])=>{
    if(D&&D.n){ setHsTreePts(D); setHsTreeErr(false); setTreesData(hsPointsToTrees(D)); }
    else { setHsTreeErr(true); regLoadTrees((trees)=>{ if(trees&&trees.length) setTreesData(trees); }); }
   }).catch(()=>setHsTreeErr(true));
