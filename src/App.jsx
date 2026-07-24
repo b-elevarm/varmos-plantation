@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useContext, createContext } from "react";
+import qrcode from "qrcode-generator";
 import {
   Leaf, LayoutDashboard, Map, ListTree, FlaskConical, ClipboardList, Package, Wheat, Wallet, Bell,
   FileText, Settings, Search, ChevronDown, ChevronRight, ChevronLeft, Plus, Filter,
@@ -1111,10 +1112,23 @@ const PhotoPh=({label,h="h-24"})=>(
   <Camera size={18}/><div className="text-xs mt-1 px-2 text-center truncate w-full">{label}</div>
  </div>);
 
-const QRBox=({text})=>{ const cells=[]; for(let i=0;i<121;i++){ const ch=text.charCodeAt(i%text.length)+i*7; if((ch%3)!==0) cells.push(i);} return (
- <svg viewBox="-0.5 -0.5 12 12" className="w-28 h-28 bg-white border border-gray-200 rounded p-1" aria-label={"QR "+text}>
-  {cells.map(i=><rect key={i} x={i%11} y={Math.floor(i/11)} width="0.9" height="0.9" fill="#111827"/>)}
- </svg>);};
+/* QR asli & dapat dipindai (qrcode-generator). `text` = payload (mis. URL paspor / ID pohon). */
+const QRBox=({text,size=112,className=""})=>{
+ const { count, rects } = useMemo(()=>{
+  try{ const qr=qrcode(0,"M"); qr.addData(String(text||"")); qr.make();
+   const c=qr.getModuleCount(), rs=[];
+   for(let r=0;r<c;r++) for(let col=0;col<c;col++) if(qr.isDark(r,col)) rs.push(<rect key={r+"-"+col} x={col} y={r} width="1" height="1" fill="#111827"/>);
+   return { count:c, rects:rs };
+  }catch(e){ return { count:0, rects:[] }; }
+ },[text]);
+ if(!count) return <div className="bg-white border border-gray-200 rounded flex items-center justify-center text-[10px] text-gray-400" style={{width:size,height:size}}>QR —</div>;
+ const q=4; /* quiet zone */
+ return (
+  <svg viewBox={"-"+q+" -"+q+" "+(count+q*2)+" "+(count+q*2)} width={size} height={size} shapeRendering="crispEdges"
+   className={"bg-white border border-gray-200 rounded "+className} role="img" aria-label={"Kode QR: "+text}>
+   <rect x={-q} y={-q} width={count+q*2} height={count+q*2} fill="#FFFFFF"/>
+   {rects}
+  </svg>);};
 
 const T={ table:"w-full text-sm", th:"text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-2 border-b border-gray-200 whitespace-nowrap bg-gray-50", td:"px-3 py-2.5 border-b border-gray-100 text-gray-700 whitespace-nowrap", tr:"hover:bg-green-50 cursor-pointer" };
 
@@ -4699,7 +4713,10 @@ function TreePassportPage(){
  const [statusOpen,setStatusOpen]=useState(false);
  const [rf,setRf]=useState({cat:"Penyakit",symptoms:"",severity:"Sedang"});
  const [newStatus,setNewStatus]=useState("Sehat");
+ const [photoZoom,setPhotoZoom]=useState(false);
+ useEffect(()=>{ if(!photoZoom) return; const h=e=>{ if(e.key==="Escape") setPhotoZoom(false); }; window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h); },[photoZoom]);
  if(!t) return <EmptyState t="Pohon tidak ditemukan" action={<Btn onClick={()=>nav("trees")}>Kembali ke Registri</Btn>}/>;
+ const qrPayload="https://app.varmos.id/pohon/"+t.id;
  const b=BLOCKS.find(x=>x.id===t.block);
  const treeCase=cases.find(c=>c.target===t.id && c.status!=="Selesai") || (t.activeCase?cases.find(c=>c.id===t.activeCase):null);
  const harvest = t.commodity==="lengkeng" ? [{d:"2026-07-12",qty:"18 kg",grade:"A"},{d:"2026-06-20",qty:"14 kg",grade:"A/B"}] : [];
@@ -4733,7 +4750,10 @@ function TreePassportPage(){
     <div className="space-y-4">
      <Card title="Identitas & QR">
       <div className="flex gap-4">
-       <QRBox text={t.id}/>
+       <div className="shrink-0 text-center">
+        <QRBox text={qrPayload}/>
+        <div className="text-[10px] text-gray-400 mt-1 w-28 truncate" title={qrPayload}>Pindai → {t.id}</div>
+       </div>
        <div className="flex-1">
         <Badge v={t.status}/>
         <div className="mt-2 text-sm text-gray-600">Skor kesehatan</div>
@@ -4746,8 +4766,11 @@ function TreePassportPage(){
       </div>
      </Card>
      <Card title="Foto terbaru">
-      <div className="rounded-lg overflow-hidden border border-gray-100 bg-gray-50 aspect-[3/4]"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
-      <div className="text-xs text-gray-400 mt-1.5 text-center">{t.photoUrl?"Foto geotag Sensus Desember 2025":("Foto "+t.id+" • "+fmtD(t.lastInspection))}</div>
+      <button type="button" onClick={()=>t.photoUrl&&setPhotoZoom(true)} aria-label={t.photoUrl?"Perbesar foto":"Foto"} className={"group relative block w-full rounded-lg overflow-hidden border border-gray-100 bg-gray-50 aspect-[3/4] "+(t.photoUrl?"cursor-zoom-in":"cursor-default")}>
+       <TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/>
+       {t.photoUrl&&<span className="absolute bottom-2 right-2 bg-black/45 text-white rounded-md p-1.5 opacity-80 group-hover:opacity-100 transition-opacity"><Maximize2 size={13}/></span>}
+      </button>
+      <div className="text-xs text-gray-400 mt-1.5 text-center">{t.photoUrl?"Foto geotag Sensus Desember 2025 — klik untuk perbesar":("Foto "+t.id+" • "+fmtD(t.lastInspection))}</div>
      </Card>
      <Card title="Data Sensus Desember 2025">
       <KeyVal k="Status sensus" v={t.censusLabel||t.status}/>
@@ -4798,6 +4821,15 @@ function TreePassportPage(){
     <Sel value={newStatus} onChange={e=>setNewStatus(e.target.value)} options={["Sehat","Pemantauan","Sakit","Mati"]} className="w-full"/>
     <p className="text-xs text-gray-500 mt-2">Perubahan status tercatat pada jejak audit pohon.</p>
    </Modal>
+   {photoZoom&&t.photoUrl&&(
+    <div onClick={()=>setPhotoZoom(false)} role="dialog" aria-modal="true" aria-label={"Foto "+t.id}
+     className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 sm:p-8">
+     <button aria-label="Tutup" onClick={()=>setPhotoZoom(false)} className="absolute top-4 right-4 text-white/90 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2"><X size={20}/></button>
+     <figure className="max-w-2xl w-full" onClick={e=>e.stopPropagation()}>
+      <img src={t.photoUrl} alt={"Foto sensus "+t.id} className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-black/20"/>
+      <figcaption className="text-center text-xs text-white/80 mt-3">{t.id} • {comName(t.commodity)} • {blockLabel(t.block)}{t.petak?" • Petak "+t.petak:""} • Foto geotag Sensus Desember 2025</figcaption>
+     </figure>
+    </div>)}
   </div>);
 }
 
