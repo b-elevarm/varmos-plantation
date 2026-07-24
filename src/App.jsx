@@ -4630,7 +4630,7 @@ function TreeRegistryPage(){
      <Sel aria-label="Filter blok" value={fBlock} onChange={e=>{setFBlock(e.target.value);setFCluster("Semua");setFPetak("Semua");setPage(1);}} options={[["Semua","Semua blok"],...BLOCKS.filter(b=>inScope(sb,b.id)).map(b=>[b.id,b.name])]}/>
      <Sel aria-label="Filter cluster" value={fCluster} disabled={fBlock==="Semua"} title={fBlock==="Semua"?"Pilih blok dulu":""} onChange={e=>{setFCluster(e.target.value);setFPetak("Semua");setPage(1);}} options={[["Semua","Semua cluster"],...(fBlock==="Semua"?[]:HS_GEO.clusters.filter(c=>c.parentId===fBlock).map(c=>[c.id,c.name]))]} className={fBlock==="Semua"?"opacity-60":""}/>
      <Sel aria-label="Filter petak" value={fPetak} disabled={fCluster==="Semua"} title={fCluster==="Semua"?"Pilih cluster dulu":""} onChange={e=>{setFPetak(e.target.value);setPage(1);}} options={[["Semua","Semua petak"],...(fCluster==="Semua"?[]:HS_GEO.plots.filter(p=>p.parentId===fCluster).map(p=>[p.id,"P"+String(p.id).split("P").pop()]))]} className={fCluster==="Semua"?"opacity-60":""}/>
-     <Sel aria-label="Filter status" value={fStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}} options={["Semua","Sehat","Pemantauan","Sakit","Mati"]}/>
+     <Sel aria-label="Filter kondisi tanaman" value={fStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}} options={[["Semua","Semua Kondisi"],"Sehat","Pemantauan","Sakit","Mati"]}/>
      <div className="relative ml-auto">
       <Btn variant="secondary" size="sm" onClick={()=>setColMenu(m=>!m)}><SlidersHorizontal size={13}/>Kolom</Btn>
       {colMenu && <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-30 w-44">
