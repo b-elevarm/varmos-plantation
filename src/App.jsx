@@ -488,11 +488,12 @@ const invStatus=(it)=> it.onHand < it.min ? "Kritis" : (it.onHand - it.reserved)
 const invExpiring=(it)=> it.expiry && daysBetween(TODAY,it.expiry) <= 45;
 /* ---- Pengajuan pengadaan material: diajukan WO/AH/EM, disetujui minimal 3 Direksi ---- */
 const INV_APPROVALS_MIN=3;
+const INV_REQUIRE_TITLE="CFO"; /* pengadaan terkait budget: kuorum wajib menyertakan CFO */
 const INV_CAN_REQUEST=["Warehouse Officer","Agronomy Head","Estate Manager"];
 const INV_INIT_REQS=[
  {id:"REQ-2026-014",items:[{id:"MAT-001",name:"NPK 16-16-16",qty:10000,unit:"kg"}],note:"Stok NPK di bawah minimum; kebutuhan pemupukan semester 2 (rencana Agustus).",
   requestedBy:"Mahfud Irsyad",requesterRole:"Warehouse Officer",date:"2026-07-22",status:"Menunggu Persetujuan",
-  approvals:[{id:"USR-002",name:"Bayu Syerli",title:"CEO",at:"2026-07-23"}],rejectedBy:null},
+  approvals:[{id:"USR-002",name:"Bayu Syerli",title:"CEO",at:"2026-07-23"},{id:"USR-004",name:"Lintang Pratiwi",title:"CAO",at:"2026-07-23"},{id:"USR-005",name:"Bayu Adi Persada",title:"CPO",at:"2026-07-23"}],rejectedBy:null},
  {id:"REQ-2026-013",items:[{id:"MAT-007",name:"Mankozeb 80WP",qty:120,unit:"kg"},{id:"MAT-004",name:"Dolomit",qty:1500,unit:"kg"}],note:"Pengendalian antraknosa & koreksi pH Blok 2–3.",
   requestedBy:"Michelle Aisyah",requesterRole:"Agronomy Head",date:"2026-07-15",status:"Disetujui",
   approvals:[{id:"USR-002",name:"Bayu Syerli",title:"CEO",at:"2026-07-16"},{id:"USR-003",name:"Febi Agil",title:"CFO",at:"2026-07-16"},{id:"USR-004",name:"Lintang Pratiwi",title:"CAO",at:"2026-07-17"}],rejectedBy:null},
@@ -5769,16 +5770,17 @@ function InventoryPage(){
    </Card>
    {/* ===== Pengajuan pengadaan — diajukan WO/AH/EM, disetujui minimal 3 Direksi ===== */}
    <Card title={"Pengajuan Pengadaan ("+invReqs.length+")"} pad={false} className="mt-4"
-    action={<span className="text-[11px] text-gray-400">Persetujuan minimal {INV_APPROVALS_MIN} Direksi</span>}>
+    action={<span className="text-[11px] text-gray-400">Minimal {INV_APPROVALS_MIN} Direksi · wajib termasuk CFO</span>}>
     <div className="divide-y divide-gray-100">
      {invReqs.length===0&&<div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada pengajuan.</div>}
-     {invReqs.map(r=>{ const mine=curUser&&r.approvals.some(a=>a.id===curUser.id);
+     {invReqs.map(r=>{ const mine=curUser&&r.approvals.some(a=>a.id===curUser.id); const hasCfo=r.approvals.some(a=>a.title===INV_REQUIRE_TITLE);
       return (
       <div key={r.id} className="px-4 py-3">
        <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-bold text-green-700">{r.id}</span>
         <ReqBadge v={r.status}/>
         {r.status==="Menunggu Persetujuan"&&<span className="text-[11px] font-semibold text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">{r.approvals.length}/{INV_APPROVALS_MIN} persetujuan</span>}
+        {r.status==="Menunggu Persetujuan"&&<span className={"text-[11px] font-semibold rounded-full px-2 py-0.5 "+(hasCfo?"text-green-700 bg-green-50":"text-gray-500 bg-gray-100")}>{hasCfo?"CFO ✓":"Menunggu CFO"}</span>}
         <span className="text-xs text-gray-400 ml-auto">{fmtD(r.date)} • {r.requestedBy} ({r.requesterRole})</span>
        </div>
        <div className="text-sm text-gray-900 mt-1.5">{r.items.map(it=>it.name+" "+fmtN(it.qty)+" "+it.unit).join(" • ")}</div>
@@ -5793,7 +5795,7 @@ function InventoryPage(){
        </div>}
       </div>); })}
     </div>
-    <div className="px-4 py-2.5 text-[11px] text-gray-500 border-t border-gray-100 bg-gray-50">Alur: pengajuan oleh Warehouse Officer / Agronomy Head / Estate Manager → persetujuan kuorum minimal {INV_APPROVALS_MIN} dari {`4`} Direksi → PO diterbitkan.</div>
+    <div className="px-4 py-2.5 text-[11px] text-gray-500 border-t border-gray-100 bg-gray-50">Alur: pengajuan oleh Warehouse Officer / Agronomy Head / Estate Manager → persetujuan kuorum minimal {INV_APPROVALS_MIN} dari 4 Direksi <b>dan wajib menyertakan CFO</b> (terkait budget) → PO diterbitkan.</div>
    </Card>
    <Modal open={reqOpen} onClose={()=>setReqOpen(false)} title="Buat Pengajuan Pengadaan"
     footer={<><Btn variant="secondary" onClick={()=>setReqOpen(false)}>Batal</Btn><Btn onClick={submitReq}><Check size={14}/>Kirim Pengajuan</Btn></>}>
@@ -5806,7 +5808,7 @@ function InventoryPage(){
       </div>))}
      <Btn size="sm" variant="secondary" onClick={()=>setRf(f=>({...f,items:[...f.items,{id:"MAT-001",qty:""}]}))}><Plus size={13}/>Tambah material</Btn>
      <label className="block"><span className="text-xs text-gray-500">Catatan / justifikasi</span><textarea value={rf.note} onChange={e=>setRf(f=>({...f,note:e.target.value}))} rows={3} className="mt-1 w-full text-sm border border-gray-200 rounded-md px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Alasan kebutuhan, rencana pemakaian, urgensi…"/></label>
-     <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2">Pengajuan akan menunggu persetujuan minimal {INV_APPROVALS_MIN} Direksi sebelum PO diterbitkan.</div>
+     <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2">Pengajuan akan menunggu persetujuan minimal {INV_APPROVALS_MIN} Direksi (wajib termasuk CFO) sebelum PO diterbitkan.</div>
     </div>
    </Modal>
   </div>);
@@ -14145,9 +14147,12 @@ export default function App(){
  const approveInvReq=(id)=>{ if(!curUser||curUser.role!=="Direksi"){ toast("Hanya Direksi yang dapat menyetujui pengajuan.","warn"); return; }
   setInvReqs(xs=>xs.map(r=>{ if(r.id!==id||r.status!=="Menunggu Persetujuan"||r.approvals.some(a=>a.id===curUser.id)) return r;
    const approvals=[...r.approvals,{id:curUser.id,name:curUser.name,title:userTitle(curUser),at:TODAY}];
-   const done=approvals.length>=INV_APPROVALS_MIN;
-   if(done) toast("Pengajuan "+id+" disetujui ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi) — PO dapat diterbitkan");
-   else toast("Persetujuan tercatat ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi)");
+   /* Kuorum pengadaan (terkait budget): minimal 3 Direksi DAN salah satunya wajib CFO. */
+   const hasCfo=approvals.some(a=>a.title===INV_REQUIRE_TITLE);
+   const done=approvals.length>=INV_APPROVALS_MIN&&hasCfo;
+   if(done) toast("Pengajuan "+id+" disetujui ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi, termasuk CFO) — PO dapat diterbitkan");
+   else if(approvals.length>=INV_APPROVALS_MIN&&!hasCfo) toast("Persetujuan tercatat ("+approvals.length+" Direksi) — masih menunggu persetujuan CFO sebelum disetujui.","warn");
+   else toast("Persetujuan tercatat ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi"+(hasCfo?", CFO ✓":"")+")");
    return {...r,approvals,status:done?"Disetujui":r.status}; })); };
  const rejectInvReq=(id,reason)=>{ if(!curUser||curUser.role!=="Direksi"){ toast("Hanya Direksi yang dapat menolak pengajuan.","warn"); return; }
   setInvReqs(xs=>xs.map(r=>r.id===id&&r.status==="Menunggu Persetujuan"?{...r,status:"Ditolak",rejectedBy:{id:curUser.id,name:curUser.name,at:TODAY,reason:reason||"—"}}:r)); toast("Pengajuan "+id+" ditolak","warn"); };
