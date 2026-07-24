@@ -1532,7 +1532,7 @@ function LoginPage(){
         return (
         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
-          <DemoAvatar src={u.role==="Mitra Lahan"?"/peak92-logo.png":null} Icon={Ic}/>
+          <DemoAvatar src={u.role==="Mitra Lahan"?"/peak92-logo.jpg":null} Icon={Ic}/>
           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{name}</div>
            <div className="text-[10px] text-gray-400 truncate">{sub}</div></div>
          </div>
