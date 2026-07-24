@@ -1436,6 +1436,7 @@ const USER_AVATAR={
  "USR-004":"/avatar-USR-004.jpg", // Lintang Pratiwi — CAO
  "USR-005":"/avatar-USR-005.jpg", // Bayu Adi Persada — CPO
  "USR-006":"/peak92-logo.jpg",    // PEAK 92 — Mitra Lahan (emblem)
+ "USR-007":"/avatar-USR-007.jpg", // Dimas Fadhillah Hakim — Estate Manager
 };
 /* Avatar kartu akses cepat: pakai gambar (foto/emblem) bila tersedia,
    jatuh ke ikon peran hijau bila gambar tak ada/gagal dimuat. */
