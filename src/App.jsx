@@ -413,7 +413,18 @@ const OPS_OVERLAY={
  "GH-B04":{supervisor:"—",health:null,activeWO:0,activeCases:0,risk:"—",water:"—",monthlyCost:0,variance:0,pH:null,moisture:null},
 };
 /* BLOCKS dibangun dari geometri KML Gunung Hejo (HS_GEO) + Demo Tree Registry — satu sumber kebenaran */
-const FS_BY_BLOCK={"GH-B01":"Yudha Kubil","GH-B02":"Saktian","GH-B03":"Indra","GH-B04":"Asep Ganjar"};
+/* Sumber tunggal identitas Field Supervisor per blok (userId = akun di INIT_USERS).
+   FS_BY_BLOCK (nama) & FS_USER_BY_BLOCK (id) diderivasi dari sini agar tidak ada duplikasi. */
+const FS_ROSTER=[
+ {userId:"USR-009",name:"Yudha Kubil",block:"GH-B01",phone:"0812-1100-201"},
+ {userId:"USR-013",name:"Saktian",block:"GH-B02",phone:"0812-1100-202"},
+ {userId:"USR-014",name:"Indra",block:"GH-B03",phone:"0812-1100-203"},
+ {userId:"USR-015",name:"Asep Ganjar",block:"GH-B04",phone:"0812-1100-204"},
+];
+const FS_BY_BLOCK=Object.fromEntries(FS_ROSTER.map(f=>[f.block,f.name]));
+const fsIdForBlock=(b)=>(FS_ROSTER.find(f=>f.block===b)||{}).userId||null;
+const fsNameForBlock=(b)=>(FS_ROSTER.find(f=>f.block===b)||{}).name||"—";
+const fsNameById=(id)=>(FS_ROSTER.find(f=>f.userId===id)||{}).name||id;
 const BLOCKS = HS_GEO.blocks.map(b=>{
  const cnt=hsCountsFor(b.id);
  const coms=[...new Set(HS_GEO.clusters.filter(c=>c.parentId===b.id).map(c=>c.commodity))];
@@ -447,7 +458,11 @@ const HEALTH_DIST=[];
 
 /* ============ Mock data: work orders, cases, alerts, inventory, SOP, kalender ============ */
 const ACTIVITIES=["Pemupukan","Penyiraman","Inspeksi kesehatan","Pemangkasan","Penyiangan","Pengendalian hama","Penyulaman","Soil sampling","Perbaikan irigasi","Sanitasi kebun","Panen"];
-const mkWo=(o)=>({ team:6, progress:0, targetTrees:0, actualTrees:0, materials:[], evidence:[], checklist:[{t:"Dokumentasi kondisi awal",done:false},{t:"Pelaksanaan sesuai SOP",done:false},{t:"Dokumentasi hasil akhir",done:false}], timeline:[{d:o.scheduled,t:"Work order dibuat & dijadwalkan",by:"Sistem"}], cost:0, note:"", sop:"", due:o.scheduled, ...o });
+const mkWo=(o)=>{ const w={ team:6, progress:0, targetTrees:0, actualTrees:0, materials:[], evidence:[], checklist:[{t:"Dokumentasi kondisi awal",done:false},{t:"Pelaksanaan sesuai SOP",done:false},{t:"Dokumentasi hasil akhir",done:false}], timeline:[{d:o.scheduled,t:"Work order dibuat & dijadwalkan",by:"Sistem"}], cost:0, note:"", sop:"", due:o.scheduled, ...o };
+ /* Akuntabilitas by-ID: FS penanggung jawab & pembuat WO (nama tetap untuk tampilan). */
+ if(w.supervisorId===undefined) w.supervisorId=fsIdForBlock(w.block)||null;
+ if(w.createdById===undefined) w.createdById=w.createdById||null;
+ return w; };
 
 const INIT_WOS=[];
 
@@ -476,10 +491,10 @@ const INV_APPROVALS_MIN=3;
 const INV_CAN_REQUEST=["Warehouse Officer","Agronomy Head","Estate Manager"];
 const INV_INIT_REQS=[
  {id:"REQ-2026-014",items:[{id:"MAT-001",name:"NPK 16-16-16",qty:10000,unit:"kg"}],note:"Stok NPK di bawah minimum; kebutuhan pemupukan semester 2 (rencana Agustus).",
-  requestedBy:"Akun Warehouse Officer",requesterRole:"Warehouse Officer",date:"2026-07-22",status:"Menunggu Persetujuan",
+  requestedBy:"Mahfud Irsyad",requesterRole:"Warehouse Officer",date:"2026-07-22",status:"Menunggu Persetujuan",
   approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-23"}],rejectedBy:null},
  {id:"REQ-2026-013",items:[{id:"MAT-007",name:"Mankozeb 80WP",qty:120,unit:"kg"},{id:"MAT-004",name:"Dolomit",qty:1500,unit:"kg"}],note:"Pengendalian antraknosa & koreksi pH Blok 2–3.",
-  requestedBy:"Akun Agronomy Head",requesterRole:"Agronomy Head",date:"2026-07-15",status:"Disetujui",
+  requestedBy:"Michelle Aisyah",requesterRole:"Agronomy Head",date:"2026-07-15",status:"Disetujui",
   approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-16"},{id:"USR-003",name:"Febi Agil",at:"2026-07-16"},{id:"USR-004",name:"Lintang Pratiwi",at:"2026-07-17"}],rejectedBy:null},
 ];
 
@@ -953,7 +968,7 @@ const scopeBlocks=(role,curUser)=>{
  return own.length?own:Object.keys(FS_BY_BLOCK);
 };
 const inScope=(sb,block)=>!sb||!block||sb.includes(block);
-const FS_USER_BY_BLOCK={"GH-B01":"USR-009","GH-B02":"USR-013","GH-B03":"USR-014","GH-B04":"USR-015"};
+const FS_USER_BY_BLOCK=Object.fromEntries(FS_ROSTER.map(f=>[f.block,f.userId]));
 const can=(role,act)=>{
  if(act==="verify") return ["Super Admin","Estate Manager","Agronomy Head"].includes(role);
  if(act==="createWo") return ["Super Admin","Estate Manager","Agronomy Head","Field Supervisor","Seedling Officer"].includes(role);
@@ -4624,7 +4639,7 @@ function TreeRegistryPage(){
 
 /* ============ Paspor Digital Pohon ============ */
 function TreePassportPage(){
- const {route,treesData,setTreesData,cases,addCase,addAlert,nav,toast,wos,addWo,role,alerts}=useApp();
+ const {route,treesData,setTreesData,cases,addCase,addAlert,nav,toast,wos,addWo,role,alerts,curUser}=useApp();
  const t=treesData.find(x=>x.id===route.params.treeId);
  const [reportOpen,setReportOpen]=useState(false);
  const [statusOpen,setStatusOpen]=useState(false);
@@ -4648,7 +4663,7 @@ function TreePassportPage(){
  };
  const createInspection=()=>{
   const id="WO-2026-0"+(124+wos.length);
-  addWo({...mkWo({id,title:"Inspeksi Pohon "+t.id,activity:"Inspeksi kesehatan",block:t.block,status:"Terjadwal",priority:"Sedang",supervisor:b.supervisor,scheduled:"2026-07-21",due:"2026-07-21",team:2,targetTrees:1,cost:450000,sop:"SOP-UMU-04"}),timeline:[{d:TODAY,t:"WO inspeksi dibuat dari paspor pohon",by:role}]});
+  addWo({...mkWo({id,title:"Inspeksi Pohon "+t.id,activity:"Inspeksi kesehatan",block:t.block,status:"Terjadwal",priority:"Sedang",supervisor:b.supervisor,scheduled:"2026-07-21",due:"2026-07-21",team:2,targetTrees:1,cost:450000,sop:"SOP-UMU-04",createdById:curUser?curUser.id:null,createdByName:curUser?curUser.name:role}),timeline:[{d:TODAY,t:"WO inspeksi dibuat dari paspor pohon",by:(curUser?curUser.name:role)}]});
   toast("Work order inspeksi "+id+" dibuat");
   nav("wo",{woId:id});
  };
@@ -4890,10 +4905,11 @@ function CreateWoPage(){
    supervisor:f.supervisor||b.supervisor, scheduled:f.scheduled, due:dueDate, team:Number(f.team),
    targetTrees:Number(f.targetTrees||0), cost:laborCost+matCost, sop:f.sop, note:f.note,
    locations:f.locs, blocks:selBlocks,
+   createdById:curUser?curUser.id:null, createdByName:curUser?curUser.name:role,
    materials:f.materials.map(m=>({name:m.name,qty:Number(m.qty),unit:m.custom?(m.unit||"kg"):((INIT_INV.find(i=>i.name===m.name)||{}).unit||"kg"),custom:!!m.custom})),
   }),
    checklist:(chosenSop?chosenSop.checklist.map(t=>({t,done:false})):mkWo({scheduled:f.scheduled}).checklist),
-   timeline:[{d:TODAY,t:asDraft?"Work order disimpan sebagai draft":"Work order dibuat & diterbitkan ke jadwal",by:role}]});
+   timeline:[{d:TODAY,t:asDraft?"Work order disimpan sebagai draft":"Work order dibuat & diterbitkan ke jadwal",by:(curUser?curUser.name:role)}]});
   toast(asDraft?("Draft "+id+" disimpan"):("Work order "+id+" diterbitkan • status Terjadwal"));
   nav("wo",{woId:id});
  };
@@ -5144,10 +5160,13 @@ function VerificationPage(){
  const verifier=can(role,"verify");
  const age=(w)=>daysBetween(w.submitted||TODAY,TODAY);
  const avgScore=queue.length?Math.round(queue.reduce((a,w)=>a+(w.evScore||0),0)/queue.length):0;
+ /* Segregation of Duties: pembuat WO tidak boleh memverifikasi WO yang sama. */
+ const selfVerify=(w)=>!!(w&&w.createdById&&curUser&&w.createdById===curUser.id);
  const approve=(w)=>{
+  if(selfVerify(w)){ toast("Pemisahan tugas: Anda pembuat "+w.id+" — verifikasi harus oleh verifikator lain (EM/Agronomy Head).","warn"); return; }
   if(w.alertId){ const av=alerts.find(x=>x.id===w.alertId);
    if(av){ const sg=alertCanRolePerform(role,"verifyAlertAction",av,curUser); if(!sg.ok){ toast(sg.reason,"warn"); return; } } }
-  updateWo(w.id,{status:"Selesai"},"Disetujui verifikator ("+role+")");
+  updateWo(w.id,{status:"Selesai",verifiedById:curUser?curUser.id:null,verifiedByName:curUser?curUser.name:role},"Disetujui verifikator "+(curUser?curUser.name:role));
   if(w.alertId&&alertLoop) alertLoop.onWoVerified(w,"Disetujui");
   toast(w.id+" disetujui • pekerjaan selesai"+(w.alertId?" • alert "+w.alertId+" masuk monitoring efektivitas":"")); setSelId(null); };
  const rework=(w)=>{ updateWo(w.id,{status:"Rework",progress:80,note:"Rework: "+(reworkNote||"perbaiki kelengkapan bukti sesuai catatan verifikator.")},"Diminta rework oleh "+role); if(w.alertId&&alertLoop) alertLoop.onWoVerified(w,"Rework",reworkNote); toast(w.id+" dikembalikan untuk rework","warn"); setSelId(null); setReworkNote(""); };
@@ -5186,9 +5205,10 @@ function VerificationPage(){
      <Btn variant="secondary" onClick={()=>{toast("Permintaan klarifikasi dikirim ke "+sel.supervisor+" (simulasi)");}}>Minta Klarifikasi</Btn>
      <Btn variant="danger" onClick={()=>confirmAction("Tolak Pengajuan",sel.id+" akan ditolak permanen dan tidak dibayarkan.",()=>{updateWo(sel.id,{status:"Ditolak"},"Ditolak verifikator ("+role+")");toast(sel.id+" ditolak","warn");setSelId(null);})}>Tolak</Btn>
      <Btn variant="amber" onClick={()=>rework(sel)}>Minta Rework</Btn>
-     <Btn onClick={()=>approve(sel)}><CheckCircle2 size={14}/>Setujui</Btn>
+     <Btn onClick={()=>approve(sel)} disabled={selfVerify(sel)} title={selfVerify(sel)?"Pemisahan tugas: Anda pembuat WO ini":""}><CheckCircle2 size={14}/>Setujui</Btn>
     </>:<Btn variant="secondary" onClick={()=>setSelId(null)}>Tutup</Btn>)}>
     {sel&&<div className="space-y-4">
+     {selfVerify(sel)&&<div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-md p-3 flex gap-2"><AlertTriangle size={15} className="shrink-0 mt-0.5"/><span><b>Pemisahan tugas (SoD).</b> Anda tercatat sebagai pembuat WO ini{sel.createdByName?" ("+sel.createdByName+")":""}. Verifikasi harus dilakukan verifikator lain — Estate Manager atau Agronomy Head yang berbeda.</span></div>}
      {sel.alertId&&<AlertVerificationContext wo={sel}/>}
      <div className="grid grid-cols-3 gap-3">
       <div className="bg-gray-50 rounded-md p-3 text-center"><div className={"text-xl font-bold "+((sel.evScore||0)>=80?"text-green-700":"text-amber-600")}>{sel.evScore}/100</div><div className="text-xs text-gray-500">Skor bukti</div></div>
@@ -5213,7 +5233,7 @@ function VerificationPage(){
 }
 
 function HealthPage(){
- const {cases,nav,role,wos,addWo,toast,route,aiRecs}=useApp();
+ const {cases,nav,role,wos,addWo,toast,route,aiRecs,curUser}=useApp();
  const [fSev,setFSev]=useState("Semua"),[fSt,setFSt]=useState("Semua"),[fBlk,setFBlk]=useState(()=>{ const b=route&&route.params&&route.params.block; return b&&HS_GEO.units[b]?b:"Semua"; });
  const pfCase=route&&route.params?route.params.prefillCase:null;
  const [inspOpen,setInspOpen]=useState(false); const [inspBlock,setInspBlock]=useState("GH-B01");
@@ -5226,7 +5246,7 @@ function HealthPage(){
  const createInsp=()=>{
   const b=BLOCKS.find(x=>x.id===inspBlock);
   const id="WO-2026-0"+(124+wos.length);
-  addWo({...mkWo({id,title:"Inspeksi Kesehatan Khusus "+blockLabel(inspBlock),activity:"Inspeksi kesehatan",block:inspBlock,status:"Terjadwal",priority:"Tinggi",supervisor:b.supervisor,scheduled:"2026-07-20",due:"2026-07-21",team:4,targetTrees:Math.round(b.population*0.1),cost:5200000,sop:"SOP-UMU-04"}),timeline:[{d:TODAY,t:"WO inspeksi dibuat dari dashboard kesehatan",by:role}]});
+  addWo({...mkWo({id,title:"Inspeksi Kesehatan Khusus "+blockLabel(inspBlock),activity:"Inspeksi kesehatan",block:inspBlock,status:"Terjadwal",priority:"Tinggi",supervisor:b.supervisor,scheduled:"2026-07-20",due:"2026-07-21",team:4,targetTrees:Math.round(b.population*0.1),cost:5200000,sop:"SOP-UMU-04",createdById:curUser?curUser.id:null,createdByName:curUser?curUser.name:role}),timeline:[{d:TODAY,t:"WO inspeksi dibuat dari dashboard kesehatan",by:(curUser?curUser.name:role)}]});
   setInspOpen(false); toast("Work order inspeksi "+id+" dibuat"); nav("wo",{woId:id});
  };
  return (
@@ -5315,7 +5335,7 @@ function HealthPage(){
 }
 
 function CaseDetailPage(){
- const {route,cases,updateCase,nav,role,toast,confirmAction,wos,addWo,alerts,addAlert,treesData,setTreesData}=useApp();
+ const {route,cases,updateCase,nav,role,toast,confirmAction,wos,addWo,alerts,addAlert,treesData,setTreesData,curUser}=useApp();
  const c=cases.find(x=>x.id===route.params.caseId);
  const [sevOpen,setSevOpen]=useState(false),[fuOpen,setFuOpen]=useState(false);
  const [newSev,setNewSev]=useState("Sedang"),[fuDate,setFuDate]=useState("2026-07-24");
@@ -5327,7 +5347,7 @@ function CaseDetailPage(){
  const confirmDiag=()=>{ updateCase(c.id,{confirmed:c.suspected,status:c.status==="Baru"?"Investigasi":c.status},"Diagnosis dikonfirmasi: "+c.suspected); toast("Diagnosis "+c.id+" dikonfirmasi"); };
  const createTreatWo=()=>{
   const id="WO-2026-0"+(124+wos.length);
-  addWo({...mkWo({id,title:"Perawatan Kasus "+c.id+" — "+(c.confirmed||c.suspected),activity:"Pengendalian hama",block:c.block,status:"Terjadwal",priority:c.severity==="Kritis"?"Kritis":"Tinggi",supervisor:b.supervisor,scheduled:"2026-07-20",due:"2026-07-22",team:4,targetTrees:tree?1:0,cost:12500000}),timeline:[{d:TODAY,t:"WO perawatan dibuat dari kasus "+c.id,by:role}]});
+  addWo({...mkWo({id,title:"Perawatan Kasus "+c.id+" — "+(c.confirmed||c.suspected),activity:"Pengendalian hama",block:c.block,status:"Terjadwal",priority:c.severity==="Kritis"?"Kritis":"Tinggi",supervisor:b.supervisor,scheduled:"2026-07-20",due:"2026-07-22",team:4,targetTrees:tree?1:0,cost:12500000,createdById:curUser?curUser.id:null,createdByName:curUser?curUser.name:role}),timeline:[{d:TODAY,t:"WO perawatan dibuat dari kasus "+c.id,by:(curUser?curUser.name:role)}]});
   updateCase(c.id,{woId:id,status:"Perawatan",treatment:c.treatment&&c.treatment!=="Belum ditetapkan"?c.treatment:"Perawatan sesuai WO "+id},"WO perawatan "+id+" diterbitkan");
   toast("WO perawatan "+id+" dibuat & ditautkan"); nav("wo",{woId:id});
  };
@@ -7092,20 +7112,20 @@ function HsDataPage(){
 
 /* ============ Manajemen Pengguna ============ */
 const INIT_USERS=[
- {id:"USR-001",name:"Administrator Sistem",email:"admin@varmos.id",phone:"—",role:"Super Admin",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun sistem — akses penuh"},
- {id:"USR-002",name:"Bayu Syerli",email:"bayu.syerli@varmos.id",phone:"—",role:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-003",name:"Febi Agil",email:"febi.agil@varmos.id",phone:"—",role:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-004",name:"Lintang Pratiwi",email:"lintang.pratiwi@varmos.id",phone:"—",role:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-005",name:"Bayu Adi Persada",email:"bayu.adi@varmos.id",phone:"—",role:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-006",name:"PEAK 92",email:"peak92@mitralahan.id",phone:"—",role:"Mitra Lahan",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Pemilik lahan (landowner)"},
- {id:"USR-007",name:"Akun Estate Manager",email:"estate.manager@varmos.id",phone:"—",role:"Estate Manager",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
- {id:"USR-008",name:"Akun Agronomy Head",email:"agronomy.head@varmos.id",phone:"—",role:"Agronomy Head",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
- {id:"USR-009",name:"Yudha Kubil",email:"yudha.kubil@varmos.id",phone:"0812-1100-201",role:"Field Supervisor",blocks:["GH-B01"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 1"},
- {id:"USR-013",name:"Saktian",email:"saktian@varmos.id",phone:"0812-1100-202",role:"Field Supervisor",blocks:["GH-B02"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 2"},
- {id:"USR-014",name:"Indra",email:"indra@varmos.id",phone:"0812-1100-203",role:"Field Supervisor",blocks:["GH-B03"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 3"},
- {id:"USR-015",name:"Asep Ganjar",email:"asep.ganjar@varmos.id",phone:"0812-1100-204",role:"Field Supervisor",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 4"},
- {id:"USR-010",name:"Akun Warehouse Officer",email:"warehouse.officer@varmos.id",phone:"—",role:"Warehouse Officer",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Akun berbasis posisi"},
- {id:"USR-012",name:"Akun Finance",email:"finance@varmos.id",phone:"—",role:"Finance",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun berbasis posisi"},
+ {id:"USR-001",name:"Administrator Sistem",email:"admin@varmos.id",phone:"—",role:"Super Admin",position:"System Administrator",dept:"IT & Sistem",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun sistem — akses penuh"},
+ {id:"USR-002",name:"Bayu Syerli",email:"bayu.syerli@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
+ {id:"USR-003",name:"Febi Agil",email:"febi.agil@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
+ {id:"USR-004",name:"Lintang Pratiwi",email:"lintang.pratiwi@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
+ {id:"USR-005",name:"Bayu Adi Persada",email:"bayu.adi@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
+ {id:"USR-006",name:"PEAK 92",email:"peak92@mitralahan.id",phone:"—",role:"Mitra Lahan",position:"Perwakilan Mitra Lahan",dept:"Eksternal",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Pemilik lahan (landowner)"},
+ {id:"USR-007",name:"Dimas Fadhillah Hakim",email:"dimas.hakim@varmos.id",phone:"0812-2100-107",role:"Estate Manager",position:"Estate Manager",dept:"Manajemen Estate",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Estate Manager Gunung Hejo"},
+ {id:"USR-008",name:"Michelle Aisyah",email:"michelle.aisyah@varmos.id",phone:"0812-2100-108",role:"Agronomy Head",position:"Agronomy Head",dept:"Agronomi",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Kepala Agronomi Gunung Hejo"},
+ {id:"USR-009",name:"Yudha Kubil",email:"yudha.kubil@varmos.id",phone:"0812-1100-201",role:"Field Supervisor",position:"Field Supervisor",dept:"Operasi Lapangan",blocks:["GH-B01"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 1"},
+ {id:"USR-013",name:"Saktian",email:"saktian@varmos.id",phone:"0812-1100-202",role:"Field Supervisor",position:"Field Supervisor",dept:"Operasi Lapangan",blocks:["GH-B02"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 2"},
+ {id:"USR-014",name:"Indra",email:"indra@varmos.id",phone:"0812-1100-203",role:"Field Supervisor",position:"Field Supervisor",dept:"Operasi Lapangan",blocks:["GH-B03"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 3"},
+ {id:"USR-015",name:"Asep Ganjar",email:"asep.ganjar@varmos.id",phone:"0812-1100-204",role:"Field Supervisor",position:"Field Supervisor",dept:"Operasi Lapangan",blocks:["GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"FS Blok 4"},
+ {id:"USR-010",name:"Mahfud Irsyad",email:"mahfud.irsyad@varmos.id",phone:"0812-2100-110",role:"Warehouse Officer",position:"Warehouse Officer",dept:"Gudang & Sarana",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Penanggung jawab gudang pusat"},
+ {id:"USR-012",name:"Catherine",email:"catherine@varmos.id",phone:"0812-2100-112",role:"Finance",position:"Finance Officer",dept:"Keuangan",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Keuangan & anggaran"},
 ];
 const INIT_USER_LOG=[];
 const USTAT_STYLE={"Aktif":"bg-green-100 text-green-800","Menunggu Undangan":"bg-amber-100 text-amber-800","Nonaktif":"bg-gray-200 text-gray-600"};
@@ -7158,7 +7178,7 @@ function UserDrawer({userId,onClose}){
  const acc=roleAccess(u.role);
  const tgB=(id)=>updateUser(u.id,{blocks:u.blocks.includes(id)?u.blocks.filter(x=>x!==id):[...u.blocks,id]},"Mengubah penugasan blok "+u.name);
  return (
-  <Drawer open onClose={onClose} title={u.name} subtitle={u.id+" • "+u.role} wide
+  <Drawer open onClose={onClose} title={u.name} subtitle={u.id+" • "+(u.position||u.role)} wide
    footer={canManage&&<div className="flex flex-wrap gap-2">
     {u.status==="Menunggu Undangan"&&<Btn size="sm" onClick={()=>toast("Undangan dikirim ulang ke "+u.email+" (simulasi)")}><Send size={13}/>Kirim Ulang Undangan</Btn>}
     {u.status==="Aktif"&&<Btn size="sm" variant="secondary" onClick={()=>{updateUser(u.id,{},"Reset kata sandi "+u.name+" — tautan dikirim ke email");toast("Tautan reset kata sandi dikirim ke "+u.email+" (simulasi)");}}>Reset Kata Sandi</Btn>}
@@ -7176,8 +7196,16 @@ function UserDrawer({userId,onClose}){
     </div>
    </div>
    {u.notes&&<div className="text-xs text-gray-600 bg-gray-50 rounded-md p-2">{u.notes}</div>}
+   {/* Organisasi (jabatan) — dipisah tegas dari Peran (hak akses aplikasi) */}
    <div>
-    <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Peran</div>
+    <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Organisasi</div>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+     <div><span className="text-gray-500">Jabatan</span><div className="font-medium text-gray-900">{u.position||"—"}</div></div>
+     <div><span className="text-gray-500">Departemen</span><div className="font-medium text-gray-900">{u.dept||"—"}</div></div>
+    </div>
+   </div>
+   <div>
+    <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Peran <span className="normal-case font-normal text-gray-400">(hak akses aplikasi)</span></div>
     {canManage?<Sel value={u.role} onChange={v=>{updateUser(u.id,{role:v},"Mengubah peran "+u.name+" menjadi "+v);toast("Peran "+u.name+" diubah menjadi "+v);}} options={Object.keys(ROLES)}/>
      :<div className="font-semibold">{u.role}</div>}
     <div className="text-[11px] text-gray-400 mt-1">{ROLES[u.role]?.desc}</div>
@@ -7238,7 +7266,7 @@ function UsersPage(){
       <tbody>{rows.map(u=><tr key={u.id} className={T.tr} onClick={()=>setSel(u.id)}>
        <td className={T.td}><div className="flex items-center gap-2.5">
         <span className="w-8 h-8 rounded-full bg-green-700 text-white flex items-center justify-center text-xs font-bold shrink-0">{uInitials(u.name)}</span>
-        <div><div className="font-semibold text-gray-900">{u.name}</div><div className="text-[10px] text-gray-400">{u.id}</div></div></div></td>
+        <div><div className="font-semibold text-gray-900">{u.name}</div><div className="text-[10px] text-gray-400">{u.position||u.id}</div></div></div></td>
        <td className={T.td+" text-xs"}>{u.email}<div className="text-gray-400">{u.phone}</div></td>
        <td className={T.td}>{u.role}</td>
        <td className={T.td+" text-xs"}>{u.blocks.length?u.blocks.map(blockLabel).join(", "):"—"}</td>
@@ -7509,12 +7537,8 @@ const LB_DESA=["Gununghejo","Cirende","Sukamulya","Wanayasa","Sukatani","Cibinon
 const LB_SKILLS=["Pembukaan lahan","Lubang tanam","Penanaman","Penyulaman","Pemupukan","Penyiangan","Penyemprotan","Pemangkasan","Penyiraman","Pemasangan irigasi","Sensus tanaman","Inspeksi tanaman","Pengendalian HPT","Pemanenan","Sortasi","Pengangkutan","Operasi mesin","Pemetaan lapangan"];
 /* Struktur HOK per blok: tiap blok punya 1 Field Supervisor + HOK khusus (dedicated). */
 const LB_BLOCK_HOK={"GH-B01":10,"GH-B02":10,"GH-B03":6,"GH-B04":14};
-const LB_FS=[
- {id:"FS-01",block:"GH-B01",name:FS_BY_BLOCK["GH-B01"],phone:"0812-1100-201"},
- {id:"FS-02",block:"GH-B02",name:FS_BY_BLOCK["GH-B02"],phone:"0812-1100-202"},
- {id:"FS-03",block:"GH-B03",name:FS_BY_BLOCK["GH-B03"],phone:"0812-1100-203"},
- {id:"FS-04",block:"GH-B04",name:FS_BY_BLOCK["GH-B04"],phone:"0812-1100-204"},
-];
+/* Diderivasi dari FS_ROSTER (sumber tunggal): id workforce FS-0x membawa userId akunnya. */
+const LB_FS=FS_ROSTER.map((f,i)=>({id:"FS-0"+(i+1),userId:f.userId,block:f.block,name:f.name,phone:f.phone}));
 const lbFsOfBlock=(block)=>LB_FS.find(f=>f.block===block)||{};
 const LB_GROUPS=BLOCKS.map((b,i)=>({id:"REGU-B0"+(i+1),name:"Regu HOK "+b.name,block:b.id,fs:lbFsOfBlock(b.id).id,count:LB_BLOCK_HOK[b.id]||0,skill:["Perawatan umum","Pemupukan & perawatan","Pengendalian HPT","Panen & perawatan"][i]||"Perawatan",formed:"2024-02-10"}));
 const LB_WORKTYPES=[
@@ -7996,11 +8020,11 @@ const DQ_INIT_ISSUES=[
    sampleRecords:[{k:"GH4-C02-0117",v:"Koordinat kosong"},{k:"GH4-C02-0163",v:"Koordinat kosong"},{k:"GH4-C05-0031",v:"Lat/Lon 0,0"}] },
  { id:"DQ-2026-002", title:"14 duplicate Tree ID ditemukan pada registri", domain:"Sensus Tanaman", dimension:"uniqueness", severity:"Critical", status:"Dalam Pemeriksaan",
    estateId:"GH", blockId:"GH-B01", clusterId:"B1C2", plotId:null, affectedRecords:14, sourceId:"SRC-CENSUS-001", ruleId:"DQ-TREE-001",
-   detectedAt:"2026-07-18T14:20:00+07:00", dueAt:"2026-07-19T14:20:00+07:00", ownerId:"USR-008", ownerName:"Akun Agronomy Head", assignedBy:"Akun Estate Manager", sensitive:true,
+   detectedAt:"2026-07-18T14:20:00+07:00", dueAt:"2026-07-19T14:20:00+07:00", ownerId:"USR-008", ownerName:"Michelle Aisyah", assignedBy:"Dimas Fadhillah Hakim", sensitive:true,
    modules:["Registri Pohon","Sensus","Database Pohon"],
    impact:"Paspor digital pohon ambigu; riwayat perawatan dan biaya dapat tercatat ke pohon yang salah.",
    recommendation:"Bandingkan foto dan koordinat tiap pasangan duplikat, gabungkan record, terbitkan Tree ID pengganti.",
-   evidence:[{name:"duplikat-b1c2.xlsx",by:"Akun Agronomy Head",at:"2026-07-18T16:05:00+07:00",status:"Terunggah"}], resolution:null,
+   evidence:[{name:"duplikat-b1c2.xlsx",by:"Michelle Aisyah",at:"2026-07-18T16:05:00+07:00",status:"Terunggah"}], resolution:null,
    sampleRecords:[{k:"GH1-C02-0045",v:"2 record identik"},{k:"GH1-C02-0046",v:"2 record identik"},{k:"GH1-C03-0012",v:"ID dipakai lintas cluster"}] },
  { id:"DQ-2026-003", title:"3 transaksi payroll terindikasi duplikat pada periode Jul-I", domain:"Keuangan", dimension:"uniqueness", severity:"Critical", status:"Baru",
    estateId:"GH", blockId:null, clusterId:null, plotId:null, affectedRecords:3, sourceId:"SRC-PAY-001", ruleId:"DQ-PAY-001",
@@ -8012,21 +8036,21 @@ const DQ_INIT_ISSUES=[
    sampleRecords:[{k:"PAY-0716-118",v:"Duplikat PAY-0716-121"},{k:"PAY-0716-119",v:"Duplikat PAY-0716-124"},{k:"PAY-0716-127",v:"Nominal sama, jam impor berbeda"}] },
  { id:"DQ-2026-004", title:"Sensor tanah SNS-GH-02 tidak mengirim data lebih dari 26 jam", domain:"Hybrid Sensing", dimension:"timeliness", severity:"Critical", status:"Menunggu Sumber Eksternal",
    estateId:"GH", blockId:"GH-B01", clusterId:null, plotId:null, affectedRecords:1, sourceId:"SRC-SENSOR-001", ruleId:"DQ-SNS-001",
-   detectedAt:"2026-07-18T09:30:00+07:00", dueAt:"2026-07-19T09:30:00+07:00", ownerId:"USR-007", ownerName:"Akun Estate Manager", assignedBy:"Administrator Sistem", sensitive:false,
+   detectedAt:"2026-07-18T09:30:00+07:00", dueAt:"2026-07-19T09:30:00+07:00", ownerId:"USR-007", ownerName:"Dimas Fadhillah Hakim", assignedBy:"Administrator Sistem", sensitive:false,
    modules:["Hybrid Sensing","Manajemen Air","Alert"],
    impact:"Kelembapan tanah Blok 1 tidak termonitor; keputusan irigasi berjalan tanpa data terkini.",
    recommendation:"Cek daya dan gateway di lapangan; eskalasi ke vendor bila modul LoRa gagal. Jangan anggap nilai kosong sebagai nol.",
    evidence:[{name:"foto-gateway-b1.jpg",by:"Yudha Kubil",at:"2026-07-18T15:40:00+07:00",status:"Terunggah"}], resolution:null },
  { id:"DQ-2026-005", title:"Selisih 94 pohon antara Peta Kebun dan sensus di Blok 2", domain:"Data Spasial", dimension:"consistency", severity:"High", status:"Ditugaskan",
    estateId:"GH", blockId:"GH-B02", clusterId:null, plotId:null, affectedRecords:94, sourceId:"SRC-KML-001", ruleId:"DQ-GEO-001",
-   detectedAt:"2026-07-17T16:40:00+07:00", dueAt:"2026-07-20T16:40:00+07:00", ownerId:"USR-013", ownerName:"Saktian", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-17T16:40:00+07:00", dueAt:"2026-07-20T16:40:00+07:00", ownerId:"USR-013", ownerName:"Saktian", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Peta Kebun","Sensus","Command Center"],
    impact:"Populasi per blok pada dashboard eksekutif berbeda dengan peta; angka survival rate bias.",
    recommendation:"Rekonsiliasi titik peta dengan record sensus; tandai pohon yang ditanam setelah sensus Desember 2025.",
    evidence:[], resolution:null },
  { id:"DQ-2026-006", title:"Konflik komoditas Cluster B2C3: Peta mencatat Jengkol, registri mencatat Durian", domain:"Data Spasial", dimension:"consistency", severity:"High", status:"Dalam Pemeriksaan",
    estateId:"GH", blockId:"GH-B02", clusterId:"B2C3", plotId:null, affectedRecords:412, sourceId:"SRC-KML-001", ruleId:"DQ-GEO-002",
-   detectedAt:"2026-07-16T10:15:00+07:00", dueAt:"2026-07-19T10:15:00+07:00", ownerId:"USR-008", ownerName:"Akun Agronomy Head", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-16T10:15:00+07:00", dueAt:"2026-07-19T10:15:00+07:00", ownerId:"USR-008", ownerName:"Michelle Aisyah", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Peta Kebun","Hybrid Sensing","Registri Pohon"],
    impact:"Analitik komoditas (produksi, pemupukan, benchmark NDVI) tercampur antara dua komoditas.",
    recommendation:"Verifikasi komoditas aktual di lapangan, lalu pilih sumber yang benar dan sinkronkan seluruh modul.",
@@ -8039,7 +8063,7 @@ const DQ_INIT_ISSUES=[
    actions:["existing","proposed","merge","inspect","fp","exception"] },
  { id:"DQ-2026-007", title:"Sensus Blok 3 berumur 204 hari (melewati ambang 180 hari)", domain:"Sensus Tanaman", dimension:"timeliness", severity:"High", status:"Ditugaskan",
    estateId:"GH", blockId:"GH-B03", clusterId:null, plotId:null, affectedRecords:4210, sourceId:"SRC-CENSUS-001", ruleId:"DQ-CEN-001",
-   detectedAt:"2026-07-15T08:00:00+07:00", dueAt:"2026-07-18T08:00:00+07:00", ownerId:"USR-008", ownerName:"Akun Agronomy Head", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-15T08:00:00+07:00", dueAt:"2026-07-18T08:00:00+07:00", ownerId:"USR-008", ownerName:"Michelle Aisyah", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Sensus","Kesehatan Tanaman","Command Center"],
    impact:"Status kesehatan dan tinggi tanaman Blok 3 berbasis kondisi Desember 2025; tren pertumbuhan tidak akurat.",
    recommendation:"Jadwalkan sensus ulang Blok 3 atau sensus sampling per cluster prioritas.",
@@ -8060,7 +8084,7 @@ const DQ_INIT_ISSUES=[
    evidence:[], resolution:null },
  { id:"DQ-2026-010", title:"Selisih stok fisik vs sistem pada 6 material gudang", domain:"Inventori", dimension:"consistency", severity:"Medium", status:"Ditugaskan",
    estateId:"GH", blockId:null, clusterId:null, plotId:null, affectedRecords:6, sourceId:"SRC-INV-001", ruleId:"DQ-INV-001",
-   detectedAt:"2026-07-18T08:10:00+07:00", dueAt:"2026-07-25T08:10:00+07:00", ownerId:"USR-010", ownerName:"Akun Warehouse Officer", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-18T08:10:00+07:00", dueAt:"2026-07-25T08:10:00+07:00", ownerId:"USR-010", ownerName:"Mahfud Irsyad", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Inventori","Work Order"],
    impact:"Reservasi material WO dapat gagal dipenuhi; nilai stok pada laporan keuangan bias.",
    recommendation:"Lakukan stock opname parsial untuk 6 SKU terdampak dan catat penyesuaian beralasan.",
@@ -8074,7 +8098,7 @@ const DQ_INIT_ISSUES=[
    evidence:[], resolution:null },
  { id:"DQ-2026-012", title:"2 pekerja tercatat hadir di dua Blok pada jam yang sama", domain:"Tenaga Kerja", dimension:"plausibility", severity:"Medium", status:"Dalam Pemeriksaan",
    estateId:"GH", blockId:"GH-B01", clusterId:null, plotId:null, affectedRecords:2, sourceId:"SRC-HOK-001", ruleId:"DQ-PLA-001",
-   detectedAt:"2026-07-18T13:45:00+07:00", dueAt:"2026-07-25T13:45:00+07:00", ownerId:"USR-007", ownerName:"Akun Estate Manager", assignedBy:"Administrator Sistem", sensitive:false,
+   detectedAt:"2026-07-18T13:45:00+07:00", dueAt:"2026-07-25T13:45:00+07:00", ownerId:"USR-007", ownerName:"Dimas Fadhillah Hakim", assignedBy:"Administrator Sistem", sensitive:false,
    modules:["Penugasan & Kehadiran","Rekapitulasi HOK"],
    impact:"Indikasi salah input atau presensi ganda; HOK ganda berujung pembayaran tidak wajar.",
    recommendation:"Konfirmasi ke kedua supervisor blok; koreksi kehadiran yang tidak sesuai bukti lapangan.",
@@ -8088,22 +8112,22 @@ const DQ_INIT_ISSUES=[
    evidence:[], resolution:null },
  { id:"DQ-2026-014", title:"3 material tanpa satuan baku pada master inventori", domain:"Inventori", dimension:"validity", severity:"Low", status:"Selesai",
    estateId:"GH", blockId:null, clusterId:null, plotId:null, affectedRecords:3, sourceId:"SRC-INV-001", ruleId:"DQ-INV-001",
-   detectedAt:"2026-07-14T10:30:00+07:00", dueAt:"2026-08-13T10:30:00+07:00", ownerId:"USR-010", ownerName:"Akun Warehouse Officer", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-14T10:30:00+07:00", dueAt:"2026-08-13T10:30:00+07:00", ownerId:"USR-010", ownerName:"Mahfud Irsyad", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Inventori"],
    impact:"Konversi kebutuhan material WO tidak konsisten (liter vs botol).",
    recommendation:"Standardisasi satuan mengikuti master SOP material.",
-   evidence:[{name:"master-satuan-v2.xlsx",by:"Akun Warehouse Officer",at:"2026-07-17T11:00:00+07:00",status:"Terunggah"}],
-   resolution:{decision:"Gunakan data baru",reason:"Satuan distandarkan mengikuti master SOP material versi 2.",note:"3 SKU diperbarui: liter, kilogram, sak.",by:"Akun Warehouse Officer",at:"2026-07-17T11:05:00+07:00",verifier:"Akun Estate Manager",targetVerification:"2026-07-19"},
-   verifiedBy:"Akun Estate Manager", verifiedAt:"2026-07-19T08:00:00+07:00" },
+   evidence:[{name:"master-satuan-v2.xlsx",by:"Mahfud Irsyad",at:"2026-07-17T11:00:00+07:00",status:"Terunggah"}],
+   resolution:{decision:"Gunakan data baru",reason:"Satuan distandarkan mengikuti master SOP material versi 2.",note:"3 SKU diperbarui: liter, kilogram, sak.",by:"Mahfud Irsyad",at:"2026-07-17T11:05:00+07:00",verifier:"Dimas Fadhillah Hakim",targetVerification:"2026-07-19"},
+   verifiedBy:"Dimas Fadhillah Hakim", verifiedAt:"2026-07-19T08:00:00+07:00" },
  { id:"DQ-2026-015", title:"NDVI Cluster B4C1 berubah tanpa observasi baru", domain:"Hybrid Sensing", dimension:"plausibility", severity:"Low", status:"False Positive",
    estateId:"GH", blockId:"GH-B04", clusterId:"B4C1", plotId:null, affectedRecords:1, sourceId:"SRC-SAT-001", ruleId:"DQ-PLA-001",
-   detectedAt:"2026-07-13T09:20:00+07:00", dueAt:"2026-08-12T09:20:00+07:00", ownerId:"USR-008", ownerName:"Akun Agronomy Head", assignedBy:"Akun Estate Manager", sensitive:false,
+   detectedAt:"2026-07-13T09:20:00+07:00", dueAt:"2026-08-12T09:20:00+07:00", ownerId:"USR-008", ownerName:"Michelle Aisyah", assignedBy:"Dimas Fadhillah Hakim", sensitive:false,
    modules:["Hybrid Sensing"],
    impact:"—",
    recommendation:"—",
    evidence:[],
-   resolution:{decision:"Tandai false positive",reason:"Perubahan berasal dari reprocessing histori penyedia, bukan observasi baru.",note:"Rule diberi pengecualian untuk event reprocessing.",by:"Akun Agronomy Head",at:"2026-07-17T14:30:00+07:00",verifier:"Akun Estate Manager",targetVerification:"2026-07-18"},
-   closedBy:"Akun Estate Manager", closedAt:"2026-07-17T16:00:00+07:00" },
+   resolution:{decision:"Tandai false positive",reason:"Perubahan berasal dari reprocessing histori penyedia, bukan observasi baru.",note:"Rule diberi pengecualian untuk event reprocessing.",by:"Michelle Aisyah",at:"2026-07-17T14:30:00+07:00",verifier:"Dimas Fadhillah Hakim",targetVerification:"2026-07-18"},
+   closedBy:"Dimas Fadhillah Hakim", closedAt:"2026-07-17T16:00:00+07:00" },
 ];
 
 /* Issue yang "ditemukan" saat Jalankan Validasi (idempoten — tidak diduplikasi) */
@@ -8175,16 +8199,16 @@ const DQ_INIT_RULES=[
 /* ---------- Mock: Audit Trail (immutable, hanya bertambah) ---------- */
 const DQ_INIT_AUDIT=[
  { id:"AUD-DQ-1012", issueId:null, sourceId:"SRC-SENSOR-001", action:"Retry sync Soil Sensor Gateway — gagal", userId:"USR-001", userName:"Administrator Sistem", role:"Super Admin", at:"2026-07-19T09:30:00+07:00", reason:"Percobaan otomatis terjadwal", before:null, after:{status:"Failed"} },
- { id:"AUD-DQ-1011", issueId:"DQ-2026-014", action:"Issue diverifikasi dan diselesaikan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-19T08:00:00+07:00", reason:"Perubahan satuan dicek terhadap master SOP", before:{status:"Menunggu Verifikasi"}, after:{status:"Selesai"} },
+ { id:"AUD-DQ-1011", issueId:"DQ-2026-014", action:"Issue diverifikasi dan diselesaikan", userId:"USR-007", userName:"Dimas Fadhillah Hakim", role:"Estate Manager", at:"2026-07-19T08:00:00+07:00", reason:"Perubahan satuan dicek terhadap master SOP", before:{status:"Menunggu Verifikasi"}, after:{status:"Selesai"} },
  { id:"AUD-DQ-1010", issueId:"DQ-2026-003", action:"Issue dibuat oleh rule DQ-PAY-001", userId:null, userName:"Sistem", role:"Sistem", at:"2026-07-19T07:05:00+07:00", reason:"Duplicate pekerja+periode pada import payroll", before:null, after:{status:"Baru"} },
  { id:"AUD-DQ-1009", issueId:"DQ-2026-001", action:"Issue dibuat oleh rule DQ-TREE-002", userId:null, userName:"Sistem", role:"Sistem", at:"2026-07-19T05:10:00+07:00", reason:"287 record tanpa koordinat valid", before:null, after:{status:"Baru"} },
  { id:"AUD-DQ-1008", issueId:"DQ-2026-012", action:"Issue ditugaskan", userId:"USR-001", userName:"Administrator Sistem", role:"Super Admin", at:"2026-07-18T14:10:00+07:00", reason:"Perlu konfirmasi lintas blok", before:{ownerId:null}, after:{ownerId:"USR-007",status:"Dalam Pemeriksaan"} },
- { id:"AUD-DQ-1007", issueId:"DQ-2026-002", action:"Bukti diunggah — duplikat-b1c2.xlsx", userId:"USR-008", userName:"Akun Agronomy Head", role:"Agronomy Head", at:"2026-07-18T16:05:00+07:00", reason:null, before:null, after:null },
- { id:"AUD-DQ-1006", issueId:"DQ-2026-002", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-18T15:30:00+07:00", reason:"Verifikasi duplikat memerlukan review agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
- { id:"AUD-DQ-1005", issueId:"DQ-2026-005", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-17T17:00:00+07:00", reason:"Verifikasi lapangan diperlukan", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-013",status:"Ditugaskan"} },
- { id:"AUD-DQ-1004", issueId:"DQ-2026-015", action:"Issue ditutup — False Positive", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-17T16:00:00+07:00", reason:"Reprocessing histori penyedia, bukan observasi baru", before:{status:"Menunggu Verifikasi"}, after:{status:"False Positive"} },
- { id:"AUD-DQ-1003", issueId:"DQ-2026-014", action:"Resolution diajukan — Gunakan data baru", userId:"USR-010", userName:"Akun Warehouse Officer", role:"Warehouse Officer", at:"2026-07-17T11:05:00+07:00", reason:"Satuan distandarkan mengikuti master SOP material versi 2", before:{status:"Dalam Pemeriksaan"}, after:{status:"Menunggu Verifikasi"} },
- { id:"AUD-DQ-1002", issueId:"DQ-2026-006", action:"Issue ditugaskan", userId:"USR-007", userName:"Akun Estate Manager", role:"Estate Manager", at:"2026-07-16T11:00:00+07:00", reason:"Konflik komoditas perlu keputusan agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
+ { id:"AUD-DQ-1007", issueId:"DQ-2026-002", action:"Bukti diunggah — duplikat-b1c2.xlsx", userId:"USR-008", userName:"Michelle Aisyah", role:"Agronomy Head", at:"2026-07-18T16:05:00+07:00", reason:null, before:null, after:null },
+ { id:"AUD-DQ-1006", issueId:"DQ-2026-002", action:"Issue ditugaskan", userId:"USR-007", userName:"Dimas Fadhillah Hakim", role:"Estate Manager", at:"2026-07-18T15:30:00+07:00", reason:"Verifikasi duplikat memerlukan review agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
+ { id:"AUD-DQ-1005", issueId:"DQ-2026-005", action:"Issue ditugaskan", userId:"USR-007", userName:"Dimas Fadhillah Hakim", role:"Estate Manager", at:"2026-07-17T17:00:00+07:00", reason:"Verifikasi lapangan diperlukan", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-013",status:"Ditugaskan"} },
+ { id:"AUD-DQ-1004", issueId:"DQ-2026-015", action:"Issue ditutup — False Positive", userId:"USR-007", userName:"Dimas Fadhillah Hakim", role:"Estate Manager", at:"2026-07-17T16:00:00+07:00", reason:"Reprocessing histori penyedia, bukan observasi baru", before:{status:"Menunggu Verifikasi"}, after:{status:"False Positive"} },
+ { id:"AUD-DQ-1003", issueId:"DQ-2026-014", action:"Resolution diajukan — Gunakan data baru", userId:"USR-010", userName:"Mahfud Irsyad", role:"Warehouse Officer", at:"2026-07-17T11:05:00+07:00", reason:"Satuan distandarkan mengikuti master SOP material versi 2", before:{status:"Dalam Pemeriksaan"}, after:{status:"Menunggu Verifikasi"} },
+ { id:"AUD-DQ-1002", issueId:"DQ-2026-006", action:"Issue ditugaskan", userId:"USR-007", userName:"Dimas Fadhillah Hakim", role:"Estate Manager", at:"2026-07-16T11:00:00+07:00", reason:"Konflik komoditas perlu keputusan agronomi", before:{ownerId:null,status:"Baru"}, after:{ownerId:"USR-008",status:"Ditugaskan"} },
  { id:"AUD-DQ-1001", issueId:null, ruleId:"DQ-LAB-001", action:"Rule diubah — Pekerja nonaktif tidak boleh ditugaskan", userId:"USR-001", userName:"Administrator Sistem", role:"Super Admin", at:"2026-07-12T09:05:00+07:00", reason:"Dinonaktifkan sementara selama migrasi status pekerja", before:{status:"Aktif"}, after:{status:"Nonaktif"} },
 ];
 
@@ -9755,14 +9779,14 @@ function useFieldEngine(deps){
    const patch={status:"Menunggu Verifikasi",progress:Math.max(0,Math.min(100,op.payload.progress||100)),actualTrees:op.payload.treesOk||0,submitted:FIELD_TODAY,gps:op.payload.gps?(op.payload.gps.lat+", "+op.payload.gps.lon):undefined};
    if(d.wos.some(w=>w.id===op.payload.woId)) d.updateWo(op.payload.woId,patch,"Realisasi diajukan dari PWA Lapangan ("+(device?device.deviceId:"device")+") — menunggu verifikasi");
    else { const p=activePack&&activePack.data.workOrders.find(w=>w.id===op.payload.woId);
-    d.addWo(mkWo({id:op.payload.woId,title:(p&&p.title)||"Realisasi lapangan "+op.payload.woId,activity:(p&&p.activity)||"Perawatan",block:(p&&p.block)||(activePack?activePack.blockIds[0]:"GH-B04"),status:"Menunggu Verifikasi",priority:(p&&p.priority)||"Sedang",scheduled:FIELD_TODAY,supervisor:(p&&p.supervisor)||"—",...patch})); }
+    d.addWo(mkWo({id:op.payload.woId,title:(p&&p.title)||"Realisasi lapangan "+op.payload.woId,activity:(p&&p.activity)||"Perawatan",block:(p&&p.block)||(activePack?activePack.blockIds[0]:"GH-B04"),status:"Menunggu Verifikasi",priority:(p&&p.priority)||"Sedang",scheduled:FIELD_TODAY,supervisor:(p&&p.supervisor)||"—",createdById:d.curUser?d.curUser.id:null,createdByName:d.curUser?d.curUser.name:null,...patch})); }
    { const aw=d.wos.find(w=>w.id===op.payload.woId); if(aw&&aw.alertId&&d.alertLoop) d.alertLoop.onFieldWoSubmitted(op.payload.woId,{...op,deviceId:device?device.deviceId:"device"}); }
   }
   if(op.entityType==="media"){ const m=media.find(x=>x.id===op.localEntityId); if(m) putMedia({...m,syncStatus:"uploaded",serverEntityId:res.serverEntityId}); }
   if(op.entityType==="wo-create"){
    const ins=queue.find(o=>o.localEntityId===op.payload.fromInspectionLocal&&o.entityType==="inspection");
    const insServer=op.payload.inspectionServerId||(ins&&ins.serverEntityId);
-   d.addWo(mkWo({id:res.serverEntityId,title:"Tindak lanjut inspeksi "+(insServer||op.payload.fromInspectionLocal),activity:op.payload.activity,block:op.payload.block||(activePack?activePack.blockIds[0]:"GH-B04"),petak:op.payload.petak,status:"Draft",priority:op.payload.priority,scheduled:FIELD_TODAY,supervisor:depsRef.current.curUser?depsRef.current.curUser.name:"—",note:"Dibuat otomatis dari inspeksi lapangan offline "+(insServer||"")}));
+   d.addWo(mkWo({id:res.serverEntityId,title:"Tindak lanjut inspeksi "+(insServer||op.payload.fromInspectionLocal),activity:op.payload.activity,block:op.payload.block||(activePack?activePack.blockIds[0]:"GH-B04"),petak:op.payload.petak,status:"Draft",priority:op.payload.priority,scheduled:FIELD_TODAY,supervisor:depsRef.current.curUser?depsRef.current.curUser.name:"—",createdById:depsRef.current.curUser?depsRef.current.curUser.id:null,createdByName:depsRef.current.curUser?depsRef.current.curUser.name:null,note:"Dibuat otomatis dari inspeksi lapangan offline "+(insServer||"")}));
   }
  };
 
@@ -11313,27 +11337,27 @@ const AL_INIT_ALERTS=[
   detectedAt:alIso(AL_D1,22,10), acknowledgedAt:alIso(AL_D1,22,40), triagedAt:alIso(AL_TODAY,7,5),
   ownerId:"USR-015", ownerName:"Asep Ganjar", ownerRole:"Field Supervisor",
   inspectionIds:["INS-2026-0067"],
-  triage:{result:"Perlu Inspeksi",impactLevel:"Sedang",suspectedCause:"Emitter irigasi tersumbat",urgency:"Tinggi",by:"Akun Agronomy Head",at:alIso(AL_TODAY,7,5)},
+  triage:{result:"Perlu Inspeksi",impactLevel:"Sedang",suspectedCause:"Emitter irigasi tersumbat",urgency:"Tinggi",by:"Michelle Aisyah",at:alIso(AL_TODAY,7,5)},
   impact:"Zona akar mengering; risiko gugur bunga pada 38 pohon.",
   rec:"Inspeksi jalur irigasi sub-main sebelum 14:00; siapkan penyiraman korektif.",
   timeline:[alTl(alIso(AL_D1,22,10),"Alert dibuat dari Sensor Tanah SNS-B4-07",{by:"Sistem"}),
-   alTl(alIso(AL_D1,22,40),"Alert diakui",{by:"Akun Agronomy Head"}),
-   alTl(alIso(AL_TODAY,7,5),"Triage: Perlu Inspeksi — dugaan emitter tersumbat",{by:"Akun Agronomy Head"}),
-   alTl(alIso(AL_TODAY,7,10),"Inspeksi INS-2026-0067 dijadwalkan untuk Asep Ganjar (tersedia offline di PWA)",{by:"Akun Agronomy Head"})] }),
+   alTl(alIso(AL_D1,22,40),"Alert diakui",{by:"Michelle Aisyah"}),
+   alTl(alIso(AL_TODAY,7,5),"Triage: Perlu Inspeksi — dugaan emitter tersumbat",{by:"Michelle Aisyah"}),
+   alTl(alIso(AL_TODAY,7,10),"Inspeksi INS-2026-0067 dijadwalkan untuk Asep Ganjar (tersedia offline di PWA)",{by:"Michelle Aisyah"})] }),
  alMk({ id:"ALT-2026-0043", title:"Serangan penggerek batang terkonfirmasi di B2C1P4", severity:"Tinggi", stage:AL_S.CONFIRMED,
   description:"Surveilans OPT menemukan 12 pohon dengan lubang gerek aktif; inspeksi mengonfirmasi serangan.",
   category:"Kesehatan Tanaman", type:"OPT Outbreak",
   source:{type:"Surveilans OPT",sourceId:"SRV-2026-0207",ruleId:"ALR-OPT-002",detectedValue:12,threshold:5,unit:"pohon",confidence:97,coverage:100,observedAt:alIso(AL_D0,9,0),freshness:"2 hari lalu"},
   blockId:"GH-B02", clusterId:"B2C1", plotId:"B2C1P4", impactTreeCount:12,
   detectedAt:alIso(AL_D0,9,30), acknowledgedAt:alIso(AL_D0,10,0), triagedAt:alIso(AL_D0,11,0),
-  ownerId:"USR-008", ownerName:"Akun Agronomy Head", ownerRole:"Agronomy Head",
+  ownerId:"USR-008", ownerName:"Michelle Aisyah", ownerRole:"Agronomy Head",
   inspectionIds:["INS-2026-0063"],
-  triage:{result:"Perlu Inspeksi",impactLevel:"Tinggi",suspectedCause:"Penggerek batang (Batocera)",urgency:"Tinggi",by:"Akun Agronomy Head",at:alIso(AL_D0,11,0)},
+  triage:{result:"Perlu Inspeksi",impactLevel:"Tinggi",suspectedCause:"Penggerek batang (Batocera)",urgency:"Tinggi",by:"Michelle Aisyah",at:alIso(AL_D0,11,0)},
   impact:"Serangan aktif dapat menyebar ke pohon tetangga dalam 1–2 minggu.",
   rec:"Susun action plan injeksi & sanitasi; terbitkan WO pengendalian hama.",
   timeline:[alTl(alIso(AL_D0,9,30),"Alert dibuat dari Surveilans OPT",{by:"Sistem"}),
-   alTl(alIso(AL_D0,10,0),"Alert diakui",{by:"Akun Agronomy Head"}),
-   alTl(alIso(AL_D0,11,0),"Triage: Perlu Inspeksi",{by:"Akun Agronomy Head"}),
+   alTl(alIso(AL_D0,10,0),"Alert diakui",{by:"Michelle Aisyah"}),
+   alTl(alIso(AL_D0,11,0),"Triage: Perlu Inspeksi",{by:"Michelle Aisyah"}),
    alTl(alIso(AL_D1,10,42),"Inspeksi INS-2026-0063 selesai — serangan terkonfirmasi (Confirmed)",{by:"Saktian",device:"DEVICE-FS02-01"})] }),
  alMk({ id:"ALT-2026-0044", title:"Stres air area barat Petak B4C2P8 (eksekusi berjalan)", severity:"Tinggi", stage:AL_S.IN_EXECUTION,
   description:"Kombinasi NDVI & soil moisture mengonfirmasi stres air; perbaikan irigasi sedang dieksekusi.",
@@ -11341,16 +11365,16 @@ const AL_INIT_ALERTS=[
   source:{type:"Hybrid Sensing",sourceId:"OBS-SAT-20260718-B4C2P8",ruleId:"ALR-NDVI-003",detectedValue:0.47,threshold:0.55,unit:"index",confidence:88,coverage:96,observedAt:alIso("2026-07-18",6,0),freshness:"3 hari lalu"},
   blockId:"GH-B04", clusterId:"B4C2", plotId:"B4C2P8", impactTreeCount:44, impactAreaHa:0.52,
   detectedAt:alIso("2026-07-18",6,20), acknowledgedAt:alIso("2026-07-18",6,50), triagedAt:alIso("2026-07-18",8,0),
-  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Asep Ganjar",
+  ownerId:"USR-007", ownerName:"Dimas Fadhillah Hakim", ownerRole:"Estate Manager", executorName:"Asep Ganjar",
   inspectionIds:["INS-2026-0060"], actionPlanIds:["CAP-2026-0018"], workOrderIds:["WO-2026-0131"], assignmentIds:["ASN-2026-0084"],
-  triage:{result:"Perlu Inspeksi",impactLevel:"Tinggi",suspectedCause:"Emitter tersumbat pada sub-main barat",urgency:"Tinggi",by:"Akun Agronomy Head",at:alIso("2026-07-18",8,0)},
+  triage:{result:"Perlu Inspeksi",impactLevel:"Tinggi",suspectedCause:"Emitter tersumbat pada sub-main barat",urgency:"Tinggi",by:"Michelle Aisyah",at:alIso("2026-07-18",8,0)},
   impact:"44 pohon; potensi kehilangan hasil bila kelembapan tidak pulih.",
   rec:"Selesaikan WO-2026-0131 lalu ajukan verifikasi dengan bukti lengkap.",
   timeline:[alTl(alIso("2026-07-18",6,20),"Alert dibuat oleh Hybrid Sensing",{by:"Sistem"}),
-   alTl(alIso("2026-07-18",6,50),"Alert diakui",{by:"Akun Agronomy Head"}),
+   alTl(alIso("2026-07-18",6,50),"Alert diakui",{by:"Michelle Aisyah"}),
    alTl(alIso("2026-07-18",10,42),"Inspeksi INS-2026-0060 selesai — stres air terkonfirmasi",{by:"Asep Ganjar"}),
-   alTl(alIso("2026-07-18",11,10),"Action Plan CAP-2026-0018 disetujui",{by:"Akun Estate Manager"}),
-   alTl(alIso("2026-07-18",11,35),"Work Order WO-2026-0131 diterbitkan dari action plan",{by:"Akun Estate Manager"}),
+   alTl(alIso("2026-07-18",11,10),"Action Plan CAP-2026-0018 disetujui",{by:"Dimas Fadhillah Hakim"}),
+   alTl(alIso("2026-07-18",11,35),"Work Order WO-2026-0131 diterbitkan dari action plan",{by:"Dimas Fadhillah Hakim"}),
    alTl(alIso("2026-07-18",13,0),"Regu HOK ditugaskan (ASN-2026-0084) — 6 pekerja",{by:"Asep Ganjar"})] }),
  alMk({ id:"ALT-2026-0045", title:"Pompa irigasi P-02 tekanan rendah (menunggu verifikasi)", severity:"Sedang", stage:AL_S.PENDING_VERIFICATION,
   description:"Perbaikan seal pompa selesai di lapangan; bukti telah dikirim via PWA dan menunggu verifikasi.",
@@ -11358,14 +11382,14 @@ const AL_INIT_ALERTS=[
   source:{type:"Sensor Tanah",sourceId:"SNS-PMP-02",ruleId:"ALR-AST-004",detectedValue:1.1,threshold:1.8,unit:"bar",confidence:95,coverage:100,observedAt:alIso("2026-07-17",7,0),freshness:"4 hari lalu"},
   blockId:"GH-B03", clusterId:"B3C1", plotId:"B3C1P2",
   detectedAt:alIso("2026-07-17",7,10), acknowledgedAt:alIso("2026-07-17",7,30), triagedAt:alIso("2026-07-17",8,0),
-  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager", executorName:"Indra",
+  ownerId:"USR-007", ownerName:"Dimas Fadhillah Hakim", ownerRole:"Estate Manager", executorName:"Indra",
   workOrderIds:["WO-2026-0138"], evidenceIds:["EVD-2026-0104","EVD-2026-0105"],
-  triage:{result:"Terkonfirmasi Tanpa Inspeksi",impactLevel:"Sedang",suspectedCause:"Seal pompa aus (diagnosis deterministik)",urgency:"Sedang",by:"Akun Estate Manager",at:alIso("2026-07-17",8,0)},
+  triage:{result:"Terkonfirmasi Tanpa Inspeksi",impactLevel:"Sedang",suspectedCause:"Seal pompa aus (diagnosis deterministik)",urgency:"Sedang",by:"Dimas Fadhillah Hakim",at:alIso("2026-07-17",8,0)},
   impact:"Debit irigasi Blok 3 turun 35% selama pompa bermasalah.",
   rec:"Verifikasi hasil perbaikan pada Antrian Verifikasi.",
   timeline:[alTl(alIso("2026-07-17",7,10),"Alert dibuat dari telemetry pompa",{by:"Sistem"}),
-   alTl(alIso("2026-07-17",8,0),"Triage: Terkonfirmasi tanpa inspeksi (diagnosis deterministik — perbaikan teknis)",{by:"Akun Estate Manager"}),
-   alTl(alIso("2026-07-17",8,15),"Work Order WO-2026-0138 diterbitkan",{by:"Akun Estate Manager"}),
+   alTl(alIso("2026-07-17",8,0),"Triage: Terkonfirmasi tanpa inspeksi (diagnosis deterministik — perbaikan teknis)",{by:"Dimas Fadhillah Hakim"}),
+   alTl(alIso("2026-07-17",8,15),"Work Order WO-2026-0138 diterbitkan",{by:"Dimas Fadhillah Hakim"}),
    alTl(alIso(AL_D1,15,20),"Bukti tindakan dikirim melalui Offline Field PWA (2 foto, geotag)",{by:"Indra",device:"DEVICE-FS03-02"}),
    alTl(alIso(AL_D1,15,25),"Work Order diajukan — Menunggu Verifikasi",{by:"Indra"})] }),
  alMk({ id:"ALT-2026-0046", title:"Kekurangan kelembapan zona akar B1C2P3 (monitoring)", severity:"Sedang", stage:AL_S.EFFECTIVENESS_MONITORING,
@@ -11374,9 +11398,9 @@ const AL_INIT_ALERTS=[
   source:{type:"Sensor Tanah",sourceId:"SNS-B1-03",ruleId:"ALR-SM-001",detectedValue:17,threshold:22,unit:"%",confidence:93,coverage:100,observedAt:alIso("2026-07-15",6,0),freshness:"6 hari lalu"},
   blockId:"GH-B01", clusterId:"B1C2", plotId:"B1C2P3", impactTreeCount:26,
   detectedAt:alIso("2026-07-15",6,10), acknowledgedAt:alIso("2026-07-15",6,40), triagedAt:alIso("2026-07-15",8,0),
-  ownerId:"USR-008", ownerName:"Akun Agronomy Head", ownerRole:"Agronomy Head", executorName:"FS-01 Regu B01",
+  ownerId:"USR-008", ownerName:"Michelle Aisyah", ownerRole:"Agronomy Head", executorName:"FS-01 Regu B01",
   inspectionIds:["INS-2026-0058"], actionPlanIds:["CAP-2026-0016"], workOrderIds:["WO-2026-0126"], verificationIds:["VRF-2026-0031"],
-  triage:{result:"Perlu Inspeksi",impactLevel:"Sedang",by:"Akun Agronomy Head",at:alIso("2026-07-15",8,0)},
+  triage:{result:"Perlu Inspeksi",impactLevel:"Sedang",by:"Michelle Aisyah",at:alIso("2026-07-15",8,0)},
   monitoringPlan:{ startAt:"2026-07-19", dueAt:"2026-07-26", baseline:{metric:"soilMoisture",value:17}, target:{operator:">=",value:28,unit:"%"},
    observationSources:["Sensor Tanah","Inspeksi Lapangan"], minimumObservations:2,
    observations:[{at:alIso(AL_D1,6,0),metric:"soilMoisture",value:29,source:"Sensor Tanah",by:"Sistem"}], result:null },
@@ -11384,7 +11408,7 @@ const AL_INIT_ALERTS=[
   rec:"Tambahkan 1 observasi lagi sebelum evaluasi efektivitas.",
   timeline:[alTl(alIso("2026-07-15",6,10),"Alert dibuat dari Sensor Tanah",{by:"Sistem"}),
    alTl(alIso("2026-07-17",9,30),"WO-2026-0126 selesai dilaksanakan",{by:"FS-01"}),
-   alTl(alIso("2026-07-19",8,30),"Work Order diverifikasi & disetujui (VRF-2026-0031) — alert masuk Monitoring Efektivitas",{by:"Akun Estate Manager"}),
+   alTl(alIso("2026-07-19",8,30),"Work Order diverifikasi & disetujui (VRF-2026-0031) — alert masuk Monitoring Efektivitas",{by:"Dimas Fadhillah Hakim"}),
    alTl(alIso(AL_D1,6,0),"Observasi 1/2: soil moisture 29% (≥ target 28%)",{by:"Sistem"})] }),
  alMk({ id:"ALT-2026-0047", title:"Genangan drainase B3C2P5 kambuh (dibuka kembali)", severity:"Tinggi", stage:AL_S.REOPENED,
   description:"Setelah perbaikan drainase, genangan muncul kembali pada monitoring hari ke-4. Alert dibuka kembali.",
@@ -11392,7 +11416,7 @@ const AL_INIT_ALERTS=[
   source:{type:"Inspeksi lapangan",sourceId:"INS-2026-0052",ruleId:"ALR-DRN-002",detectedValue:9,threshold:2,unit:"cm",confidence:99,coverage:100,observedAt:alIso(AL_D1,16,0),freshness:"17 jam lalu"},
   blockId:"GH-B03", clusterId:"B3C2", plotId:"B3C2P5", impactTreeCount:18,
   detectedAt:alIso("2026-07-12",7,0), acknowledgedAt:alIso("2026-07-12",7,30), triagedAt:alIso("2026-07-12",9,0),
-  ownerId:"USR-007", ownerName:"Akun Estate Manager", ownerRole:"Estate Manager",
+  ownerId:"USR-007", ownerName:"Dimas Fadhillah Hakim", ownerRole:"Estate Manager",
   inspectionIds:["INS-2026-0052"], actionPlanIds:["CAP-2026-0014"], workOrderIds:["WO-2026-0121"],
   reopenCount:1, occurrenceCount:2,
   monitoringPlan:{ startAt:"2026-07-16", dueAt:"2026-07-23", baseline:{metric:"genangan",value:9}, target:{operator:"<=",value:2,unit:"cm"},
@@ -11401,7 +11425,7 @@ const AL_INIT_ALERTS=[
   impact:"Akar 18 pohon terendam berulang; risiko busuk akar meningkat.",
   rec:"Triage ulang: evaluasi kapasitas saluran sekunder, bukan hanya pembersihan.",
   timeline:[alTl(alIso("2026-07-12",7,0),"Alert dibuat dari inspeksi rutin",{by:"FS-03"}),
-   alTl(alIso("2026-07-16",9,0),"WO-2026-0121 diverifikasi — masuk monitoring",{by:"Akun Estate Manager"}),
+   alTl(alIso("2026-07-16",9,0),"WO-2026-0121 diverifikasi — masuk monitoring",{by:"Dimas Fadhillah Hakim"}),
    alTl(alIso(AL_D1,16,0),"Observasi monitoring gagal: genangan 9 cm (target ≤ 2 cm)",{by:"FS-03"}),
    alTl(alIso(AL_D1,16,5),"Monitoring TIDAK EFEKTIF — alert dibuka kembali (reopen ke-1), SLA baru dimulai",{by:"Sistem"})] }),
  alMk({ id:"ALT-2026-0048", title:"Anomali NDVI massal B2 (false positive — awan)", severity:"Sedang", stage:AL_S.CLOSED,
@@ -11410,16 +11434,16 @@ const AL_INIT_ALERTS=[
   source:{type:"Satelit",sourceId:"OBS-SAT-20260716-B2",ruleId:"ALR-NDVI-003",detectedValue:0.38,threshold:0.55,unit:"index",confidence:41,coverage:52,observedAt:alIso("2026-07-16",6,0),freshness:"5 hari lalu"},
   blockId:"GH-B02", clusterId:null, plotId:null,
   detectedAt:alIso("2026-07-16",6,15), acknowledgedAt:alIso("2026-07-16",7,0), triagedAt:alIso("2026-07-16",8,0),
-  ownerId:"USR-008", ownerName:"Akun Agronomy Head", ownerRole:"Agronomy Head",
+  ownerId:"USR-008", ownerName:"Michelle Aisyah", ownerRole:"Agronomy Head",
   inspectionIds:["INS-2026-0055"],
-  disposition:ALERT_DISPOSITIONS.FALSE_POSITIVE, dispositionReason:"Cloud contamination — coverage 52% & confidence 41; inspeksi lapangan tidak menemukan gejala.", dispositionVerifier:"Akun Agronomy Head",
+  disposition:ALERT_DISPOSITIONS.FALSE_POSITIVE, dispositionReason:"Cloud contamination — coverage 52% & confidence 41; inspeksi lapangan tidak menemukan gejala.", dispositionVerifier:"Michelle Aisyah",
   resolvedAt:alIso("2026-07-17",9,0), closedAt:alIso("2026-07-17",9,0),
-  closure:{outcome:ALERT_DISPOSITIONS.FALSE_POSITIVE,summary:"Inspeksi INS-2026-0055 (Not Confirmed) — vegetasi normal.",rootCause:"Kontaminasi awan pada scene satelit",correctiveAction:"—",preventiveAction:"Naikkan ambang minimum coverage rule ALR-NDVI-003 menjadi 70%",verifier:"Akun Agronomy Head",at:alIso("2026-07-17",9,0)},
+  closure:{outcome:ALERT_DISPOSITIONS.FALSE_POSITIVE,summary:"Inspeksi INS-2026-0055 (Not Confirmed) — vegetasi normal.",rootCause:"Kontaminasi awan pada scene satelit",correctiveAction:"—",preventiveAction:"Naikkan ambang minimum coverage rule ALR-NDVI-003 menjadi 70%",verifier:"Michelle Aisyah",at:alIso("2026-07-17",9,0)},
   impact:"Tidak ada dampak lapangan.",
   rec:"Rule sensing perlu penyesuaian ambang coverage.",
   timeline:[alTl(alIso("2026-07-16",6,15),"Alert dibuat oleh pipeline satelit (confidence rendah 41%)",{by:"Sistem"}),
    alTl(alIso("2026-07-16",14,30),"Inspeksi INS-2026-0055: Not Confirmed",{by:"Saktian"}),
-   alTl(alIso("2026-07-17",9,0),"Ditandai False Positive & ditutup — preventive: penyesuaian ambang coverage rule",{by:"Akun Agronomy Head"})] }),
+   alTl(alIso("2026-07-17",9,0),"Ditandai False Positive & ditutup — preventive: penyesuaian ambang coverage rule",{by:"Michelle Aisyah"})] }),
 ];
 /* Inspeksi (entitas terpisah, alertId wajib) */
 const AL_INIT_INSPECTIONS=[
@@ -11458,15 +11482,15 @@ const AL_INIT_PLANS=[
    recommendedActions:["Periksa jalur irigasi","Perbaiki emitter tersumbat","Lakukan penyiraman korektif"],
    sopId:"SOP-AIR-004", targetAreaHa:0.52, targetTreeCount:44,
    successCriteria:[{metric:"soilMoisture",operator:">=",target:28,unit:"%"},{metric:"affectedTreeCount",operator:"<=",target:5,unit:"tree"}],
-   monitoringWindowDays:7, approvedBy:"Akun Estate Manager", approvedAt:alIso("2026-07-18",11,10), status:"Disetujui", createdAt:alIso("2026-07-18",10,55), createdBy:"Akun Agronomy Head" },
+   monitoringWindowDays:7, approvedBy:"Dimas Fadhillah Hakim", approvedAt:alIso("2026-07-18",11,10), status:"Disetujui", createdAt:alIso("2026-07-18",10,55), createdBy:"Michelle Aisyah" },
  { id:"CAP-2026-0016", alertId:"ALT-2026-0046", inspectionId:"INS-2026-0058", diagnosis:"Emitter tersumbat B1C2P3", objective:"Soil moisture ≥ 28%",
    recommendedActions:["Flushing sub-main","Ganti emitter rusak"], sopId:"SOP-AIR-004", targetTreeCount:26,
    successCriteria:[{metric:"soilMoisture",operator:">=",target:28,unit:"%"}], monitoringWindowDays:7,
-   approvedBy:"Akun Estate Manager", approvedAt:alIso("2026-07-15",13,0), status:"Disetujui", createdAt:alIso("2026-07-15",12,30), createdBy:"Akun Agronomy Head" },
+   approvedBy:"Dimas Fadhillah Hakim", approvedAt:alIso("2026-07-15",13,0), status:"Disetujui", createdAt:alIso("2026-07-15",12,30), createdBy:"Michelle Aisyah" },
  { id:"CAP-2026-0014", alertId:"ALT-2026-0047", inspectionId:"INS-2026-0052", diagnosis:"Saluran drainase tersumbat", objective:"Genangan ≤ 2 cm setelah hujan",
    recommendedActions:["Bersihkan saluran tersier","Perdalam titik kritis"], sopId:"SOP-DRN-002", targetTreeCount:18,
    successCriteria:[{metric:"genangan",operator:"<=",target:2,unit:"cm"}], monitoringWindowDays:7,
-   approvedBy:"Akun Estate Manager", approvedAt:alIso("2026-07-12",11,0), status:"Disetujui", createdAt:alIso("2026-07-12",10,30), createdBy:"Akun Agronomy Head" },
+   approvedBy:"Dimas Fadhillah Hakim", approvedAt:alIso("2026-07-12",11,0), status:"Disetujui", createdAt:alIso("2026-07-12",10,30), createdBy:"Michelle Aisyah" },
 ];
 /* Evidence */
 const AL_INIT_EVIDENCE=[
@@ -11490,7 +11514,7 @@ const AL_INIT_EVIDENCE=[
 /* Verifikasi tercatat */
 const AL_INIT_VERIFS=[
  { id:"VRF-2026-0031", alertId:"ALT-2026-0046", workOrderId:"WO-2026-0126", decision:"Disetujui", notes:"Bukti lengkap; realisasi sesuai target.",
-   verifier:"Akun Estate Manager", verifierRole:"Estate Manager", at:alIso("2026-07-19",8,30) },
+   verifier:"Dimas Fadhillah Hakim", verifierRole:"Estate Manager", at:alIso("2026-07-19",8,30) },
 ];
 /* HOK assignment (entitas ASN — terhubung ke alert & WO; roster tetap modul existing) */
 const AL_INIT_ASSIGNMENTS=[
@@ -11508,7 +11532,7 @@ const AL_SEED_WOS=[
   materials:[{id:"MAT-EMT",name:"Emitter 8 L/j",unit:"pcs",qty:60},{id:"MAT-PIPA",name:"Selang PE 16mm",unit:"m",qty:40}],
   note:"Dibuat dari Action Plan CAP-2026-0018 (alert ALT-2026-0044)" }),
  mkWo({ id:"WO-2026-0138", title:"Perbaikan seal pompa irigasi P-02", activity:"Perbaikan irigasi", block:"GH-B03", petak:"B3C1P2",
-  status:"Menunggu Verifikasi", priority:"Sedang", scheduled:AL_D1, due:AL_D1, submitted:AL_D1, supervisor:"Indra", team:2, targetTrees:0, progress:100, sop:"SOP-AIR-006",
+  status:"Menunggu Verifikasi", priority:"Sedang", scheduled:AL_D1, due:AL_D1, submitted:AL_D1, supervisor:"Indra", createdById:"USR-007", createdByName:"Dimas Fadhillah Hakim", team:2, targetTrees:0, progress:100, sop:"SOP-AIR-006",
   alertId:"ALT-2026-0045", requiredEvidence:["Foto kerusakan","Foto perbaikan","GPS"], monitoringWindowDays:3,
   successCriteria:[{metric:"tekanan",operator:">=",target:1.8,unit:"bar"}], evidence:[{t:"Foto kerusakan"},{t:"Foto perbaikan"}], gps:"-6.6559, 107.4188",
   note:"Dibuat langsung dari triage (diagnosis deterministik — pengecualian action plan). Bukti via PWA Lapangan." }),
@@ -11967,7 +11991,7 @@ function AlertsPage(){
  const [fSla,setFSla]=useState("Semua"); const [fSrc,setFSrc]=useState("Semua"); const [fBlock,setFBlock]=useState(route.params.block||"Semua");
  const [qf,setQf]=useState(route.params.qf||null);
  const [selIds,setSelIds]=useState([]);
- const [bulkAssignOpen,setBulkAssignOpen]=useState(false); const [bulkOwner,setBulkOwner]=useState("Akun Agronomy Head");
+ const [bulkAssignOpen,setBulkAssignOpen]=useState(false); const [bulkOwner,setBulkOwner]=useState("Michelle Aisyah");
  useEffect(()=>{ if(route.params.qf) setQf(route.params.qf); if(route.params.stage) setFStage(route.params.stage); },[route.params.qf,route.params.stage]);
  const open=alerts.filter(a=>alertLifecycleStatus(a)==="Open");
  const kpis=[
@@ -12158,7 +12182,7 @@ function AlertsPage(){
    </>)}
    <Modal open={bulkAssignOpen} onClose={()=>setBulkAssignOpen(false)} title={"Assign Owner — "+selIds.length+" alert"}
     footer={<><Btn variant="secondary" onClick={()=>setBulkAssignOpen(false)}>Batal</Btn><Btn onClick={()=>{selIds.forEach(id=>L.assignAlert(id,{ownerName:bulkOwner,ownerRole:bulkOwner.includes("Agronomy")?"Agronomy Head":bulkOwner.includes("Estate")?"Estate Manager":"Field Supervisor"}));setBulkAssignOpen(false);setSelIds([]);}}>Tugaskan</Btn></>}>
-    <Lbl>Owner</Lbl><Sel value={bulkOwner} onChange={e=>setBulkOwner(e.target.value)} options={["Akun Agronomy Head","Akun Estate Manager",...SUPERVISORS]} className="w-full"/>
+    <Lbl>Owner</Lbl><Sel value={bulkOwner} onChange={e=>setBulkOwner(e.target.value)} options={["Michelle Aisyah","Dimas Fadhillah Hakim",...SUPERVISORS]} className="w-full"/>
    </Modal>
   </div>);
 }
@@ -12445,7 +12469,7 @@ function AlertDetailPage(){
       <div className="px-4 py-2">
        <KeyVal k="Owner" v={a.ownerName||"Belum ditetapkan"}/><KeyVal k="Peran" v={a.ownerRole||"—"}/>
        <KeyVal k="Executor" v={a.executorName||"—"}/><KeyVal k="Verifier" v={(a.closure&&a.closure.verifier)||a.dispositionVerifier||"—"}/>
-       {alertCanRolePerform(role,"assignAlert",a,curUser).ok&&alertLifecycleStatus(a)==="Open"&&<div className="py-2"><Btn size="sm" variant="secondary" className="w-full" onClick={()=>openM("assign",{owner:a.ownerName||"Akun Agronomy Head"})}><User size={13}/>Tetapkan Owner</Btn></div>}
+       {alertCanRolePerform(role,"assignAlert",a,curUser).ok&&alertLifecycleStatus(a)==="Open"&&<div className="py-2"><Btn size="sm" variant="secondary" className="w-full" onClick={()=>openM("assign",{owner:a.ownerName||"Michelle Aisyah"})}><User size={13}/>Tetapkan Owner</Btn></div>}
       </div>
      </Card>
      {!elig.eligible&&alertLifecycleStatus(a)==="Open"&&<Card title="Closure Blocker" pad={false} className="border-red-200">
@@ -12611,7 +12635,7 @@ function AlertDetailPage(){
    </Modal>
    <Modal open={m==="assign"} onClose={()=>setM(null)} title={"Tetapkan Owner — "+a.id}
     footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.assignAlert(a.id,{ownerName:f.owner,ownerRole:f.owner&&f.owner.includes("Agronomy")?"Agronomy Head":f.owner&&f.owner.includes("Estate")?"Estate Manager":"Field Supervisor"});setM(null);}}>Tugaskan</Btn></>}>
-    <Lbl>Owner</Lbl><Sel value={f.owner||"Akun Agronomy Head"} onChange={e=>setF({...f,owner:e.target.value})} className="w-full" options={["Akun Agronomy Head","Akun Estate Manager",...SUPERVISORS]}/>
+    <Lbl>Owner</Lbl><Sel value={f.owner||"Michelle Aisyah"} onChange={e=>setF({...f,owner:e.target.value})} className="w-full" options={["Michelle Aisyah","Dimas Fadhillah Hakim",...SUPERVISORS]}/>
    </Modal>
    <Modal open={m==="pause"} onClose={()=>setM(null)} title={"Tahan SLA — "+a.id}
     footer={<><Btn variant="secondary" onClick={()=>setM(null)}>Batal</Btn><Btn onClick={()=>{L.pauseAlertSla(a.id,{reason:f.reason,until:f.until});setM(null);}}>Tahan SLA</Btn></>}>
