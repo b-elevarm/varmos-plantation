@@ -1406,6 +1406,13 @@ function CommandPalette(){
   </div>);
 }
 
+/* Avatar kartu akses cepat: pakai gambar (mis. emblem PEAK 92) bila tersedia,
+   jatuh ke ikon peran hijau bila gambar tak ada/gagal dimuat. */
+function DemoAvatar({src,Icon}){
+ const [err,setErr]=useState(false);
+ if(src&&!err) return <img src={src} alt="" onError={()=>setErr(true)} className="w-8 h-8 rounded-md object-contain bg-white border border-gray-100 shrink-0"/>;
+ return <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors shrink-0"><Icon size={14}/></div>;
+}
 function LoginPage(){
  const {users,login,loginUser,updateUser,toast}=useApp();
  const DEMO_PASS="varmos123", DEMO_OTP="246810";
@@ -1525,7 +1532,7 @@ function LoginPage(){
         return (
         <button key={u.id} onClick={()=>loginUser(u)} className="text-left border border-gray-200 rounded-lg p-2.5 hover:border-green-600 hover:shadow-sm hover:-translate-y-px transition-all focus:outline-none focus:ring-2 focus:ring-green-600 group">
          <div className="flex items-center gap-2">
-          <div className="rounded-md p-1.5 bg-green-100 text-green-800 group-hover:bg-green-600 group-hover:text-white transition-colors shrink-0"><Ic size={14}/></div>
+          <DemoAvatar src={u.role==="Mitra Lahan"?"/peak92-logo.png":null} Icon={Ic}/>
           <div className="min-w-0"><div className="text-xs font-semibold text-gray-900 truncate">{name}</div>
            <div className="text-[10px] text-gray-400 truncate">{sub}</div></div>
          </div>
