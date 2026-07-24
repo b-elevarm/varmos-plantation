@@ -1242,10 +1242,10 @@ function Sidebar(){
   <aside className={"h-full bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all "+(collapsed?"w-16":"w-64")}>
    <div className="px-3 py-3 border-b border-gray-200">
     <div className="flex items-center gap-2.5">
-     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{background:C.dark}}><Leaf size={18} className="text-white"/></div>
+     <img src="/icons/icon-192.png" alt="VarmOS" className="w-9 h-9 rounded-lg shrink-0" draggable={false}/>
      {!collapsed && <div className="min-w-0">
-      <div className="text-sm font-bold text-gray-900 leading-tight">VarmOS Plantation</div>
-      <div className="text-xs text-gray-500 truncate">Command Center</div>
+      <img src="/varmos-wordmark.svg" alt="varmos" className="h-6 -ml-0.5" draggable={false}/>
+      <div className="text-[10px] text-gray-500 truncate uppercase tracking-wide mt-0.5">Plantation Command Center</div>
      </div>}
     </div>
     {!collapsed && <select aria-label="Pilih estate" className="mt-2.5 w-full text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-gray-50 text-gray-700" value="EST-001" onChange={()=>{}}>
@@ -1423,9 +1423,9 @@ function LoginPage(){
      {[0,1,2,3,4].map(i=><circle key={"c"+i} cx="480" cy="150" r={28+i*26} fill="none" stroke="#fff" strokeWidth="1"/>)}
      {[0,1,2,3].map(i=><circle key={"d"+i} cx="110" cy="650" r={22+i*22} fill="none" stroke="#fff" strokeWidth="1"/>)}
     </svg>
-    <div className="relative flex items-center gap-3">
-     <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center ring-1 ring-white/25"><Leaf size={22} className="text-white"/></div>
-     <div><div className="text-lg font-bold leading-tight">VarmOS Plantation</div><div className="text-[11px] text-green-100/80">Plantation Command Center</div></div>
+    <div className="relative">
+     <img src="/varmos-wordmark-white.svg" alt="varmos" className="h-12 -ml-1" draggable={false}/>
+     <div className="text-[11px] text-green-100/80 uppercase tracking-wider mt-1">Plantation Command Center</div>
     </div>
     <div className="relative max-w-md">
      <h1 className="text-3xl xl:text-4xl font-bold leading-tight">Satu command center untuk seluruh kebun.</h1>
@@ -1447,9 +1447,9 @@ function LoginPage(){
    {/* ===== Kolom kanan: form & akses cepat ===== */}
    <div className="flex-1 min-h-screen overflow-y-auto">
     <div className="max-w-md mx-auto px-6 py-10 lg:py-14">
-     <div className="flex lg:hidden items-center gap-3 mb-8">
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{background:C.dark}}><Leaf size={22} className="text-white"/></div>
-      <div><div className="text-lg font-bold text-gray-900 leading-tight">VarmOS Plantation</div><div className="text-xs text-gray-500">Kebun Agroforestry Gununghejo</div></div>
+     <div className="lg:hidden mb-8">
+      <img src="/varmos-wordmark.svg" alt="varmos" className="h-11 -ml-1" draggable={false}/>
+      <div className="text-xs text-gray-500 mt-1">Kebun Agroforestry Gununghejo</div>
      </div>
      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       {mode==="cred"&&<form onSubmit={submitCred} className="space-y-3.5">
