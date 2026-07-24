@@ -7631,6 +7631,8 @@ const LB_RATES=[
  {code:"RATE-SPES",name:"Tarif Spesialis (mesin/irigasi)",hok:110000,half:55000,ot:16000,bor:"per output",effFrom:"2026-01-01",status:"Aktif"},
  {code:"RATE-2025",name:"Tarif Standar 2025",hok:75000,half:37500,ot:11000,bor:"per output",effFrom:"2025-01-01",status:"Nonaktif"},
 ];
+/* Tipe pekerja: HOK lapangan + staf/struktural kebun. Dipakai di filter & form Database Pekerja. */
+const LB_WORKER_TYPES=["HOK Reguler","HOK Musiman","Borongan","Tenaga Spesialis","Estate Manager","Agronomy Head","Field Supervisor","Warehouse Officer","Water Management Officer"];
 const LB_STATUS_COL={"Aktif":"green","Tidak Aktif":"gray","Berhenti":"red","Diblokir":"red","Tersedia":"green","Sedang bertugas":"blue","Cuti/Izin":"amber","Tidak tersedia":"gray","Lengkap":"green","Belum lengkap":"amber","Menunggu verifikasi":"amber","Ditolak":"red","Hadir penuh":"green","Setengah hari":"amber","Lembur":"blue","Izin":"amber","Sakit":"amber","Tidak hadir":"red","Terverifikasi":"green","Dijadwalkan":"blue","Berjalan":"blue","Selesai":"green","Menunggu verifikasi ":"amber","Draft":"gray","Disetujui":"green","Perlu revisi":"amber","Diajukan":"blue"};
 const LbBadge=({v})=>{ const t=LB_STATUS_COL[v]||"gray"; const c={green:{bg:"#DCFCE7",fg:"#166534"},blue:{bg:"#DBEAFE",fg:"#1D4ED8"},amber:{bg:"#FEF3C7",fg:"#B45309"},red:{bg:"#FEE2E2",fg:"#B91C1C"},gray:{bg:"#F3F4F6",fg:"#4B5563"}}[t]; return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" style={{background:c.bg,color:c.fg}}>{v}</span>; };
 const lbHue=(s)=>{ let h=0; for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360; return h; };
@@ -7832,7 +7834,7 @@ function WorkerDatabasePage(){
      <div className="relative"><Search size={14} className="absolute left-2.5 top-2.5 text-gray-400"/><input value={q} onChange={e=>{setQ(e.target.value);setPage(1);}} placeholder="Cari nama / ID / telepon…" className="border border-gray-300 rounded-md pl-8 pr-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-green-600"/></div>
      <Sel value={fGroup} onChange={e=>{setFGroup(e.target.value);setPage(1);}} options={[["Semua","Semua kelompok"],...LB_GROUPS.map(g=>[g.id,g.name])]}/>
      <Sel value={fStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}} options={[["Semua","Semua status"],"Aktif","Tidak Aktif","Berhenti"]}/>
-     <Sel value={fType} onChange={e=>{setFType(e.target.value);setPage(1);}} options={[["Semua","Semua tipe"],"HOK Reguler","HOK Musiman","Borongan","Tenaga Spesialis"]}/>
+     <Sel value={fType} onChange={e=>{setFType(e.target.value);setPage(1);}} options={[["Semua","Semua tipe"],...LB_WORKER_TYPES]}/>
      <Sel value={fAvail} onChange={e=>{setFAvail(e.target.value);setPage(1);}} options={[["Semua","Semua ketersediaan"],"Tersedia","Sedang bertugas","Cuti/Izin","Tidak tersedia"]}/>
      <Sel value={fDoc} onChange={e=>{setFDoc(e.target.value);setPage(1);}} options={[["Semua","Semua dokumen"],"Lengkap","Belum lengkap","Menunggu verifikasi"]}/>
     </div>
@@ -7873,7 +7875,7 @@ function AddWorkerDrawer({onClose}){
     <div className="text-xs text-gray-500">ID pekerja dibuat otomatis. Lengkapi dokumen (KTP, rekening) di halaman profil setelah tersimpan.</div>
     <div><Lbl>Nama lengkap (wajib)</Lbl><Inp value={f.name} onChange={e=>set("name",e.target.value)} placeholder="mis. Asep Suryana"/></div>
     <div className="grid grid-cols-2 gap-3"><div><Lbl>No. telepon</Lbl><Inp value={f.phone} onChange={e=>set("phone",e.target.value)} placeholder="08…"/></div><div><Lbl>Domisili (desa)</Lbl><Sel value={f.desa} onChange={e=>set("desa",e.target.value)} options={LB_DESA}/></div></div>
-    <div className="grid grid-cols-2 gap-3"><div><Lbl>Tipe pekerja</Lbl><Sel value={f.type} onChange={e=>set("type",e.target.value)} options={["HOK Reguler","HOK Musiman","Borongan","Tenaga Spesialis"]}/></div><div><Lbl>Kelompok kerja</Lbl><Sel value={f.group} onChange={e=>set("group",e.target.value)} options={LB_GROUPS.map(g=>[g.id,g.name])}/></div></div>
+    <div className="grid grid-cols-2 gap-3"><div><Lbl>Tipe pekerja</Lbl><Sel value={f.type} onChange={e=>set("type",e.target.value)} options={LB_WORKER_TYPES}/></div><div><Lbl>Kelompok kerja</Lbl><Sel value={f.group} onChange={e=>set("group",e.target.value)} options={LB_GROUPS.map(g=>[g.id,g.name])}/></div></div>
     <div className="grid grid-cols-2 gap-3"><div><Lbl>Keahlian utama</Lbl><Sel value={f.skill} onChange={e=>set("skill",e.target.value)} options={LB_SKILLS}/></div><div><Lbl>Bank pembayaran</Lbl><Sel value={f.bank} onChange={e=>set("bank",e.target.value)} options={["BRI","BNI","Mandiri","BJB"]}/></div></div>
    </div>
   </Drawer>);

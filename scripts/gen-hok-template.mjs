@@ -14,7 +14,7 @@ const BLOK       = ["Blok 1", "Blok 2", "Blok 3", "Blok 4"];
 const KODE_BLOK  = ["GH-B01", "GH-B02", "GH-B03", "GH-B04"];
 const REGU       = ["Regu HOK Blok 1", "Regu HOK Blok 2", "Regu HOK Blok 3", "Regu HOK Blok 4"];
 const FS         = ["Yudha Kubil", "Saktian", "Indra", "Asep Ganjar"];
-const TIPE       = ["HOK Reguler", "HOK Musiman", "Borongan", "Tenaga Spesialis"];
+const TIPE       = ["HOK Reguler", "HOK Musiman", "Borongan", "Tenaga Spesialis", "Estate Manager", "Agronomy Head", "Field Supervisor", "Warehouse Officer", "Water Management Officer"];
 const PERAN      = ["Ketua Regu", "Anggota HOK"];
 const STATUS     = ["Aktif", "Tidak Aktif", "Berhenti"];
 const AVAIL      = ["Tersedia", "Sedang bertugas", "Cuti/Izin", "Tidak tersedia"];
@@ -120,7 +120,7 @@ for (let c = 0; c < refCols.length; c++) {
  for (let r = 0; r < list.length; r++) wsR.getCell(r + 2, c + 2).value = list[r];
 }
 styleHeader(wsR, 1);
-applyBorders(wsR, 2, 8, refCols.length + 1);
+applyBorders(wsR, 2, 10, refCols.length + 1);
 wsR.views = [{ state: "frozen", ySplit: 1 }];
 /* helper: kolom referensi 1-based index → huruf */
 const refRange = (idx, n) => { const col = wsR.getColumn(idx + 1).letter; return `Referensi!$${col}$2:$${col}$${1 + n}`; };
