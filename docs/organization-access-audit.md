@@ -1,6 +1,53 @@
 # Audit Struktur Organisasi & Akses — VarmOS Plantation
 
-Tanggal: 24 Juli 2026 • Basis audit: `src/App.jsx` (kondisi hidup, supersedes `varmos-plantation_15.jsx`) • Status: **audit & rekomendasi — belum ada perubahan kode**
+Tanggal: 24 Juli 2026 • Basis audit: `src/App.jsx` (kondisi hidup, supersedes `varmos-plantation_15.jsx`) • Status: **audit & rekomendasi — Fase 1 sudah diimplementasi (lihat §20)**
+
+---
+
+## 20. Analisis & Rekomendasi Penempatan Direksi (C-Level)
+
+Konteks baru (ditetapkan 24 Jul 2026): keempat Direksi memiliki jabatan fungsional berbeda, sementara sebelumnya semua identik "Direksi".
+
+| Nama | Jabatan (Position) | Fungsi domain | Role akses (saat ini) |
+|---|---|---|---|
+| Bayu Syerli | **CEO** — Chief Executive Officer | Strategi lintas fungsi, keputusan tertinggi | Direksi |
+| Febi Agil | **CFO** — Chief Financial Officer | Keuangan, anggaran, pengadaan | Direksi |
+| Lintang Pratiwi | **CAO** — Chief Agriculture Officer | Strategi agronomi & produksi tanaman | Direksi |
+| Bayu Adi Persada | **CPO** — Chief Product Officer* | Produk & pengembangan platform | Direksi |
+
+> *CPO diasumsikan **Chief Product Officer** (konteks VarmOS = platform agritech). Bila maksudnya **Chief Plantation/Operations Officer**, fungsinya bergeser ke operasional estate — perlu konfirmasi (Open Decision D7).
+
+### 20.1 Pertanyaan inti
+Apakah keempat direktur harus punya **role akses berbeda** sesuai jabatan, atau tetap **satu role "Direksi" yang seragam**?
+
+### 20.2 Analisis
+Tiga prinsip audit yang relevan saling menarik ke arah berlawanan:
+
+- **Separation of Position vs Role (Prinsip §1).** Keempat direktur adalah contoh sempurna: **jabatan berbeda, tetapi berada di lapisan tata kelola yang sama**. Membedakan *position* itu wajib (legibilitas & akuntabilitas); membedakan *access role* belum tentu.
+- **Least Privilege (Prinsip §2).** Secara harfiah, CFO tidak "butuh" mengedit data agronomi dan CPO tidak "butuh" melihat rincian anggaran. Ini menyarankan diferensiasi.
+- **Realita board-level oversight.** Namun di lapisan direksi, norma tata kelola justru sebaliknya: seluruh anggota board berhak **melihat semuanya** (transparansi & tanggung renteng). Diferensiasi di level board bukan soal *siapa boleh lihat apa*, melainkan *siapa pemilik keputusan (DRI) atas domain apa*.
+- **Keputusan produk yang sudah diambil.** Kuorum pengadaan = **3 Direksi untuk semua nilai** (belum ada limit nominal; konfigurasi diserahkan ke modul Pengaturan nanti). Artinya persetujuan finansial **tidak** eksklusif CFO saat ini. Memaksakan role finansial khusus CFO sekarang akan bertabrakan dengan keputusan kuorum seragam.
+
+**Kesimpulan analisis:** diferensiasi yang tepat untuk MVP adalah pada **Position + Akuntabilitas domain + Personalisasi tampilan**, BUKAN pada *access role*. Membuat 4 role akses berbeda ("Direksi-Finance", "Direksi-Agro", …) akan: (a) menggandakan hide-list yang harus dirawat, (b) melanggar norma board see-all, (c) bertabrakan dengan kuorum seragam, (d) over-engineering untuk 1 estate. Diferensiasi *access* baru bernilai saat modul Pengaturan Approval (Fase 3) hadir — di situ CFO/CAO menjadi **default approver/escalation** per domain, bukan gerbang visibilitas.
+
+### 20.3 Rekomendasi bertingkat
+
+**Tingkat 1 — Sekarang (sudah diimplementasi):**
+- Keempat direktur berbagi **satu role akses "Direksi"** (board see-all, kuorum seragam) — tidak diubah.
+- **Jabatan C-level sebagai `position`** (dipisah dari role). Terlihat di: switcher topbar ("Bayu Syerli — CEO"), greeting login, direktori Manajemen Pengguna (jabatan di bawah nama, role di kolom terpisah), dan **atribusi persetujuan pengadaan** ("Disetujui: Febi Agil (CFO)") sehingga jejak audit menunjukkan direktur *mana* yang menyetujui, dengan kapasitas apa.
+
+**Tingkat 2 — Growth (personalisasi tanpa ubah akses):**
+- **Landing per jabatan**: CFO → Keuangan, CAO → Kesehatan/Command Center agronomi, CEO/CPO → Command Center. Semua tetap bisa menavigasi ke mana pun (akses tidak berubah), hanya titik mendarat yang relevan. (Belum diimplementasi — menunggu keputusan; landing saat ini seragam ke Peta Kebun sesuai keputusan produk terdahulu.)
+- **Akuntabilitas domain (DRI)** ditampilkan sebagai label, bukan gerbang: eskalasi agronomi → CAO, anggaran → CFO, produk/integrasi → CPO, strategi → CEO. Cukup metadata pada proses, tidak mengubah `can()`.
+
+**Tingkat 3 — Enterprise / modul Pengaturan Approval (Fase 3):**
+- **Approval routing configurable per domain**: pengadaan tetap kuorum-3 secara default, tetapi admin dapat mengatur — mis. matriks nominal (< Rp X → 1 Direksi; keputusan Anda menaruh ini di modul Pengaturan), atau routing domain (rekomendasi agronomi butuh persetujuan CAO; belanja modal butuh CFO dalam kuorum).
+- Di titik ini, "Direksi" bisa dipecah menjadi **role template + approval authority per jabatan** tanpa migrasi ulang (position sudah tersimpan sejak Tingkat 1).
+
+### 20.4 Mengapa bukan 4 role terpisah sekarang
+Menyimpan **satu role, empat jabatan** menjaga sistem tetap konsisten dengan Prinsip §1 (Position ≠ Role) dan Acceptance Criteria #3 ("satu Person dapat memegang RoleAssignment dengan scope berbeda") — differensiasi kelak cukup dilakukan lewat *approval authority* dan *scope*, bukan lewat pemekaran role. Ini menghindari ledakan kombinatorial role saat kelak ada CTO, COO, atau direktur regional.
+
+---
 
 > Catatan basis: sejak `_15.jsx`, beberapa temuan yang diminta PDF sudah terlanjur diperbaiki di source hidup dan diperhitungkan dalam audit ini: (a) akun Field Supervisor sudah per-orang (Yudha/Saktian/Indra/Asep) dengan scope blok yang di-enforce (`scopeBlocks`/`inScope`), (b) modul Inventori sudah punya persetujuan kuorum formal (approvals[] berbasis user-ID, min 3 Direksi), (c) guard rute terpusat berbasis hide-list. Sisanya masih sesuai kondisi `_15`.
 
@@ -353,6 +400,7 @@ Halaman **Manajemen Pengguna** → menjadi hub "Orang & Akses" dengan tab (bukan
 3. **Tanpa limit nominal untuk saat ini** — semua pengeluaran tetap kuorum 3 Direksi. Ke depan diatur lewat **fitur pengaturan approval di modul Pengaturan** (ApprovalAuthority configurable — masuk backlog Fase 3, dimajukan sebagai fitur khusus).
 4. **SoD dikunci di sistem**: pembuat WO tidak boleh memverifikasi WO-nya sendiri.
 5. **Mitra Lahan mendapat unduhan laporan berkala**: Bulanan, Kuartalan, Semesteran, Tahunan. Selain Bulanan, laporan diperkaya *commentary*, analisis, dan rekomendasi.
-6. Fase 1: menunggu penjelasan urgensi & dampak sebelum eksekusi (lihat ringkasan terpisah yang disampaikan ke pemilik produk).
+6. Fase 1: **sudah dijalankan & diverifikasi** (akun personal EM/AH/WH/Finance, sumber tunggal FS, akuntabilitas by-ID, SoD verifikasi WO, drawer Posisi).
+7. **Susunan Direksi C-level** ditetapkan (CEO/CFO/CAO/CPO) — lihat analisis §20. Keputusan: satu role akses seragam + jabatan sebagai position. **D7 (open):** konfirmasi arti CPO (Chief Product Officer vs Chief Plantation Officer).
 
 **Urutan eksekusi turunan keputusan:** Fase 1 (fondasi ID & akun personal) → SoD verifikasi WO (butuh actor-ID) → fitur Pengaturan Approval → laporan berkala Mitra (independen, bisa paralel) → akun mobile Ketua Regu (setelah Fase 2).
