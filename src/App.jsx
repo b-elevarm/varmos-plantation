@@ -1544,7 +1544,7 @@ function LoginPage(){
        {demoOpen&&<>
         <div className="fixed inset-0 z-30" onClick={()=>setDemoOpen(false)}/>
         <div role="listbox" className="absolute z-40 mt-1.5 left-0 right-0 max-h-[19rem] overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg py-1.5">
-         {(()=>{ const ord=["Super Admin","Mitra Lahan","Direksi","Estate Manager","Agronomy Head","Field Supervisor","Warehouse Officer","Finance"];
+         {(()=>{ const ord=["Mitra Lahan","Direksi","Estate Manager","Agronomy Head","Field Supervisor","Warehouse Officer","Finance","Super Admin"];
           return users.filter(u=>u.status==="Aktif").slice().sort((a,b)=>{const ia=ord.indexOf(a.role),ib=ord.indexOf(b.role);return (ia<0?99:ia)-(ib<0?99:ib);}); })().map(u=>{
           const name=u.role==="Super Admin"?"Admin":u.name;
           const sub=u.role==="Field Supervisor"?("Field Spv. "+((u.blocks||[]).map(blockLabel).join(", ")||"—"))
