@@ -7637,6 +7637,11 @@ const LB_RATES=[
 const LB_WORKER_TYPES=["HOK Reguler","HOK Musiman","Borongan","Tenaga Spesialis","Estate Manager","Agronomy Head","Field Supervisor","Warehouse Officer","Water Management Officer"];
 const LB_STATUS_COL={"Aktif":"green","Tidak Aktif":"gray","Berhenti":"red","Diblokir":"red","Tersedia":"green","Sedang bertugas":"blue","Cuti/Izin":"amber","Tidak tersedia":"gray","Lengkap":"green","Belum lengkap":"amber","Menunggu verifikasi":"amber","Ditolak":"red","Hadir penuh":"green","Setengah hari":"amber","Lembur":"blue","Izin":"amber","Sakit":"amber","Tidak hadir":"red","Terverifikasi":"green","Dijadwalkan":"blue","Berjalan":"blue","Selesai":"green","Menunggu verifikasi ":"amber","Draft":"gray","Disetujui":"green","Perlu revisi":"amber","Diajukan":"blue"};
 const LbBadge=({v})=>{ const t=LB_STATUS_COL[v]||"gray"; const c={green:{bg:"#DCFCE7",fg:"#166534"},blue:{bg:"#DBEAFE",fg:"#1D4ED8"},amber:{bg:"#FEF3C7",fg:"#B45309"},red:{bg:"#FEE2E2",fg:"#B91C1C"},gray:{bg:"#F3F4F6",fg:"#4B5563"}}[t]; return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" style={{background:c.bg,color:c.fg}}>{v}</span>; };
+/* Empty-state modul Tenaga Kerja/HOK (data dummy telah dihapus — menunggu data nyata). */
+const LbEmpty=({h=180,msg="Belum ada data tenaga kerja",hint="Impor via Template Excel di Database Pekerja",Icon=Users})=>(
+ <div className="flex flex-col items-center justify-center text-center text-gray-400 gap-1.5 px-4" style={{minHeight:h}}>
+  <Icon size={22} className="opacity-40"/><div className="text-sm font-medium text-gray-500">{msg}</div>{hint&&<div className="text-xs text-gray-400">{hint}</div>}
+ </div>);
 const lbHue=(s)=>{ let h=0; for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360; return h; };
 const LbAvatar=({name,size=34})=>{ const ini=name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase(); const h=lbHue(name); return <div className="rounded-full flex items-center justify-center font-semibold text-white shrink-0" style={{width:size,height:size,background:"hsl("+h+",45%,45%)",fontSize:size*0.4}}>{ini}</div>; };
 
@@ -7764,31 +7769,38 @@ function LaborDashboard(){
    </Card>
    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
     <Card title="Tren HOK harian (7 hari)" className="xl:col-span-2">
-     <ResponsiveContainer width="100%" height={220}><BarChart data={LB_HOK_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="d" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>fmtN(v)+" HOK"}/><Bar dataKey="v" name="HOK" fill="#16A34A" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>
+     {LB_HOK_TREND.length===0 ? <LbEmpty h={220} msg="Belum ada rekaman HOK"/> :
+     <ResponsiveContainer width="100%" height={220}><BarChart data={LB_HOK_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="d" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>fmtN(v)+" HOK"}/><Bar dataKey="v" name="HOK" fill="#16A34A" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>}
     </Card>
     <Card title="Komposisi kehadiran hari ini (fingerprint)">
-     <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={LB_ATTEND_DIST} dataKey="value" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>{LB_ATTEND_DIST.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><RTooltip {...ChartTip} formatter={(v)=>v+"%"}/><Legend wrapperStyle={{fontSize:11}}/></PieChart></ResponsiveContainer>
+     {LB_ATTEND_DIST.length===0 ? <LbEmpty h={220} msg="Belum ada absensi fingerprint"/> :
+     <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={LB_ATTEND_DIST} dataKey="value" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={2}>{LB_ATTEND_DIST.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><RTooltip {...ChartTip} formatter={(v)=>v+"%"}/><Legend wrapperStyle={{fontSize:11}}/></PieChart></ResponsiveContainer>}
     </Card>
     <Card title="Biaya tenaga kerja (Rp juta)">
-     <ResponsiveContainer width="100%" height={210}><LineChart data={LB_COST_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>"Rp "+v+" jt"}/><Line type="monotone" dataKey="v" name="Biaya (jt)" stroke="#7C3AED" strokeWidth={2.5} dot={{r:3}}/></LineChart></ResponsiveContainer>
+     {LB_COST_TREND.length===0 ? <LbEmpty h={210} msg="Belum ada data biaya"/> :
+     <ResponsiveContainer width="100%" height={210}><LineChart data={LB_COST_TREND}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="m" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>"Rp "+v+" jt"}/><Line type="monotone" dataKey="v" name="Biaya (jt)" stroke="#7C3AED" strokeWidth={2.5} dot={{r:3}}/></LineChart></ResponsiveContainer>}
     </Card>
     <Card title="Distribusi pekerja per kelompok">
-     <ResponsiveContainer width="100%" height={210}><BarChart data={byGroup}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="name" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Bar dataKey="v" name="Pekerja" fill="#2563EB" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>
+     {byGroup.every(g=>g.v===0) ? <LbEmpty h={210} msg="Belum ada pekerja HOK"/> :
+     <ResponsiveContainer width="100%" height={210}><BarChart data={byGroup}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="name" {...AXIS}/><YAxis {...AXIS}/><RTooltip {...ChartTip}/><Bar dataKey="v" name="Pekerja" fill="#2563EB" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>}
     </Card>
     <Card title="Produktivitas per kelompok (%)">
-     <ResponsiveContainer width="100%" height={210}><BarChart data={prodByGroup}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="name" {...AXIS}/><YAxis domain={[0,120]} {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>v+"%"}/><Bar dataKey="v" name="Produktivitas" fill="#16A34A" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>
+     {prodByGroup.every(g=>g.v===0) ? <LbEmpty h={210} msg="Belum ada data produktivitas"/> :
+     <ResponsiveContainer width="100%" height={210}><BarChart data={prodByGroup}><CartesianGrid strokeDasharray="3 3" stroke="#EEF0F2"/><XAxis dataKey="name" {...AXIS}/><YAxis domain={[0,120]} {...AXIS}/><RTooltip {...ChartTip} formatter={(v)=>v+"%"}/><Bar dataKey="v" name="Produktivitas" fill="#16A34A" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer>}
     </Card>
    </div>
    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <Card title="Penugasan terkini" pad={false} action={<Btn size="sm" variant="ghost" onClick={()=>nav("assign")}>Semua<ChevronRight size={13}/></Btn>}>
+     {LB_ASSIGN.filter(a=>inScope(sb,a.block)).length===0 ? <LbEmpty h={160} msg="Belum ada penugasan"/> :
      <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Penugasan","Pekerjaan","Lokasi","Regu","Pekerja","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-      <tbody>{LB_ASSIGN.filter(a=>a.date===LB_ASSIGN.reduce((m,x)=>x.date>m?x.date:m,"")&&inScope(sb,a.block)).map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>
+      <tbody>{LB_ASSIGN.filter(a=>a.date===LB_ASSIGN.reduce((m,x)=>x.date>m?x.date:m,"")&&inScope(sb,a.block)).map(a=>(<tr key={a.id} className="hover:bg-green-50"><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{a.workers}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>}
     </Card>
     <Card title="Konflik & kehadiran bermasalah" pad={false}>
+     {LB_CONFLICTS.length===0 ? <LbEmpty h={160} msg="Tidak ada konflik penugasan" hint={null} Icon={CheckCircle2}/> :
      <div className="divide-y divide-gray-100">
       {LB_CONFLICTS.map((c,i)=>(<div key={i} className="px-4 py-2.5 flex items-start gap-2.5"><AlertTriangle size={15} className={"mt-0.5 shrink-0 "+(c.sev==="Konflik"?"text-red-600":"text-amber-600")}/><div><div className="text-sm font-medium text-gray-900">{c.name} <span className="text-xs text-gray-400">({c.worker})</span></div><div className="text-xs text-gray-500">{c.issue}</div></div></div>))}
       <div className="px-4 py-2.5 text-xs text-gray-500">{LB_ASSIGN.filter(a=>a.status==="Menunggu verifikasi").length} pekerjaan menunggu verifikasi Field Supervisor.</div>
-     </div>
+     </div>}
     </Card>
    </div>
   </div>);
@@ -7937,8 +7949,8 @@ function AssignmentAttendancePage(){
    </div>
    {tab==="assign"?<>
     {LB_CONFLICTS.length>0&&<div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><div className="text-sm font-semibold text-amber-900 flex items-center gap-1.5 mb-1"><AlertTriangle size={15}/>Validasi penugasan — {LB_CONFLICTS.length} isu terdeteksi</div>{LB_CONFLICTS.map((c,i)=>(<div key={i} className="text-xs text-amber-800 flex items-center gap-2 py-0.5"><LbBadge v={c.sev==="Konflik"?"Ditolak":"Menunggu verifikasi"}/>{c.name} — {c.issue} <button onClick={()=>toast("Override dicatat dengan alasan (simulasi)")} className="underline ml-1">Override</button></div>))}</div>}
-    <Card pad={false}><div className="overflow-x-auto"><table className={T.table}><thead><tr>{["ID","Tanggal","Perintah Kerja","Pekerjaan","Lokasi","Regu","Field Supervisor","Pekerja","Target","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
-     <tbody>{LB_ASSIGN.filter(a=>inScope(sb,a.block)).map(a=>(<tr key={a.id} className={T.tr} onClick={()=>nav("wo",{woId:a.wo})}><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{fmtD(a.date)}</td><td className={T.td}>{a.wo}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{lbMandorName(a.mandor)}</td><td className={T.td+" text-right"}>{a.workers}</td><td className={T.td}>{a.target}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div></Card>
+    <Card pad={false}>{LB_ASSIGN.filter(a=>inScope(sb,a.block)).length===0 ? <LbEmpty h={200} msg="Belum ada penugasan pekerja" hint="Penugasan muncul saat pekerja HOK ditugaskan ke perintah kerja."/> : <div className="overflow-x-auto"><table className={T.table}><thead><tr>{["ID","Tanggal","Perintah Kerja","Pekerjaan","Lokasi","Regu","Field Supervisor","Pekerja","Target","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
+     <tbody>{LB_ASSIGN.filter(a=>inScope(sb,a.block)).map(a=>(<tr key={a.id} className={T.tr} onClick={()=>nav("wo",{woId:a.wo})}><td className={T.td+" font-medium text-green-700"}>{a.id}</td><td className={T.td}>{fmtD(a.date)}</td><td className={T.td}>{a.wo}</td><td className={T.td}>{a.type}</td><td className={T.td}>{blockLabel(a.block)} · {a.petak}</td><td className={T.td}>{lbGroupName(a.group)}</td><td className={T.td}>{lbMandorName(a.mandor)}</td><td className={T.td+" text-right"}>{a.workers}</td><td className={T.td}>{a.target}</td><td className={T.td}><LbBadge v={a.status}/></td></tr>))}</tbody></table></div>}</Card>
    </>:<>
     <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 flex items-start gap-2.5">
      <Fingerprint size={18} className="text-blue-700 mt-0.5 shrink-0"/>
@@ -7995,12 +8007,13 @@ function HokRecapPage(){
     <Sel defaultValue="Juli 2026" options={["Juli 2026","Juni 2026","Kuartal berjalan"]}/>
    </div>
    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-    <Kpi label="Total pekerja" value={fmtN(LB_WORKERS.filter(w=>w.status==="Aktif").length)} icon={Users} tone="blue"/>
+    <Kpi label="Total pekerja HOK" value={fmtN(LB_WORKERS.filter(w=>w.status==="Aktif"&&!w.staff).length)} icon={Users} tone="blue"/>
     <Kpi label="Total HOK" value={fmtN(totHok)} icon={CalendarDays} tone="green"/>
     <Kpi label="Estimasi biaya TK" value={fmtRpC(totCost)} icon={Wallet} tone="purple"/>
     <Kpi label="Biaya per HOK" value={fmtRp(80000)} icon={Activity} tone="gray"/>
     <Kpi label="Status approval" value="Draft" sub="belum diajukan" icon={FileText} tone="amber"/>
    </div>
+   {totHok===0&&<div className="mb-4 text-sm text-blue-900 bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2"><Info size={16} className="shrink-0 mt-0.5"/>Belum ada rekaman HOK. Rekap terisi otomatis setelah data kehadiran (fingerprint) pekerja tersedia.</div>}
    <Card pad={false}><div className="overflow-x-auto"><table className={T.table}><thead><tr>{["Unit","Pekerja","Total HOK","Estimasi biaya","Produktivitas","Status"].map(h=><th key={h} className={T.th}>{h}</th>)}</tr></thead>
     <tbody>{rows.map(r=>(<tr key={r.id} className="hover:bg-green-50"><td className={T.td+" font-medium"}>{r.name}</td><td className={T.td+" text-right"}>{r.workers}</td><td className={T.td+" text-right font-semibold"}>{r.hok}</td><td className={T.td+" text-right"}>{fmtRpC(r.cost)}</td><td className={T.td+" text-right"}>{r.prod}%</td><td className={T.td}><LbBadge v={r.status}/></td></tr>))}
      <tr className="bg-gray-50 font-semibold"><td className={T.td}>Total</td><td className={T.td+" text-right"}>{fmtN(rows.reduce((a,r)=>a+r.workers,0))}</td><td className={T.td+" text-right"}>{fmtN(totHok)}</td><td className={T.td+" text-right"}>{fmtRpC(totCost)}</td><td className={T.td}></td><td className={T.td}></td></tr>
