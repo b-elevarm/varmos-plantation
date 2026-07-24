@@ -446,7 +446,7 @@ const BLOCKS = HS_GEO.blocks.map(b=>{
   cx:b.cxy[0], cy:b.cxy[1],
   ...OPS_OVERLAY[b.id], supervisor:FS_BY_BLOCK[b.id]||"—" };
 });
-const blockLabel = (id)=>{ const b=BLOCKS.find(x=>x.id===id); return b ? b.name : "Blok "+id; };
+const blockLabel = (id)=>{ if(!id) return "—"; const b=BLOCKS.find(x=>x.id===id); return b ? b.name : "Blok "+id; };
 /* Label Land ID: blok tampil "Blok N" (bukan GH-B0N); cluster/petak tetap kode lapangan (B4C2P8) */
 const landLabel=(id)=>{ const m=String(id||"").match(/^GH-B0?(\d)$/); return m?("Blok "+m[1]):String(id||"").replace("GH-",""); };
 const SUPERVISORS = [...Object.values(FS_BY_BLOCK),"Seedling Officer"];
@@ -7658,6 +7658,21 @@ const LB_WORKERS=(()=>{ const rnd=lbRng(20260720); const arr=[]; let idx=0;
     lastWork:"2026-07-"+String(day).padStart(2,"0"), rekening:"•••• "+String(1000+Math.floor(rnd()*9000)), bank:["BRI","BNI","Mandiri","BJB"][Math.floor(rnd()*4)] });
   }
  });
+ /* Staf/struktural yang sudah memiliki akun (userId) — tampil di Database Pekerja,
+    tetapi di luar analitik HOK (kehadiran fingerprint, produktivitas, rekap HOK). */
+ const fsPhone=(uid)=>(FS_ROSTER.find(f=>f.userId===uid)||{}).phone;
+ const mkStaff=(o)=>({ role:o.type, groupName:(LB_GROUPS.find(g=>g.id===o.group)||{}).name||"—", skills:[o.skill],
+  phone:o.phone||("0811-2000-0"+o.id.slice(-2)), desa:o.desa||"Purwakarta", status:"Aktif", avail:o.avail||"Sedang bertugas",
+  hokMonth:0, prod:0, doc:"Lengkap", lastWork:"—", rekening:"•••• ----", bank:"Mandiri", staff:true, ...o });
+ [
+  {userId:"USR-007",id:"STF-001",name:"Dimas Fadhillah Hakim",type:"Estate Manager",   block:null,    group:"—",       mandor:"Direksi",               skill:"Manajemen estate",            desa:"Purwakarta", joined:"2023-01-10"},
+  {userId:"USR-008",id:"STF-002",name:"Michelle Aisyah",      type:"Agronomy Head",     block:null,    group:"—",       mandor:"Dimas Fadhillah Hakim", skill:"Agronomi & proteksi tanaman", desa:"Purwakarta", joined:"2023-03-01"},
+  {userId:"USR-010",id:"STF-003",name:"Mahfud Irsyad",        type:"Warehouse Officer", block:null,    group:"—",       mandor:"Dimas Fadhillah Hakim", skill:"Manajemen gudang & material", desa:"Purwakarta", avail:"Tersedia", joined:"2023-05-12"},
+  {userId:"USR-009",id:"STF-004",name:"Yudha Kubil",          type:"Field Supervisor",  block:"GH-B01",group:"REGU-B01",mandor:"Dimas Fadhillah Hakim", skill:"Supervisi lapangan",          desa:"Gununghejo", phone:fsPhone("USR-009"), joined:"2023-02-15"},
+  {userId:"USR-013",id:"STF-005",name:"Saktian",              type:"Field Supervisor",  block:"GH-B02",group:"REGU-B02",mandor:"Dimas Fadhillah Hakim", skill:"Supervisi lapangan",          desa:"Gununghejo", phone:fsPhone("USR-013"), joined:"2023-02-15"},
+  {userId:"USR-014",id:"STF-006",name:"Indra",                type:"Field Supervisor",  block:"GH-B03",group:"REGU-B03",mandor:"Dimas Fadhillah Hakim", skill:"Supervisi lapangan",          desa:"Gununghejo", phone:fsPhone("USR-014"), joined:"2023-02-15"},
+  {userId:"USR-015",id:"STF-007",name:"Asep Ganjar",          type:"Field Supervisor",  block:"GH-B04",group:"REGU-B04",mandor:"Dimas Fadhillah Hakim", skill:"Supervisi lapangan",          desa:"Gununghejo", phone:fsPhone("USR-015"), joined:"2023-02-15"},
+ ].forEach(s=>arr.push(mkStaff(s)));
  return arr;
 })();
 const lbFsName=(id)=>(LB_FS.find(f=>f.id===id)||{}).name||id;
@@ -7689,7 +7704,7 @@ const LB_FP_DEVICE={"GH-B01":"FP-B01 · Fingerspot Revo","GH-B02":"FP-B02 · Fin
 const LB_ATT_DEF=[["Hadir penuh",1,0.80],["Setengah hari",0.5,0.07],["Lembur",1,0.03],["Izin",0,0.03],["Sakit",0,0.03],["Tidak hadir",0,0.04]];
 const lbWorkdays=(from,to)=>{ const days=[]; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00"); while(d<=end){ if(d.getDay()!==0) days.push(lbYmd(d)); d.setDate(d.getDate()+1);} return days; };
 const LB_ATT_DAYS=lbWorkdays("2026-07-01",LB_TODAY);
-const LB_ATTEND=(()=>{ const arr=[]; const active=LB_WORKERS.filter(w=>w.status==="Aktif");
+const LB_ATTEND=(()=>{ const arr=[]; const active=LB_WORKERS.filter(w=>w.status==="Aktif"&&!w.staff);
  active.forEach(w=>{ LB_ATT_DAYS.forEach(date=>{ const r=lbRng(parseInt(w.id.slice(3))*100003 + parseInt(date.replace(/-/g,"")));
    let x=r(), acc=0, st="Hadir penuh", hok=1; for(const [s,h,p] of LB_ATT_DEF){ acc+=p; if(x<=acc){st=s;hok=h;break;} }
    const present=st==="Hadir penuh"||st==="Setengah hari"||st==="Lembur";
@@ -7714,8 +7729,9 @@ function lbAgg(workers){
  const avail=active.filter(w=>w.avail==="Tersedia");
  const onduty=active.filter(w=>w.avail==="Sedang bertugas");
  const absent=active.filter(w=>w.avail==="Cuti/Izin");
- const hokMonth=workers.reduce((a,w)=>a+w.hokMonth,0);
- const avgProd=active.length?Math.round(active.reduce((a,w)=>a+w.prod,0)/active.length):0;
+ const hok=workers.filter(w=>!w.staff); const activeHok=active.filter(w=>!w.staff);
+ const hokMonth=hok.reduce((a,w)=>a+w.hokMonth,0);
+ const avgProd=activeHok.length?Math.round(activeHok.reduce((a,w)=>a+w.prod,0)/activeHok.length):0;
  const docOk=workers.filter(w=>w.doc==="Lengkap").length;
  return {active,avail,onduty,absent,hokMonth,avgProd,docOk};
 }
@@ -7729,9 +7745,9 @@ function LaborDashboard(){
  const A=lbAgg(ws);
  const hokToday=lbAttStat(lbAttOn(LB_TODAY).filter(a=>inScope(sb,a.block))).hok;
  const estCost=Math.round(A.hokMonth*80000);
- const byGroup=LB_GROUPS.map(g=>({name:g.name.replace("Regu HOK ",""),v:ws.filter(w=>w.group===g.id).length}));
+ const byGroup=LB_GROUPS.map(g=>({name:g.name.replace("Regu HOK ",""),v:ws.filter(w=>w.group===g.id&&!w.staff).length}));
  const byType=[["Reguler",ws.filter(w=>w.type==="HOK Reguler").length],["Musiman",ws.filter(w=>w.type==="HOK Musiman").length],["Borongan",ws.filter(w=>w.type==="Borongan").length],["Spesialis",ws.filter(w=>w.type==="Tenaga Spesialis").length]].map(([name,v])=>({name,v}));
- const prodByGroup=LB_GROUPS.map(g=>{ const gg=ws.filter(w=>w.group===g.id&&w.status==="Aktif"); return {name:g.name.replace("Regu HOK ",""),v:gg.length?Math.round(gg.reduce((a,w)=>a+w.prod,0)/gg.length):0}; });
+ const prodByGroup=LB_GROUPS.map(g=>{ const gg=ws.filter(w=>w.group===g.id&&w.status==="Aktif"&&!w.staff); return {name:g.name.replace("Regu HOK ",""),v:gg.length?Math.round(gg.reduce((a,w)=>a+w.prod,0)/gg.length):0}; });
  return (
   <div>
    <PageHeader title="Dashboard Tenaga Kerja" subtitle="Ringkasan pekerja HOK, kehadiran, produktivitas, dan biaya tenaga kerja."
@@ -7849,7 +7865,7 @@ function WorkerDatabasePage(){
        <td className={T.td+" font-medium text-green-700"}>{w.id}</td><td className={T.td+" font-medium"}>{w.name}</td><td className={T.td}>{w.phone}</td>
        <td className={T.td}>{w.type}</td><td className={T.td}>{lbGroupName(w.group)}</td><td className={T.td}>{lbMandorName(w.mandor)}</td><td className={T.td}>{blockLabel(w.block)}</td>
        <td className={T.td+" text-xs"}>{w.skill}</td><td className={T.td}><LbBadge v={w.status}/></td><td className={T.td}><LbBadge v={w.avail}/></td>
-       <td className={T.td+" text-right"}>{w.hokMonth}</td><td className={T.td+" text-right"}>{w.prod}%</td><td className={T.td}><LbBadge v={w.doc}/></td>
+       <td className={T.td+" text-right"}>{w.staff?"—":w.hokMonth}</td><td className={T.td+" text-right"}>{w.staff?"—":w.prod+"%"}</td><td className={T.td}><LbBadge v={w.doc}/></td>
       </tr>))}</tbody>
     </table></div>
     <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 text-sm text-gray-500">
@@ -7903,6 +7919,7 @@ function WorkerProfilePage(){
     <div className="min-w-0"><h1 className="text-xl font-bold text-gray-900">{w.name}</h1><div className="text-sm text-gray-500">{w.id} • {w.role||"Anggota HOK"} • {lbGroupName(w.group)} • {blockLabel(w.block)}</div></div>
     <div className="ml-auto flex gap-2"><LbBadge v={w.status}/><LbBadge v={w.avail}/><LbBadge v={w.doc}/></div>
    </div>
+   {w.staff&&<div className="mb-4 text-sm text-blue-900 bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2"><Info size={16} className="shrink-0 mt-0.5"/>Personel staf/struktural (bukan tenaga HOK). Metrik HOK, kehadiran fingerprint, dan penggajian berbasis HOK tidak berlaku untuk peran ini.</div>}
    <div className="flex gap-1 border-b border-gray-200 mb-4 overflow-x-auto">
     {[["profil","Profil"],["kehadiran","Kehadiran"],["riwayat","Riwayat Pekerjaan"],["produktivitas","Produktivitas"],["rekap","Rekap HOK & Upah"],["evaluasi","Evaluasi"]].map(([id,l])=><Tab key={id} id={id} label={l}/>)}
    </div>
@@ -7987,9 +8004,9 @@ function AssignmentAttendancePage(){
 function HokRecapPage(){
  const {toast}=useApp();
  const [grp,setGrp]=useState("mandor"), [period,setPeriod]=useState("Bulanan");
- const rows = grp==="mandor" ? LB_FS.map(m=>{ const ws=LB_WORKERS.filter(w=>w.mandor===m.id); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:m.id,name:m.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:hok>0?"Menunggu verifikasi":"Draft"}; })
-   : grp==="group" ? LB_GROUPS.map(g=>{ const ws=LB_WORKERS.filter(w=>w.group===g.id); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:g.id,name:g.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:"Menunggu verifikasi"}; })
-   : BLOCKS.map(b=>{ const ws=LB_WORKERS.filter(w=>w.block===b.id); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:b.id,name:b.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:"Menunggu verifikasi"}; });
+ const rows = grp==="mandor" ? LB_FS.map(m=>{ const ws=LB_WORKERS.filter(w=>w.mandor===m.id&&!w.staff); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:m.id,name:m.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:hok>0?"Menunggu verifikasi":"Draft"}; })
+   : grp==="group" ? LB_GROUPS.map(g=>{ const ws=LB_WORKERS.filter(w=>w.group===g.id&&!w.staff); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:g.id,name:g.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:"Menunggu verifikasi"}; })
+   : BLOCKS.map(b=>{ const ws=LB_WORKERS.filter(w=>w.block===b.id&&!w.staff); const hok=ws.reduce((a,w)=>a+w.hokMonth,0); return {id:b.id,name:b.name,workers:ws.length,hok:+hok.toFixed(1),cost:Math.round(hok*80000),prod:ws.length?Math.round(ws.reduce((a,w)=>a+w.prod,0)/ws.length):0,status:"Menunggu verifikasi"}; });
  const totHok=rows.reduce((a,r)=>a+r.hok,0), totCost=rows.reduce((a,r)=>a+r.cost,0);
  const exportCSV=()=>{ try{ const head=["Unit","Pekerja","HOK","Biaya","Produktivitas","Status"]; const body=rows.map(r=>[r.name,r.workers,r.hok,r.cost,r.prod+"%",r.status].join(",")); const blob=new Blob(["\ufeff"+[head.join(","),...body].join("\n")],{type:"text/csv;charset=utf-8"}); const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download="rekap-hok.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500);}catch(e){} };
  return (
