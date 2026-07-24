@@ -492,10 +492,10 @@ const INV_CAN_REQUEST=["Warehouse Officer","Agronomy Head","Estate Manager"];
 const INV_INIT_REQS=[
  {id:"REQ-2026-014",items:[{id:"MAT-001",name:"NPK 16-16-16",qty:10000,unit:"kg"}],note:"Stok NPK di bawah minimum; kebutuhan pemupukan semester 2 (rencana Agustus).",
   requestedBy:"Mahfud Irsyad",requesterRole:"Warehouse Officer",date:"2026-07-22",status:"Menunggu Persetujuan",
-  approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-23"}],rejectedBy:null},
+  approvals:[{id:"USR-002",name:"Bayu Syerli",title:"CEO",at:"2026-07-23"}],rejectedBy:null},
  {id:"REQ-2026-013",items:[{id:"MAT-007",name:"Mankozeb 80WP",qty:120,unit:"kg"},{id:"MAT-004",name:"Dolomit",qty:1500,unit:"kg"}],note:"Pengendalian antraknosa & koreksi pH Blok 2–3.",
   requestedBy:"Michelle Aisyah",requesterRole:"Agronomy Head",date:"2026-07-15",status:"Disetujui",
-  approvals:[{id:"USR-002",name:"Bayu Syerli",at:"2026-07-16"},{id:"USR-003",name:"Febi Agil",at:"2026-07-16"},{id:"USR-004",name:"Lintang Pratiwi",at:"2026-07-17"}],rejectedBy:null},
+  approvals:[{id:"USR-002",name:"Bayu Syerli",title:"CEO",at:"2026-07-16"},{id:"USR-003",name:"Febi Agil",title:"CFO",at:"2026-07-16"},{id:"USR-004",name:"Lintang Pratiwi",title:"CAO",at:"2026-07-17"}],rejectedBy:null},
 ];
 
 const SOPS=[
@@ -1268,11 +1268,12 @@ function Sidebar(){
   <aside className={"h-full bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all "+(collapsed?"w-16":"w-64")}>
    <div className="px-3 py-3 border-b border-gray-200">
     <div className="flex items-center gap-2.5">
-     <img src="/icons/icon-192.png" alt="VarmOS" className="w-9 h-9 rounded-lg shrink-0" draggable={false}/>
-     {!collapsed && <div className="min-w-0">
-      <img src="/varmos-wordmark.svg" alt="varmos" className="h-6 -ml-0.5" draggable={false}/>
-      <div className="text-[10px] text-gray-500 truncate uppercase tracking-wide mt-0.5">Plantation Command Center</div>
-     </div>}
+     {collapsed
+      ? <img src="/icons/icon-192.png" alt="VarmOS" className="w-9 h-9 rounded-lg shrink-0" draggable={false}/>
+      : <div className="min-w-0">
+         <img src="/varmos-logo.png" alt="VarmOS" className="h-7" draggable={false}/>
+         <div className="text-[10px] text-gray-500 truncate uppercase tracking-wide mt-1">Plantation Command Center</div>
+        </div>}
     </div>
     {!collapsed && <select aria-label="Pilih estate" className="mt-2.5 w-full text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-gray-50 text-gray-700" value="EST-001" onChange={()=>{}}>
      <option value="EST-001">Kebun Agroforestry Gununghejo</option>
@@ -1365,7 +1366,7 @@ function TopNav(){
     <Bell size={17}/>
     {counts.alerts>0 && <span className="absolute -top-0.5 -right-0.5 text-xs font-bold text-white rounded-full w-4.5 h-4.5 px-1 flex items-center justify-center" style={{background:C.red,minWidth:16,height:16,fontSize:10}}>{counts.alerts}</span>}
    </button>
-   <Sel aria-label="Ganti akun (demo)" value={curUser?curUser.id:""} onChange={e=>{const u=users.find(x=>x.id===e.target.value); if(u) loginUser(u);}} options={users.filter(u=>u.status==="Aktif").map(u=>[u.id,u.name+" — "+u.role])} className="max-w-52"/>
+   <Sel aria-label="Ganti akun (demo)" value={curUser?curUser.id:""} onChange={e=>{const u=users.find(x=>x.id===e.target.value); if(u) loginUser(u);}} options={users.filter(u=>u.status==="Aktif").map(u=>[u.id,u.name+" — "+userTitle(u)])} className="max-w-52"/>
    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{background:C.dark}} title={curUser?curUser.name+" • "+role:role}>{curUser?uInitials(curUser.name):role.split(" ").map(w=>w[0]).join("").slice(0,2)}</div>
   </header>);
 }
@@ -1450,8 +1451,8 @@ function LoginPage(){
      {[0,1,2,3].map(i=><circle key={"d"+i} cx="110" cy="650" r={22+i*22} fill="none" stroke="#fff" strokeWidth="1"/>)}
     </svg>
     <div className="relative">
-     <img src="/varmos-wordmark-white.svg" alt="varmos" className="h-12 -ml-1" draggable={false}/>
-     <div className="text-[11px] text-green-100/80 uppercase tracking-wider mt-1">Plantation Command Center</div>
+     <img src="/varmos-logo-white.png" alt="VarmOS" className="h-11" draggable={false}/>
+     <div className="text-[11px] text-green-100/80 uppercase tracking-wider mt-2">Plantation Command Center</div>
     </div>
     <div className="relative max-w-md">
      <h1 className="text-3xl xl:text-4xl font-bold leading-tight">Satu command center untuk seluruh kebun.</h1>
@@ -1474,7 +1475,7 @@ function LoginPage(){
    <div className="flex-1 min-h-screen overflow-y-auto">
     <div className="max-w-md mx-auto px-6 py-10 lg:py-14">
      <div className="lg:hidden mb-8">
-      <img src="/varmos-wordmark.svg" alt="varmos" className="h-11 -ml-1" draggable={false}/>
+      <img src="/varmos-logo.png" alt="VarmOS" className="h-10" draggable={false}/>
       <div className="text-xs text-gray-500 mt-1">Kebun Agroforestry Gununghejo</div>
      </div>
      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
@@ -5783,7 +5784,7 @@ function InventoryPage(){
        <div className="text-sm text-gray-900 mt-1.5">{r.items.map(it=>it.name+" "+fmtN(it.qty)+" "+it.unit).join(" • ")}</div>
        {r.note&&<div className="text-xs text-gray-500 mt-0.5">{r.note}</div>}
        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
-        {r.approvals.length>0&&<span>Disetujui oleh: {r.approvals.map(a=>a.name).join(", ")}</span>}
+        {r.approvals.length>0&&<span>Disetujui oleh: {r.approvals.map(a=>a.name+(a.title?" ("+a.title+")":"")).join(", ")}</span>}
         {r.rejectedBy&&<span className="text-red-600">Ditolak oleh {r.rejectedBy.name}{r.rejectedBy.reason&&r.rejectedBy.reason!=="—"?" — "+r.rejectedBy.reason:""}</span>}
        </div>
        {isDireksi&&r.status==="Menunggu Persetujuan"&&<div className="mt-2 flex gap-2">
@@ -7113,10 +7114,10 @@ function HsDataPage(){
 /* ============ Manajemen Pengguna ============ */
 const INIT_USERS=[
  {id:"USR-001",name:"Administrator Sistem",email:"admin@varmos.id",phone:"—",role:"Super Admin",position:"System Administrator",dept:"IT & Sistem",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Akun sistem — akses penuh"},
- {id:"USR-002",name:"Bayu Syerli",email:"bayu.syerli@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-003",name:"Febi Agil",email:"febi.agil@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-004",name:"Lintang Pratiwi",email:"lintang.pratiwi@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
- {id:"USR-005",name:"Bayu Adi Persada",email:"bayu.adi@varmos.id",phone:"—",role:"Direksi",position:"Direktur",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:""},
+ {id:"USR-002",name:"Bayu Syerli",email:"bayu.syerli@varmos.id",phone:"—",role:"Direksi",position:"CEO",positionLong:"Chief Executive Officer",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Pimpinan tertinggi — keputusan strategis lintas fungsi"},
+ {id:"USR-003",name:"Febi Agil",email:"febi.agil@varmos.id",phone:"—",role:"Direksi",position:"CFO",positionLong:"Chief Financial Officer",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Penanggung jawab keuangan, anggaran & pengadaan"},
+ {id:"USR-004",name:"Lintang Pratiwi",email:"lintang.pratiwi@varmos.id",phone:"—",role:"Direksi",position:"CAO",positionLong:"Chief Agriculture Officer",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Penanggung jawab strategi agronomi & produksi tanaman"},
+ {id:"USR-005",name:"Bayu Adi Persada",email:"bayu.adi@varmos.id",phone:"—",role:"Direksi",position:"CPO",positionLong:"Chief Product Officer",dept:"Direksi",blocks:[],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Penanggung jawab produk & pengembangan platform"},
  {id:"USR-006",name:"PEAK 92",email:"peak92@mitralahan.id",phone:"—",role:"Mitra Lahan",position:"Perwakilan Mitra Lahan",dept:"Eksternal",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:false,notes:"Pemilik lahan (landowner)"},
  {id:"USR-007",name:"Dimas Fadhillah Hakim",email:"dimas.hakim@varmos.id",phone:"0812-2100-107",role:"Estate Manager",position:"Estate Manager",dept:"Manajemen Estate",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Estate Manager Gunung Hejo"},
  {id:"USR-008",name:"Michelle Aisyah",email:"michelle.aisyah@varmos.id",phone:"0812-2100-108",role:"Agronomy Head",position:"Agronomy Head",dept:"Agronomi",blocks:["GH-B01","GH-B02","GH-B03","GH-B04"],status:"Aktif",lastLogin:null,joined:"2026-07-20",twoFA:true,notes:"Kepala Agronomi Gunung Hejo"},
@@ -7133,6 +7134,9 @@ const UStat=({v})=><span className={"inline-flex px-2 py-0.5 rounded-full text-x
 const uInitials=(n)=>n.replace(/[^A-Za-z ]/g,"").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const NAV_FLAT=NAV.filter(it=>!it.section).flatMap(it=>it.children?it.children.map(c=>({page:c.page,label:c.label})):[{page:it.page,label:it.label}]);
 const roleAccess=(r)=>NAV_FLAT.filter(p=>!(ROLES[r]?.hide||[]).includes(p.page));
+/* Label akun: tampilkan jabatan (mis. CEO/CFO) bila ada; jatuh ke role akses.
+   Direksi berbagi satu role akses tetapi jabatannya berbeda — inilah pembeda fungsionalnya. */
+const userTitle=(u)=>u?(u.position&&u.position!==u.role?u.position:u.role):"";
 
 function UserInviteModal({open,onClose}){
  const {users,addUser,toast}=useApp();
@@ -14140,7 +14144,7 @@ export default function App(){
  const addInvReq=(req)=>{ const id="REQ-2026-0"+(15+invReqs.length); setInvReqs(xs=>[{...req,id,date:TODAY,status:"Menunggu Persetujuan",approvals:[],rejectedBy:null},...xs]); toast("Pengajuan "+id+" dikirim — menunggu persetujuan "+INV_APPROVALS_MIN+" Direksi"); return id; };
  const approveInvReq=(id)=>{ if(!curUser||curUser.role!=="Direksi"){ toast("Hanya Direksi yang dapat menyetujui pengajuan.","warn"); return; }
   setInvReqs(xs=>xs.map(r=>{ if(r.id!==id||r.status!=="Menunggu Persetujuan"||r.approvals.some(a=>a.id===curUser.id)) return r;
-   const approvals=[...r.approvals,{id:curUser.id,name:curUser.name,at:TODAY}];
+   const approvals=[...r.approvals,{id:curUser.id,name:curUser.name,title:userTitle(curUser),at:TODAY}];
    const done=approvals.length>=INV_APPROVALS_MIN;
    if(done) toast("Pengajuan "+id+" disetujui ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi) — PO dapat diterbitkan");
    else toast("Persetujuan tercatat ("+approvals.length+"/"+INV_APPROVALS_MIN+" Direksi)");
@@ -14153,7 +14157,7 @@ export default function App(){
  const updateUser=(id,patch,logMsg)=>{ setUsers(xs=>xs.map(u=>u.id===id?{...u,...patch}:u)); if(logMsg) uLog(logMsg); };
  const [curUserId,setCurUserId]=useState(null);
  const curUser=users.find(u=>u.id===curUserId)||null;
- const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:"map",params:{}}); /* landing seragam: Peta Kebun */ updateUser(u.id,{lastLogin:fmtD(TODAY)+" "+new Intl.DateTimeFormat("id-ID",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit"}).format(new Date()).replace(".",":"),status:"Aktif"}); uLog(u.name+" ("+u.role+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+u.role); };
+ const loginUser=(u)=>{ setCurUserId(u.id); setRole(u.role); setRoute({page:"map",params:{}}); /* landing seragam: Peta Kebun */ updateUser(u.id,{lastLogin:fmtD(TODAY)+" "+new Intl.DateTimeFormat("id-ID",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit"}).format(new Date()).replace(".",":"),status:"Aktif"}); uLog(u.name+" ("+userTitle(u)+") masuk ke sistem"); toast("Selamat datang, "+u.name.split(" ")[0]+" • "+userTitle(u)); };
  const logout=()=>{ if(curUser) uLog(curUser.name+" keluar dari sistem"); setCurUserId(null); setRole(null); };
  const updateHsAlert=(id,patch,logMsg)=>setHsAlerts(xs=>xs.map(a=>a.id===id?{...a,...patch,log:[...(a.log||[]),...(logMsg?[{d:"19 Jul 2026",t:logMsg}]:[])]}:a));
  const addHsInsp=(rec)=>setHsInsp(xs=>[rec,...xs]);
