@@ -1269,8 +1269,11 @@ function TreePhoto(props){
  if(stock) cands.push(stock);
  const url=cands[i];
  if(!url) return <TreePhotoSvg {...props}/>;
+ /* Foto sensus asli (portrait) ditampilkan utuh (object-contain); foto stok/ilustrasi tetap object-cover. */
+ const isReal=props.src && i===0;
+ const fit=isReal?"object-contain":"object-cover";
  return <img key={i} src={url} alt={"Foto "+comName(props.commodity)+" — "+(props.status||"")} loading="lazy" onError={()=>setI(x=>x+1)}
-  className={(props.className||"")+" object-cover bg-gray-100"} style={{display:"block"}}/>;
+  className={(props.className||"")+" "+fit+" bg-gray-100"} style={{display:"block"}}/>;
 }
 
 /* ============ Shell: Sidebar, TopNav, Command Palette, Login ============ */
@@ -4567,7 +4570,7 @@ function TreeRegistryPage(){
  const [sort,setSort]=useState({k:"id",dir:1});
  const [page,setPage]=useState(1);
  const [sel,setSel]=useState([]);
- const [view,setView]=useState("table");
+ const [view,setView]=useState("grid");
  const [cols,setCols]=useState({variety:false,row:true,planted:false,inspect:true,cost:false,height:true});
  const [colMenu,setColMenu]=useState(false);
  const perPage=10;
@@ -4659,7 +4662,7 @@ function TreeRegistryPage(){
      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 p-4">
       {rows.map(t=>(
        <button key={t.id} onClick={()=>nav("tree",{treeId:t.id})} className="text-left border border-gray-200 rounded-lg p-3 hover:border-green-600">
-        <div className="rounded-md overflow-hidden border border-gray-100 h-20"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
+        <div className="rounded-md overflow-hidden border border-gray-100 bg-gray-50 aspect-[3/4]"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
         <div className="text-xs font-semibold text-green-700 mt-2 truncate">{t.id}</div>
         <div className="text-xs text-gray-500 truncate">{comName(t.commodity)} • {blockLabel(t.block)}{t.petak?" • "+t.petak:""}</div>
         <div className="mt-1.5"><Badge v={t.censusLabel||t.status}/></div>
@@ -4732,11 +4735,8 @@ function TreePassportPage(){
       </div>
      </Card>
      <Card title="Foto terbaru">
-      <div className="rounded-lg overflow-hidden border border-gray-100 h-40"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
-      <div className="text-xs text-gray-400 mt-1 text-center">{t.photoUrl?"Foto geotag Sensus Desember 2025":("Foto "+t.id+" • "+fmtD(t.lastInspection))}</div>
-      <div className="grid grid-cols-3 gap-2 mt-2">{[["kanopi","Kanopi"],["batang","Batang"],["piringan","Piringan"]].map(([v,l])=>(
-       <div key={v}><div className="rounded-md overflow-hidden border border-gray-100 h-16"><TreePhoto commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view={v} className="w-full h-full"/></div><div className="text-[10px] text-center text-gray-400 mt-0.5">{l}</div></div>
-      ))}</div>
+      <div className="rounded-lg overflow-hidden border border-gray-100 bg-gray-50 aspect-[3/4]"><TreePhoto src={t.photoUrl} commodity={t.commodity} status={t.censusLabel||t.status} heightCm={t.heightCm} view="full" className="w-full h-full"/></div>
+      <div className="text-xs text-gray-400 mt-1.5 text-center">{t.photoUrl?"Foto geotag Sensus Desember 2025":("Foto "+t.id+" • "+fmtD(t.lastInspection))}</div>
      </Card>
      <Card title="Data Sensus Desember 2025">
       <KeyVal k="Status sensus" v={t.censusLabel||t.status}/>
